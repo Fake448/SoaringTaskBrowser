@@ -100,11 +100,7 @@ class TaskBrowserMap {
         // Fetch tasks when the map view changes
         tbm.map.on('moveend', function () {
             tbm.airports.draw(tbm.map);
-            // B21 update - only fetch if bounds have moved outside previous fetch bounds
-            let new_bounds = tbm.map.getBounds();
-            if (tbm.mapExpanded(new_bounds)) {
-                tbm.fetchTasks();
-            }
+            tbm.filterTasksByMapBounds(); // Filter tasks based on the updated map bounds
         });
 
         tbm.airports = new B21_Airports(tbm, {
@@ -150,62 +146,56 @@ class TaskBrowserMap {
 
     }
 
+    // Process and filter tasks only once on load
     fetchTasks() {
         let tbm = this;
         console.log("fetchTasks()");
 
-        let bounds = tbm.map.getBounds();
-        const { _southWest: sw, _northEast: ne } = bounds;
-
-        const bufferKm = 0.5;
-        const bufferLat = bufferKm / 110.574; // Approximate conversion from km to latitude
-        const bufferLng = bufferKm / (111.320 * Math.cos((sw.lat + ne.lat) / 2 * Math.PI / 180)); // Approx conversion from km to longitude
-
-        const latMin = sw.lat - bufferLat;
-        const latMax = ne.lat + bufferLat;
-        const lngMin = sw.lng - bufferLng;
-        const lngMax = ne.lng + bufferLng;
-
+        // Fetch all tasks once
         let fetch_promise;
         if (DEBUG_LOCAL) {
-            fetch_promise = test_fetch_tasks(`GetTasksForMap.php?latMin=${latMin}&latMax=${latMax}&lngMin=${lngMin}&lngMax=${lngMax}`)
+            fetch_promise = test_fetch_tasks(`GetTasksForMap.php`);
         } else {
-            fetch_promise = fetch(`php/GetTasksForMap.php?latMin=${latMin}&latMax=${latMax}&lngMin=${lngMin}&lngMax=${lngMax}`)
+            fetch_promise = fetch(`php/GetTasksForMap.php`);
         }
         fetch_promise
             .then(response => response.json())
-            .then(tasks => { tbm.handleTasks(tasks, bounds); })
+            .then(tasks => {
+                tbm.allTasks = tasks; // Store all fetched tasks locally
+                tbm.api_tasks = {}; // Reset tasks
+
+                // Load each task into api_tasks and filter
+                tbm.allTasks.forEach(api_task => tbm.loadTask(api_task));
+                tbm.filterTasksByMapBounds(); // Now filter tasks by current map bounds
+            })
             .catch(error => {
                 console.error('Error fetching tasks:', error);
             });
     }
 
-    // Process the tasks returned by fetchTasks
-    handleTasks(tasks, bounds) {
+    filterTasksByMapBounds() {
         let tbm = this;
-        tbm.fetchBounds = bounds; // B21 update, keep track of current map bounds so we don't re-fetch unnecessarily
-        let preventEntrySeqIDlost = tbm.currentEntrySeqID;
+        if (!tbm.allTasks) return; // Ensure tasks are loaded first
+
+        let bounds = tbm.map.getBounds();
+        const bufferKm = 0.5;
+        const bufferLat = bufferKm / 110.574;
+        const bufferLng = bufferKm / (111.320 * Math.cos(bounds.getCenter().lat * Math.PI / 180));
+
+        const latMin = bounds.getSouthWest().lat - bufferLat;
+        const latMax = bounds.getNorthEast().lat + bufferLat;
+        const lngMin = bounds.getSouthWest().lng - bufferLng;
+        const lngMax = bounds.getNorthEast().lng + bufferLng;
+
+        const visibleTasks = tbm.allTasks.filter(task => (
+            task.LatMax >= latMin &&
+            task.LatMin <= latMax &&
+            task.LongMax >= lngMin &&
+            task.LongMin <= lngMax
+        ));
 
         tbm.clearPolylines();
-
-        // Resetting the current selected task after clearing all polylines
-        tbm.currentEntrySeqID = preventEntrySeqIDlost;
-
-        tasks.forEach(api_task => {
-            // B21_update - moved this code into a method
-            tbm.loadTask(api_task);
-        });
-
-        // Manager filtered tasks to remove tasks from the display !!! NEED TO FIX !!!
-        tbm.manageFilteredTasks();
-
-        // Restore selected task
-        if (tbm.currentEntrySeqID > 0) {
-            let api_task = tbm.api_tasks[tbm.currentEntrySeqID];
-            tbm.selectTaskCommon(tbm.currentEntrySeqID, false, false);
-            //tbm.setB21Task(api_task);
-        }
-        tbm.showSelectedOnly();
+        visibleTasks.forEach(task => tbm.api_tasks[task.EntrySeqID].polyline.addTo(tbm.map));
     }
 
     //B21_update

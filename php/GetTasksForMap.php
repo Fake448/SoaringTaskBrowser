@@ -6,34 +6,23 @@ try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Retrieve query parameters
-    $latMin = $_GET['latMin'];
-    $latMax = $_GET['latMax'];
-    $lngMin = $_GET['lngMin'];
-    $lngMax = $_GET['lngMax'];
-
-    // Define the query to retrieve the records within the bounding box
+    // Define the query to retrieve all records with bounding box information
     $query = "
         SELECT 
             EntrySeqID, 
             TaskID, 
             Title,
+            LatMin,
+            LatMax,
+            LongMin,
+            LongMax,
             PLNXML
         FROM 
             Tasks
-        WHERE
-            LatMin <= :latMax AND
-            LatMax >= :latMin AND
-            LongMin <= :lngMax AND
-            LongMax >= :lngMin
     ";
 
     // Prepare and execute the query
     $stmt = $pdo->prepare($query);
-    $stmt->bindParam(':latMin', $latMin);
-    $stmt->bindParam(':latMax', $latMax);
-    $stmt->bindParam(':lngMin', $lngMin);
-    $stmt->bindParam(':lngMax', $lngMax);
     $stmt->execute();
     $worldMapInfo = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
