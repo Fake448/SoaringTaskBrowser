@@ -175,9 +175,10 @@ class TaskBrowserMap {
                 tbm.allTasks = tasks;
                 tbm.updateTaskCountControl(tbm.allTasks.length); // Update task count control with total task count
 
-                // Optionally, store the date range for use in filters
-                tbm.oldestDate = oldestDate;
-                tbm.newestDate = newestDate;
+                // Format the date strings to only keep the date portion
+                tbm.oldestDate = oldestDate.split(' ')[0]; // Keeps only the YYYY-MM-DD part
+                tbm.newestDate = newestDate.split(' ')[0];
+                tbm.totalTasksInDB = totalTasks;
 
                 tbm.api_tasks = {}; // Reset tasks
 
