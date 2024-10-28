@@ -3,6 +3,8 @@ class TaskBrowserMap {
         let tbm = this;
         tbm.tb = tb;
 
+        this.addTaskCountControl();
+
         tbm.runningInApp = false;
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('appContext')) {
@@ -721,5 +723,29 @@ class TaskBrowserMap {
                 tbm.map.addLayer(polyline);
             }
         }
+    }
+    addTaskCountControl() {
+        let tbm = this;
+
+        // Define the control
+        tbm.taskCountControl = L.control({ position: 'bottomleft' });
+
+        tbm.taskCountControl.onAdd = function (map) {
+            // Create a div element to hold the count
+            let countDiv = L.DomUtil.create('div', 'task-count-control');
+            countDiv.style.padding = '5px';
+            countDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.8)';
+            countDiv.style.borderRadius = '5px';
+            countDiv.style.fontSize = '14px';
+            countDiv.style.color = '#333';
+
+            // Set initial text
+            countDiv.innerHTML = "Tasks: 0";
+            tbm.taskCountDiv = countDiv; // Store reference to update it later
+
+            return countDiv;
+        };
+
+        tbm.taskCountControl.addTo(tbm.map);
     }
 }
