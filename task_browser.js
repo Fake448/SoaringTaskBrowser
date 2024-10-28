@@ -101,14 +101,103 @@ class TaskBrowser {
     }
 
     switchTab(tabId) {
-        let tb = this;
-        document.querySelectorAll('.tabButton').forEach(button => button.classList.remove('active'));
-        document.querySelectorAll('.tabContent').forEach(content => content.classList.remove('active'));
-        document.querySelector(`[onclick="TB.switchTab('${tabId}')"]`).classList.add('active');
-        document.getElementById(tabId).classList.add('active');
+        const tb = this;
+
+        // Load content if it hasn't been loaded yet
+        const tabContent = document.getElementById(tabId);
+        if (!tabContent.innerHTML) {
+            loadTabContent(tabId); // Assuming loadTabContent is defined in task_browser.js
+
+            if (tabId === 'eventsTab') {
+                displayEventsStaticPortion(); // Add static events info
+                fetchAndDisplayEvents(); // Load dynamic events content
+
+                // Add refresh button functionality
+                const refreshButton = document.getElementById('refreshButton');
+                refreshButton.addEventListener('click', () => {
+                    document.getElementById('eventsList').innerHTML = ''; // Clear events list
+                    fetchAndDisplayEvents(); // Reload events
+                });
+            }
+        }
+
+        // Switch active tab content
+        const tabs = document.getElementsByClassName('tabContent');
+        for (let tab of tabs) {
+            tab.classList.remove('active');
+            tab.style.display = 'none';
+        }
+        tabContent.classList.add('active');
         if (tabId === 'mapTab') {
+            tabContent.style.display = 'flex'; // Use 'flex' for mapTab to keep its internal layout
+        } else {
+            tabContent.style.display = 'block';
+        }
+
+        // Update active tab button
+        const buttons = document.getElementsByClassName('tabButton');
+        for (let button of buttons) {
+            button.classList.remove('active');
+        }
+        document.querySelector(`button[data-tab="${tabId}"]`).classList.add('active');
+
+        // Resize the map if we're on the map tab
+        if (tabId === 'mapTab' && typeof tb.resizeMap === 'function') {
             tb.resizeMap();
         }
+
+        // Update the URL to reflect the current tab
+        const url = new URL(window.location);
+        url.searchParams.set('tab', tabId.replace('Tab', ''));
+
+        // Handle task or event parameters based on the active tab
+        if (tabId === 'mapTab') {
+            const taskParam = url.searchParams.get('task');
+            if (taskParam) {
+                url.searchParams.set('task', taskParam);
+            } else {
+                url.searchParams.delete('task');
+            }
+            url.searchParams.delete('event');
+        } else if (tabId === 'eventsTab') {
+            const eventParam = url.searchParams.get('event');
+            if (eventParam) {
+                url.searchParams.set('event', eventParam);
+            } else {
+                url.searchParams.delete('event');
+            }
+            url.searchParams.delete('task');
+        } else {
+            url.searchParams.delete('task');
+        }
+
+        // Update the page title based on the active tab
+        switch (tabId) {
+            case 'homeTab':
+                document.title = "WeSimGlide - Home";
+                break;
+            case 'eventsTab':
+                document.title = "WeSimGlide - Events";
+                break;
+            case 'mapTab':
+                document.title = "WeSimGlide - World Map";
+                break;
+            case 'toolsTab':
+                document.title = "WeSimGlide - Tools";
+                break;
+            case 'settingsTab':
+                document.title = "WeSimGlide - Settings";
+                break;
+            case 'aboutTab':
+                document.title = "WeSimGlide - About";
+                break;
+            default:
+                document.title = "WeSimGlide";
+                break;
+        }
+
+        // Push the updated URL to the browser history
+        window.history.pushState({}, '', url);
     }
 
     addCountryFlags(countries) {
