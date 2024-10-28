@@ -182,11 +182,13 @@ class TaskBrowserMap {
         const bufferLat = bufferKm / 110.574;
         const bufferLng = bufferKm / (111.320 * Math.cos(bounds.getCenter().lat * Math.PI / 180));
 
+        // Calculate buffered bounds
         const latMin = bounds.getSouthWest().lat - bufferLat;
         const latMax = bounds.getNorthEast().lat + bufferLat;
         const lngMin = bounds.getSouthWest().lng - bufferLng;
         const lngMax = bounds.getNorthEast().lng + bufferLng;
 
+        // Filter tasks based on bounds
         const visibleTasks = tbm.allTasks.filter(task => (
             task.LatMax >= latMin &&
             task.LatMin <= latMax &&
@@ -195,7 +197,30 @@ class TaskBrowserMap {
         ));
 
         tbm.clearPolylines();
-        visibleTasks.forEach(task => tbm.api_tasks[task.EntrySeqID].polyline.addTo(tbm.map));
+
+        // Check if showSelectedOnly is enabled and a task is selected
+        if (tbm.showSelectedOnlyChecked && tbm.currentEntrySeqID) {
+            // Only show the selected task if it's within the bounds
+            let selectedTask = tbm.api_tasks[tbm.currentEntrySeqID];
+            if (selectedTask &&
+                selectedTask.LatMax >= latMin &&
+                selectedTask.LatMin <= latMax &&
+                selectedTask.LongMax >= lngMin &&
+                selectedTask.LongMin <= lngMax
+            ) {
+                selectedTask.polyline.addTo(tbm.map);
+            }
+        } else {
+            // Otherwise, show all visible tasks within bounds
+            visibleTasks.forEach(task => {
+                tbm.api_tasks[task.EntrySeqID].polyline.addTo(tbm.map);
+            });
+        }
+
+        // Restore the selected task style if a task is selected
+        if (tbm.currentEntrySeqID) {
+            tbm.selectTaskCommon(tbm.currentEntrySeqID, false, false);
+        }
     }
 
     //B21_update
