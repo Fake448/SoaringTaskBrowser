@@ -178,12 +178,20 @@ class TaskBrowserMap {
             })
             .catch(error => {
                 console.error('Error fetching tasks:', error);
+            })
+            .finally(() => {
+                // Hide the loading spinner
+                document.getElementById('loadingSpinner').style.display = 'none';
             });
     }
 
     filterTasksByMapBounds() {
         let tbm = this;
+
         if (!tbm.allTasks) return; // Ensure tasks are loaded first
+
+        // Show the loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
 
         let bounds = tbm.map.getBounds();
         const bufferKm = 0.5;
@@ -229,6 +237,10 @@ class TaskBrowserMap {
         if (tbm.currentEntrySeqID) {
             tbm.selectTaskCommon(tbm.currentEntrySeqID, false, false);
         }
+
+        // Hide the loading spinner
+        document.getElementById('loadingSpinner').style.display = 'none';
+
     }
 
     //B21_update
