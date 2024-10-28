@@ -167,13 +167,22 @@ class TaskBrowserMap {
         }
         fetch_promise
             .then(response => response.json())
-            .then(tasks => {
-                tbm.allTasks = tasks; // Store all fetched tasks locally
-                tbm.updateTaskCountControl(tbm.allTasks.length); // Update task count control with total fetched tasks
+            .then(data => {
+                // Access the tasks, total count, and date information from the response
+                const { tasks, totalTasks, oldestDate, newestDate } = data;
+
+                // Store all fetched tasks locally
+                tbm.allTasks = tasks;
+                tbm.updateTaskCountControl(tbm.allTasks.length); // Update task count control with total task count
+
+                // Optionally, store the date range for use in filters
+                tbm.oldestDate = oldestDate;
+                tbm.newestDate = newestDate;
+
                 tbm.api_tasks = {}; // Reset tasks
 
-                // Load each task into api_tasks and filter
-                tbm.allTasks.forEach(api_task => tbm.loadTask(api_task));
+                // Load each task into api_tasks and filter by map bounds
+                tasks.forEach(api_task => tbm.loadTask(api_task));
                 tbm.filterTasksByMapBounds(); // Now filter tasks by current map bounds
             })
             .catch(error => {

@@ -32,6 +32,19 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
+        tb.setupSearchFiltersPanel();
+    }
+
+    // Function to initialize the search and filters panel with default content and events
+    setupSearchFiltersPanel() {
+        let tb = this;
+        const searchFiltersContainer = document.getElementById('searchAndFilters');
+
+        // Add default message to the search and filters panel
+        searchFiltersContainer.innerHTML = "<p style='text-align: center; font-weight: bold; margin-top: 20px;'>Coming soon!</p>";
+
+        // Add event listeners or controls here if needed in the future
+        // Example: searchFiltersContainer.querySelector('#someButton').addEventListener('click', () => { ... });
     }
 
     initCountryCodes() {

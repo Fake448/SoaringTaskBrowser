@@ -9,10 +9,6 @@ let isResizing = false;
 const resizer = document.getElementById('resizer');
 const mapContainer = document.getElementById('map');
 const taskDetailContainer = document.getElementById('taskDetailContainer');
-const searchFiltersContainer = document.getElementById('searchAndFilters');
-
-// Add "Coming soon!" message to the search and filters panel
-searchFiltersContainer.innerHTML = "<p style='text-align: center; font-weight: bold; margin-top: 20px;'>Coming soon!</p>";
 
 resizer.addEventListener('mousedown', (e) => {
     isResizing = true;
