@@ -714,3 +714,17 @@ body {
     font-size: 14px;
     color: #333;
 }
+
+#loadingSpinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000; /* Ensures the spinner is on top of other elements */
+}
+
+.loading-spinner img {
+    width: 50px; /* Adjust size as needed */
+    height: 50px;
+}
+

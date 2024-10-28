@@ -95,7 +95,7 @@ class TaskBrowserMap {
         tbm.filteredEntrySeqIDs = null; // Track the filtered tasks
 
         // Initial task fetch
-        tbm.filtering = true;
+        tbm.filtering = false;
         tbm.fetchTasks();
 
         this.addTaskCountControl();
@@ -152,6 +152,10 @@ class TaskBrowserMap {
     // Process and filter tasks only once on load
     fetchTasks() {
         let tbm = this;
+
+        // Show the loading spinner
+        document.getElementById('loadingSpinner').style.display = 'block';
+
         console.log("fetchTasks()");
 
         // Fetch all tasks once
