@@ -95,6 +95,7 @@ class TaskBrowserMap {
         tbm.filteredEntrySeqIDs = null; // Track the filtered tasks
 
         // Initial task fetch
+        tbm.filtering = true;
         tbm.fetchTasks();
 
         this.addTaskCountControl();
@@ -164,6 +165,7 @@ class TaskBrowserMap {
             .then(response => response.json())
             .then(tasks => {
                 tbm.allTasks = tasks; // Store all fetched tasks locally
+                tbm.updateTaskCountControl(tbm.allTasks.length); // Update task count control with total fetched tasks
                 tbm.api_tasks = {}; // Reset tasks
 
                 // Load each task into api_tasks and filter
@@ -740,12 +742,21 @@ class TaskBrowserMap {
             countDiv.style.color = '#333';
 
             // Set initial text
-            countDiv.innerHTML = "Tasks: 0";
+            countDiv.innerHTML = "Tasks fetched: 0";
             tbm.taskCountDiv = countDiv; // Store reference to update it later
 
             return countDiv;
         };
 
         tbm.taskCountControl.addTo(tbm.map);
+    }
+
+    updateTaskCountControl(count) {
+        let tbm = this;
+        if (tbm.taskCountContainer) {
+            // Display count with optional "(filters applied)" based on tbm.filtering
+            const filterText = tbm.filtering ? ' (filters applied)' : '';
+            tbm.taskCountContainer.innerHTML = `Tasks fetched: ${count}${filterText}`;
+        }
     }
 }
