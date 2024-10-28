@@ -3,8 +3,6 @@ class TaskBrowserMap {
         let tbm = this;
         tbm.tb = tb;
 
-        this.addTaskCountControl();
-
         tbm.runningInApp = false;
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('appContext')) {
@@ -98,6 +96,8 @@ class TaskBrowserMap {
 
         // Initial task fetch
         tbm.fetchTasks();
+
+        this.addTaskCountControl();
 
         // Fetch tasks when the map view changes
         tbm.map.on('moveend', function () {
