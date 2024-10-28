@@ -753,10 +753,10 @@ class TaskBrowserMap {
 
     updateTaskCountControl(count) {
         let tbm = this;
-        if (tbm.taskCountContainer) {
+        if (tbm.taskCountControl) {
             // Display count with optional "(filters applied)" based on tbm.filtering
             const filterText = tbm.filtering ? ' (filters applied)' : '';
-            tbm.taskCountContainer.innerHTML = `Tasks fetched: ${count}${filterText}`;
+            tbm.taskCountControl._container.innerHTML = `Tasks fetched: ${count}${filterText}`;
         }
     }
 }
