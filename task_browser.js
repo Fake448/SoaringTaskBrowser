@@ -91,7 +91,7 @@ class TaskBrowser {
         sliderContainer.style.marginBottom = '20px';
 
         sliderContainer.innerHTML = `
-            <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.totalTasksInDB}" style="flex: 1; margin-right: 10px;">
+            <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="flex: 1; margin-right: 10px;">
             <input type="number" id="taskCountInput" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.totalTasksInDB}" style="width: 60px; margin-right: 5px; text-align: right;">
         `;
         container.appendChild(sliderContainer);
