@@ -185,6 +185,7 @@ class TaskBrowserMap {
                 // Load each task into api_tasks and filter by map bounds
                 tasks.forEach(api_task => tbm.loadTask(api_task));
                 tbm.filterTasksByMapBounds(); // Now filter tasks by current map bounds
+                tbm.tb.setupSearchFiltersPanel();
             })
             .catch(error => {
                 console.error('Error fetching tasks:', error);

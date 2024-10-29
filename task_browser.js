@@ -32,19 +32,186 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
-        tb.setupSearchFiltersPanel();
     }
 
     // Function to initialize the search and filters panel with default content and events
     setupSearchFiltersPanel() {
-        let tb = this;
         const searchFiltersContainer = document.getElementById('searchAndFilters');
+        this.addPanelTitle(searchFiltersContainer);
+        this.addTaskCountControls(searchFiltersContainer);
+        this.addDateRangePicker(searchFiltersContainer);
+        this.addApplyButton(searchFiltersContainer);
+    }
 
-        // Add default message to the search and filters panel
-        searchFiltersContainer.innerHTML = "<p style='text-align: center; font-weight: bold; margin-top: 20px;'>Coming soon!</p>";
+    // Function to add panel title
+    addPanelTitle(container) {
+        const title = document.createElement('p');
+        title.style.textAlign = 'center';
+        title.style.fontWeight = 'bold';
+        title.style.marginTop = '20px';
+        title.innerText = "Search and Filter Tasks - NOT WORKING";
+        container.appendChild(title);
+    }
 
-        // Add event listeners or controls here if needed in the future
-        // Example: searchFiltersContainer.querySelector('#someButton').addEventListener('click', () => { ... });
+    // Function to add task count slider and input controls
+    addTaskCountControls(container) {
+        let tb = this;
+
+        // Task count label and "Max" button
+        const taskCountLabelContainer = document.createElement('div');
+        taskCountLabelContainer.style.display = 'flex';
+        taskCountLabelContainer.style.alignItems = 'center';
+        taskCountLabelContainer.style.justifyContent = 'space-between';
+        taskCountLabelContainer.style.marginBottom = '5px';
+
+        taskCountLabelContainer.innerHTML = `
+            <label>Max Tasks to Fetch:</label>
+            <button id="maxButton" class="button-style" style="font-size: 12px; padding: 2px 6px; margin-right: 5px;">Max</button>
+        `;
+        container.appendChild(taskCountLabelContainer);
+
+        // Slider and input
+        const sliderContainer = document.createElement('div');
+        sliderContainer.style.display = 'flex';
+        sliderContainer.style.alignItems = 'center';
+        sliderContainer.style.marginBottom = '20px';
+
+        sliderContainer.innerHTML = `
+            <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.totalTasksInDB}" style="flex: 1; margin-right: 10px;">
+            <input type="number" id="taskCountInput" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.totalTasksInDB}" style="width: 60px; margin-right: 5px; text-align: right;">
+        `;
+        container.appendChild(sliderContainer);
+
+        // Elements
+        const maxButton = taskCountLabelContainer.querySelector('#maxButton');
+        const taskCountSlider = sliderContainer.querySelector('#taskCountSlider');
+        const taskCountInput = sliderContainer.querySelector('#taskCountInput');
+
+        // Set max value on Max button click
+        maxButton.addEventListener('click', () => {
+            taskCountSlider.value = tb.tbm.totalTasksInDB;
+            taskCountInput.value = tb.tbm.totalTasksInDB;
+        });
+
+        // Sync slider and input
+        taskCountSlider.addEventListener('input', (event) => {
+            taskCountInput.value = event.target.value;
+        });
+
+        taskCountInput.addEventListener('input', (event) => {
+            let value = parseInt(event.target.value);
+            if (isNaN(value) || value < 1) value = 1;
+            if (value > tb.tbm.totalTasksInDB) value = tb.tbm.totalTasksInDB;
+            taskCountSlider.value = value;
+            taskCountInput.value = value;
+        });
+    }
+
+    // Function to add date range picker with quick select dropdown
+    addDateRangePicker(container) {
+        let tb = this;
+
+        const dateRangeContainer = document.createElement('div');
+        dateRangeContainer.style.marginBottom = '10px';
+        dateRangeContainer.innerHTML = `
+            <label>Last updated between:</label></br>
+            <div style="display: flex; align-items: center;">
+                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="margin-right: 10px;">
+                <span>and</span>
+                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="margin-left: 10px;">
+            </div>
+        `;
+        container.appendChild(dateRangeContainer);
+
+        // Date range quick select dropdown
+        const dateRangeDropdownContainer = document.createElement('div');
+        dateRangeDropdownContainer.style.marginBottom = '20px';
+        dateRangeDropdownContainer.style.marginRight = '5px';
+        dateRangeDropdownContainer.innerHTML = `
+            <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
+                <option value="any">Any date</option>
+                <option value="1month">Last month</option>
+                <option value="3months">Last 3 months</option>
+                <option value="6months">Last 6 months</option>
+                <option value="1year">Last year</option>
+            </select>
+        `;
+        container.appendChild(dateRangeDropdownContainer);
+
+        // Elements
+        const startDateInput = dateRangeContainer.querySelector('#startDate');
+        const endDateInput = dateRangeContainer.querySelector('#endDate');
+        const dateRangeSelect = dateRangeDropdownContainer.querySelector('#dateRangeSelect');
+
+        // Adjust dates based on quick select dropdown
+        dateRangeSelect.addEventListener('change', (event) => {
+            const today = new Date();
+            let startDate, endDate;
+
+            switch (event.target.value) {
+                case '1month':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - 1);
+                    endDate = today;
+                    break;
+                case '3months':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - 3);
+                    endDate = today;
+                    break;
+                case '6months':
+                    startDate = new Date(today);
+                    startDate.setMonth(today.getMonth() - 6);
+                    endDate = today;
+                    break;
+                case '1year':
+                    startDate = new Date(today);
+                    startDate.setFullYear(today.getFullYear() - 1);
+                    endDate = today;
+                    break;
+                case 'any':
+                default:
+                    startDate = new Date(tb.tbm.oldestDate);
+                    endDate = new Date(tb.tbm.newestDate);
+                    break;
+            }
+
+            // Enforce min and max date constraints
+            startDate = startDate < new Date(tb.tbm.oldestDate) ? new Date(tb.tbm.oldestDate) : startDate;
+            endDate = endDate > new Date(tb.tbm.newestDate) ? new Date(tb.tbm.newestDate) : endDate;
+
+            // Update date inputs with constrained values
+            startDateInput.value = startDate.toISOString().split('T')[0];
+            endDateInput.value = endDate.toISOString().split('T')[0];
+        });
+    }
+
+    // Function to add apply button
+    addApplyButton(container) {
+        let tb = this;
+
+        const applyButton = document.createElement('button');
+        applyButton.textContent = "Apply";
+        applyButton.style.display = 'block';
+        applyButton.style.margin = '20px auto';
+        applyButton.classList.add('button-style'); // Assuming this class exists for button styling
+        container.appendChild(applyButton);
+
+        // Apply button event
+        applyButton.addEventListener('click', () => {
+            tb.applyFilters();
+        });
+    }
+
+    // Function to apply filters based on selected options
+    applyFilters() {
+        const taskCount = document.getElementById('taskCountInput').value;
+        const startDate = document.getElementById('startDate').value;
+        const endDate = document.getElementById('endDate').value;
+
+        console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}`);
+
+        // Implement the filtering logic here (either local or server-side)
     }
 
     initCountryCodes() {
