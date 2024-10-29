@@ -38,19 +38,28 @@ class TaskBrowser {
     setupSearchFiltersPanel() {
         const searchFiltersContainer = document.getElementById('searchAndFilters');
         this.addPanelTitle(searchFiltersContainer);
+        this.addHorizontalLine(searchFiltersContainer);
         this.addTaskCountControls(searchFiltersContainer);
+        this.addHorizontalLine(searchFiltersContainer);
         this.addDateRangePicker(searchFiltersContainer);
+        this.addHorizontalLine(searchFiltersContainer);
         this.addApplyButton(searchFiltersContainer);
+    }
+
+    // Function to add a horizontal line with consistent styling
+    addHorizontalLine(container) {
+        const hr = document.createElement('hr');
+        hr.style.marginTop = '5px';
+        hr.style.marginBottom = '5px';
+        hr.style.marginRight = '5px';
+        container.appendChild(hr);
     }
 
     // Function to add panel title
     addPanelTitle(container) {
-        const title = document.createElement('p');
-        title.style.textAlign = 'center';
-        title.style.fontWeight = 'bold';
-        title.style.marginTop = '20px';
-        title.innerText = "Search and Filter Tasks - NOT WORKING";
-        container.appendChild(title);
+        container.innerHTML += `
+            <p style="text-align: center; font-weight: bold; margin-top: 20px;">Search and Filter Tasks</p>
+        `;
     }
 
     // Function to add task count slider and input controls
