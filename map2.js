@@ -7,12 +7,13 @@ class TaskBrowserMap {
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('appContext')) {
             tbm.runningInApp = true;
+            tbm.taskCount = 9999; // no limit when from the app
         } else {
             tbm.runningInApp = false;
+            tbm.taskCount = 300; // or any sensible default value for the number of tasks
         }
 
         // Default values for taskCount, startDate, and endDate
-        tbm.taskCount = 300; // or any sensible default value for the number of tasks
         tbm.startDate = '2000-01-01'; // example default minimum date
         tbm.endDate = '2200-01-01'; // max date
 
@@ -163,6 +164,8 @@ class TaskBrowserMap {
 
         console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate);
 
+        tbm.clearPolylines();
+
         // Construct URL with query parameters
         const url = new URL(DEBUG_LOCAL ? 'GetTasksForMap.php' : 'php/GetTasksForMap.php', window.location.href);
         url.searchParams.append('taskCount', tbm.taskCount);
@@ -176,6 +179,7 @@ class TaskBrowserMap {
 
                 // Store all fetched tasks locally
                 tbm.allTasks = tasks;
+                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
                 tbm.updateTaskCountControl(tbm.allTasks.length);
 
                 tbm.oldestDate = oldestDate.split(' ')[0];
@@ -221,8 +225,6 @@ class TaskBrowserMap {
             task.LongMax >= lngMin &&
             task.LongMin <= lngMax
         ));
-
-        tbm.clearPolylines();
 
         // Check if showSelectedOnly is enabled and a task is selected
         if (tbm.showSelectedOnlyChecked && tbm.currentEntrySeqID) {
