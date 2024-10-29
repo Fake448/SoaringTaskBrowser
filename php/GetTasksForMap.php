@@ -18,6 +18,7 @@ try {
         SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML
         FROM Tasks
         WHERE LastUpdate BETWEEN :startDate AND :endDate
+        ORDER BY LastUpdate DESC
         LIMIT :taskCount
     ";
 
