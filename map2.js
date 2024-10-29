@@ -179,12 +179,13 @@ class TaskBrowserMap {
 
                 // Store all fetched tasks locally
                 tbm.allTasks = tasks;
-                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
-                tbm.updateTaskCountControl(tbm.allTasks.length);
 
                 tbm.oldestDate = oldestDate.split(' ')[0];
                 tbm.newestDate = newestDate.split(' ')[0];
                 tbm.totalTasksInDB = totalTasks;
+
+                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
+                tbm.updateTaskCountControl(tbm.allTasks.length);
 
                 tbm.api_tasks = {};
                 tasks.forEach(api_task => tbm.loadTask(api_task));
