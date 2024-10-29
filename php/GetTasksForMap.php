@@ -10,11 +10,14 @@ try {
     $startDate = $_GET['startDate'] ?? '2000-01-01'; // Use default min date if not provided
     $endDate = $_GET['endDate'] ?? date('Y-m-d'); // Use today's date if not provided
 
+    // Add one day to endDate to ensure inclusivity
+    $endDate = date('Y-m-d', strtotime($endDate . ' +1 day'));
+
     // Query to retrieve tasks with filters
     $query = "
         SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML
         FROM Tasks
-        WHERE LastUpdate >= :startDate AND LastUpdate <= :endDate
+        WHERE LastUpdate BETWEEN :startDate AND :endDate
         LIMIT :taskCount
     ";
 
