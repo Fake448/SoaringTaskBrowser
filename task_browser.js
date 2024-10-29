@@ -130,9 +130,9 @@ class TaskBrowser {
         dateRangeContainer.innerHTML = `
             <label>Last updated between:</label></br>
             <div style="display: flex; align-items: center;">
-                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="margin-right: 10px;">
+                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="margin-right: 10px;" disabled>
                 <span>and</span>
-                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="margin-left: 10px;">
+                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="margin-left: 10px;" disabled>
             </div>
         `;
         container.appendChild(dateRangeContainer);
@@ -143,7 +143,9 @@ class TaskBrowser {
         dateRangeDropdownContainer.style.marginRight = '5px';
         dateRangeDropdownContainer.innerHTML = `
             <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
-                <option value="any">Any date</option>
+                <option value="any">Any date (all)</option>
+                <option value="custom">Custom dates</option>
+                <option value="2weeks">Last 2 weeks</option>
                 <option value="1month">Last month</option>
                 <option value="3months">Last 3 months</option>
                 <option value="6months">Last 6 months</option>
@@ -162,41 +164,56 @@ class TaskBrowser {
             const today = new Date();
             let startDate, endDate;
 
-            switch (event.target.value) {
-                case '1month':
-                    startDate = new Date(today);
-                    startDate.setMonth(today.getMonth() - 1);
-                    endDate = today;
-                    break;
-                case '3months':
-                    startDate = new Date(today);
-                    startDate.setMonth(today.getMonth() - 3);
-                    endDate = today;
-                    break;
-                case '6months':
-                    startDate = new Date(today);
-                    startDate.setMonth(today.getMonth() - 6);
-                    endDate = today;
-                    break;
-                case '1year':
-                    startDate = new Date(today);
-                    startDate.setFullYear(today.getFullYear() - 1);
-                    endDate = today;
-                    break;
-                case 'any':
-                default:
-                    startDate = new Date(tb.tbm.oldestDate);
-                    endDate = new Date(tb.tbm.newestDate);
-                    break;
+            if (event.target.value === 'custom') {
+                // Unlock date inputs for custom selection
+                startDateInput.disabled = false;
+                endDateInput.disabled = false;
+            } else {
+                // Lock date inputs and set them based on the selected range
+                startDateInput.disabled = true;
+                endDateInput.disabled = true;
+
+                switch (event.target.value) {
+                    case '2weeks':
+                        startDate = new Date(today);
+                        startDate.setDate(today.getDate() - 14); // Subtracts 14 days
+                        endDate = today;
+                        break;
+                    case '1month':
+                        startDate = new Date(today);
+                        startDate.setMonth(today.getMonth() - 1);
+                        endDate = today;
+                        break;
+                    case '3months':
+                        startDate = new Date(today);
+                        startDate.setMonth(today.getMonth() - 3);
+                        endDate = today;
+                        break;
+                    case '6months':
+                        startDate = new Date(today);
+                        startDate.setMonth(today.getMonth() - 6);
+                        endDate = today;
+                        break;
+                    case '1year':
+                        startDate = new Date(today);
+                        startDate.setFullYear(today.getFullYear() - 1);
+                        endDate = today;
+                        break;
+                    case 'any':
+                    default:
+                        startDate = new Date(tb.tbm.oldestDate);
+                        endDate = new Date(tb.tbm.newestDate);
+                        break;
+                }
+
+                // Enforce min and max date constraints
+                startDate = startDate < new Date(tb.tbm.oldestDate) ? new Date(tb.tbm.oldestDate) : startDate;
+                endDate = endDate > new Date(tb.tbm.newestDate) ? new Date(tb.tbm.newestDate) : endDate;
+
+                // Update date inputs with constrained values
+                startDateInput.value = startDate.toISOString().split('T')[0];
+                endDateInput.value = endDate.toISOString().split('T')[0];
             }
-
-            // Enforce min and max date constraints
-            startDate = startDate < new Date(tb.tbm.oldestDate) ? new Date(tb.tbm.oldestDate) : startDate;
-            endDate = endDate > new Date(tb.tbm.newestDate) ? new Date(tb.tbm.newestDate) : endDate;
-
-            // Update date inputs with constrained values
-            startDateInput.value = startDate.toISOString().split('T')[0];
-            endDateInput.value = endDate.toISOString().split('T')[0];
         });
     }
 
