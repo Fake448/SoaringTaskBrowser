@@ -220,7 +220,13 @@ class TaskBrowser {
 
         console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}`);
 
-        // Implement the filtering logic here (either local or server-side)
+        // Update the TBM instance variables
+        this.tbm.taskCount = taskCount;
+        this.tbm.startDate = startDate;
+        this.tbm.endDate = endDate;
+
+        // Call fetchTasks with updated filters
+        this.tbm.fetchTasks();
     }
 
     initCountryCodes() {

@@ -2,43 +2,42 @@
 require __DIR__ . '/CommonFunctions.php';
 
 try {
-    // Open the database connection
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Define the query to retrieve all task records with bounding box information
+    // Get the filter values from query parameters
+    $taskCount = isset($_GET['taskCount']) ? (int)$_GET['taskCount'] : PHP_INT_MAX;
+    $startDate = $_GET['startDate'] ?? '2000-01-01'; // Use default min date if not provided
+    $endDate = $_GET['endDate'] ?? date('Y-m-d'); // Use today's date if not provided
+
+    // Query to retrieve tasks with filters
     $query = "
-        SELECT 
-            EntrySeqID, 
-            TaskID, 
-            Title,
-            LatMin,
-            LatMax,
-            LongMin,
-            LongMax,
-            PLNXML
-        FROM 
-            Tasks
+        SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML
+        FROM Tasks
+        WHERE LastUpdate BETWEEN :startDate AND :endDate
+        LIMIT :taskCount
     ";
 
-    // Prepare and execute the task query
     $stmt = $pdo->prepare($query);
+    $stmt->bindValue(':startDate', $startDate);
+    $stmt->bindValue(':endDate', $endDate);
+    $stmt->bindValue(':taskCount', $taskCount, PDO::PARAM_INT);
+
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Query to get the total number of tasks
+    // Query to get total task count
     $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks";
     $countStmt = $pdo->prepare($countQuery);
     $countStmt->execute();
     $totalTasks = $countStmt->fetch(PDO::FETCH_ASSOC)['totalTasks'];
 
-    // Query to get the oldest and newest dates in the LastUpdate field
+    // Query to get oldest and newest dates
     $dateQuery = "SELECT MIN(LastUpdate) as oldestDate, MAX(LastUpdate) as newestDate FROM Tasks";
     $dateStmt = $pdo->prepare($dateQuery);
     $dateStmt->execute();
     $dates = $dateStmt->fetch(PDO::FETCH_ASSOC);
 
-    // Prepare the final response with tasks, total task count, and date information
     $response = [
         'tasks' => $tasks,
         'totalTasks' => $totalTasks,
@@ -46,7 +45,6 @@ try {
         'newestDate' => $dates['newestDate']
     ];
 
-    // Output the results as JSON
     header('Content-Type: application/json');
     echo json_encode($response);
 
@@ -55,4 +53,3 @@ try {
     header('Content-Type: application/json');
     echo json_encode(['error' => 'Connection failed']);
 }
-?>

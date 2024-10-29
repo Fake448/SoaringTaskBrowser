@@ -11,6 +11,11 @@ class TaskBrowserMap {
             tbm.runningInApp = false;
         }
 
+        // Default values for taskCount, startDate, and endDate
+        tbm.taskCount = 300; // or any sensible default value for the number of tasks
+        tbm.startDate = '2000-01-01'; // example default minimum date
+        tbm.endDate = '2200-01-01'; // max date
+
         // B21 update, these are used by B21_Task / B21_WP
         tbm.settings = {
             altitude_units: "feet",
@@ -149,49 +154,42 @@ class TaskBrowserMap {
 
     }
 
-    // Process and filter tasks only once on load
+    // Fetch and filter tasks based on current filter settings
     fetchTasks() {
         let tbm = this;
 
         // Show the loading spinner
         document.getElementById('loadingSpinner').style.display = 'block';
 
-        console.log("fetchTasks()");
+        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate);
 
-        // Fetch all tasks once
-        let fetch_promise;
-        if (DEBUG_LOCAL) {
-            fetch_promise = test_fetch_tasks(`GetTasksForMap.php`);
-        } else {
-            fetch_promise = fetch(`php/GetTasksForMap.php`);
-        }
-        fetch_promise
+        // Construct URL with query parameters
+        const url = new URL(DEBUG_LOCAL ? 'GetTasksForMap.php' : 'php/GetTasksForMap.php', window.location.href);
+        url.searchParams.append('taskCount', tbm.taskCount);
+        url.searchParams.append('startDate', tbm.startDate);
+        url.searchParams.append('endDate', tbm.endDate);
+
+        fetch(url)
             .then(response => response.json())
             .then(data => {
-                // Access the tasks, total count, and date information from the response
                 const { tasks, totalTasks, oldestDate, newestDate } = data;
 
                 // Store all fetched tasks locally
                 tbm.allTasks = tasks;
-                tbm.updateTaskCountControl(tbm.allTasks.length); // Update task count control with total task count
+                tbm.updateTaskCountControl(tbm.allTasks.length);
 
-                // Format the date strings to only keep the date portion
-                tbm.oldestDate = oldestDate.split(' ')[0]; // Keeps only the YYYY-MM-DD part
+                tbm.oldestDate = oldestDate.split(' ')[0];
                 tbm.newestDate = newestDate.split(' ')[0];
                 tbm.totalTasksInDB = totalTasks;
 
-                tbm.api_tasks = {}; // Reset tasks
-
-                // Load each task into api_tasks and filter by map bounds
+                tbm.api_tasks = {};
                 tasks.forEach(api_task => tbm.loadTask(api_task));
-                tbm.filterTasksByMapBounds(); // Now filter tasks by current map bounds
-                tbm.tb.setupSearchFiltersPanel();
+                tbm.filterTasksByMapBounds();
             })
             .catch(error => {
                 console.error('Error fetching tasks:', error);
             })
             .finally(() => {
-                // Hide the loading spinner
                 document.getElementById('loadingSpinner').style.display = 'none';
             });
     }
