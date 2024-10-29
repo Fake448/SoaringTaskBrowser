@@ -18,6 +18,7 @@ class TaskBrowser {
         tb.tbm = new TaskBrowserMap(tb);
         tb.taskDetailsContainerWidth = 0;
         tb.initCountryCodes();
+        tb.searchPanelAlreadySetup = false;
 
         // Mapping of country names in your app to the corresponding names used by the flag service
         tb.countryNameMapping = {
@@ -36,14 +37,18 @@ class TaskBrowser {
 
     // Function to initialize the search and filters panel with default content and events
     setupSearchFiltersPanel() {
-        const searchFiltersContainer = document.getElementById('searchAndFilters');
-        this.addPanelTitle(searchFiltersContainer);
-        this.addHorizontalLine(searchFiltersContainer);
-        this.addTaskCountControls(searchFiltersContainer);
-        this.addHorizontalLine(searchFiltersContainer);
-        this.addDateRangePicker(searchFiltersContainer);
-        this.addHorizontalLine(searchFiltersContainer);
-        this.addApplyButton(searchFiltersContainer);
+        let tb = this;
+        if (!tb.searchPanelAlreadySetup) {
+            const searchFiltersContainer = document.getElementById('searchAndFilters');
+            tb.addPanelTitle(searchFiltersContainer);
+            tb.addHorizontalLine(searchFiltersContainer);
+            tb.addTaskCountControls(searchFiltersContainer);
+            tb.addHorizontalLine(searchFiltersContainer);
+            tb.addDateRangePicker(searchFiltersContainer);
+            tb.addHorizontalLine(searchFiltersContainer);
+            tb.addApplyButton(searchFiltersContainer);
+            tb.searchPanelAlreadySetup = true;
+        }
     }
 
     // Function to add a horizontal line with consistent styling
