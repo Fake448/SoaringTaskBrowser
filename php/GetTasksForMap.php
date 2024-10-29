@@ -14,7 +14,7 @@ try {
     $query = "
         SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML
         FROM Tasks
-        WHERE LastUpdate BETWEEN :startDate AND :endDate
+        WHERE LastUpdate >= :startDate AND LastUpdate <= :endDate
         LIMIT :taskCount
     ";
 
