@@ -20,6 +20,9 @@ try {
     ];
     $soaringTypeFilter = $_GET['soaringTypeFilter'] ?? 'any';
 
+    // Determine if all types are selected with "any" filter
+    $allTypesSelected = array_reduce($soaringTypes, fn($carry, $value) => $carry && $value, true);
+
     // Build WHERE clause based on the filters
     $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
     $params = [
@@ -28,31 +31,33 @@ try {
         ':taskCount' => $taskCount
     ];
 
-    // Determine soaring type conditions based on filter type
+    // Add soaring type conditions only if necessary
     $soaringConditions = [];
-    foreach ($soaringTypes as $column => $value) {
-        if ($value) {
-            switch ($soaringTypeFilter) {
-                case 'any': // At least one selected type (OR)
-                    $soaringConditions[] = "$column = 1";
-                    break;
-                case 'all': // All selected types (AND)
-                    $soaringConditions[] = "$column = 1";
-                    break;
-                case 'only': // Only selected types (AND) with exclusion of others
-                    $soaringConditions[] = "$column = 1";
-                    break;
-                case 'exclude': // Exclude selected types (AND for NOT)
-                    $soaringConditions[] = "$column = 0";
-                    break;
+    if (!($soaringTypeFilter === 'any' && $allTypesSelected)) {
+        foreach ($soaringTypes as $column => $value) {
+            if ($value) {
+                switch ($soaringTypeFilter) {
+                    case 'any': // At least one selected type (OR)
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'all': // All selected types (AND)
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'only': // Only selected types (AND) with exclusion of others
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'exclude': // Exclude selected types (AND for NOT)
+                        $soaringConditions[] = "$column = 0";
+                        break;
+                }
+            } elseif ($soaringTypeFilter === 'only') {
+                // If "only" filter is applied, add condition to ensure unselected types are 0
+                $soaringConditions[] = "$column = 0";
             }
-        } elseif ($soaringTypeFilter === 'only') {
-            // If "only" filter is applied, add condition to ensure unselected types are 0
-            $soaringConditions[] = "$column = 0";
         }
     }
 
-    // Add soaring conditions to WHERE clause based on filter type
+    // Append soaring type conditions to WHERE clause if they are defined
     if (!empty($soaringConditions)) {
         if ($soaringTypeFilter === 'any') {
             $whereClauses[] = '(' . implode(' OR ', $soaringConditions) . ')';
@@ -69,6 +74,7 @@ try {
         ORDER BY LastUpdate DESC
         LIMIT :taskCount
     ";
+
     logMessage("Query: " . $query);
 
     $stmt = $pdo->prepare($query);
