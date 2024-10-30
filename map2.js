@@ -224,27 +224,28 @@ class TaskBrowserMap {
                 tbm.api_tasks = {};
                 processedTasks.forEach(api_task => tbm.loadTask(api_task));
 
-                // Initialize or update the DataTable with the processed task data
-                if ($.fn.DataTable.isDataTable('#taskGridTable')) {
-                    $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
-                } else {
-                    $('#taskGridTable').DataTable({
-                        data: processedTasks,
-                        columns: [
-                            { data: 'EntrySeqID', title: 'Task ID' },
-                            { data: 'Title', title: 'Title' },
-                            { data: 'LastUpdate', title: 'Last Update' },
-                            { data: 'SoaringType', title: 'Soaring Type' },
-                            { data: 'Duration', title: 'Duration' },
-                            { data: 'Difficulty', title: 'Difficulty' }
-                        ],
-                        paging: false,       // Disable pagination
-                        searching: true,     // Enable search/filter
-                        ordering: true,      // Enable sorting
-                        info: true           // Enable info display
-                    });
+                if (tbm.runningInApp) {
+                    // Initialize or update the DataTable with the processed task data
+                    if ($.fn.DataTable.isDataTable('#taskGridTable')) {
+                        $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
+                    } else {
+                        $('#taskGridTable').DataTable({
+                            data: processedTasks,
+                            columns: [
+                                { data: 'EntrySeqID', title: 'Task ID' },
+                                { data: 'Title', title: 'Title' },
+                                { data: 'LastUpdate', title: 'Last Update' },
+                                { data: 'SoaringType', title: 'Soaring Type' },
+                                { data: 'Duration', title: 'Duration' },
+                                { data: 'Difficulty', title: 'Difficulty' }
+                            ],
+                            paging: false,       // Disable pagination
+                            searching: true,     // Enable search/filter
+                            ordering: true,      // Enable sorting
+                            info: true           // Enable info display
+                        });
+                    }
                 }
-
                 // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
                 tbm.tb.setupSearchFiltersPanel();
