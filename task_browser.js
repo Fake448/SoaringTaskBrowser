@@ -1587,40 +1587,14 @@ class TaskBrowser {
     }
 
     toggleTableVisibility() {
-        let tb = this;
         const taskGridOverlay = document.getElementById("taskGridOverlay");
 
         if (taskGridOverlay.style.display === "none" || !taskGridOverlay.style.display) {
             // Show overlay
             taskGridOverlay.style.display = "flex";
 
-            // Process tasks if not already done (assuming tbm.allTasks holds the fetched tasks)
-            const processedTasks = tb.processTasks(tb.tbm.allTasks);
-
-            // Initialize or update the DataTable with the processed task data
-            if ($.fn.DataTable.isDataTable('#taskGridTable')) {
-                // If DataTable already exists, clear and reload with new data
-                $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
-            } else {
-                // Initialize DataTable
-                $('#taskGridTable').DataTable({
-                    data: processedTasks,
-                    columns: [
-                        { data: 'EntrySeqID', title: 'Task ID' },
-                        { data: 'Title', title: 'Title' },
-                        { data: 'SoaringType', title: 'Soaring Type' },
-                        { data: 'Duration', title: 'Duration' },
-                        { data: 'Difficulty', title: 'Difficulty' }
-                    ],
-                    paging: false,           // Disable pagination
-                    searching: true,         // Enable search/filter
-                    ordering: true,          // Enable sorting
-                    info: true,              // Enable info display
-                    scrollY: 'calc(100vh - 300px)',  // Adjust for your header/footer heights
-                    scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
-                    scroller: true           // Smooth scrolling
-                });
-            }
+            // Populate the DataTable with current tasks
+            this.populateDataTable(this.tbm.allTasks);
 
             // Add scroll prevention to keep the map from zooming when scrolling over the overlay
             taskGridOverlay.addEventListener("wheel", function (event) {
@@ -1630,7 +1604,7 @@ class TaskBrowser {
             // Hide overlay
             taskGridOverlay.style.display = "none";
 
-            // Remove the event listener if you want to ensure it’s only active when overlay is visible
+            // Remove the event listener to stop scroll prevention when overlay is hidden
             taskGridOverlay.removeEventListener("wheel", function (event) {
                 event.stopPropagation();
             });
@@ -1671,6 +1645,35 @@ class TaskBrowser {
 
             return task;
         });
+    }
+
+    populateDataTable(tasks) {
+        const processedTasks = this.processTasks(tasks); // Process tasks as needed
+
+        // Check if the DataTable is already initialized
+        if ($.fn.DataTable.isDataTable('#taskGridTable')) {
+            // Clear and reload with new data if DataTable exists
+            $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
+        } else {
+            // Initialize DataTable if it doesn’t exist
+            $('#taskGridTable').DataTable({
+                data: processedTasks,
+                columns: [
+                    { data: 'EntrySeqID', title: 'Task ID' },
+                    { data: 'Title', title: 'Title' },
+                    { data: 'SoaringType', title: 'Soaring Type' },
+                    { data: 'Duration', title: 'Duration' },
+                    { data: 'Difficulty', title: 'Difficulty' }
+                ],
+                paging: false,           // Disable pagination
+                searching: true,         // Enable search/filter
+                ordering: true,          // Enable sorting
+                info: true,              // Enable info display
+                scrollY: 'calc(100vh - 300px)', // Adjust for your header/footer heights
+                scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
+                scroller: true           // Smooth scrolling
+            });
+        }
     }
 
 }

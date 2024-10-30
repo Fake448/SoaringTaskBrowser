@@ -224,6 +224,8 @@ class TaskBrowserMap {
                 tbm.api_tasks = {};
                 tasks.forEach(api_task => tbm.loadTask(api_task));
 
+                tbm.tb.populateDataTable(tasks);
+
                 // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
                 tbm.tb.setupSearchFiltersPanel();
