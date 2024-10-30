@@ -171,7 +171,7 @@ class TaskBrowserMap {
         // Show the loading spinner
         document.getElementById('loadingSpinner').style.display = 'block';
 
-        'console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
+        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
 
         tbm.clearPolylines();
 
@@ -201,15 +201,15 @@ class TaskBrowserMap {
         });
 
         // Log constructed URL to verify query parameters
-        'console.log("Constructed URL:", url.toString());
+        console.log("Constructed URL:", url.toString());
 
         fetch(url)
             .then(response => response.json())
             .then(data => {
                 const { tasks, totalTasks, oldestDate, newestDate } = data;
 
-                // Process the task data to format necessary fields
-                const processedTasks = tbm.processTaskData(tasks);
+                // Store all fetched tasks locally
+                tbm.allTasks = tasks;
 
                 // Update dates and total tasks from the database
                 tbm.oldestDate = oldestDate.split(' ')[0];
@@ -217,35 +217,13 @@ class TaskBrowserMap {
                 tbm.totalTasksInDB = totalTasks;
 
                 // Set filtering flag
-                tbm.filtering = (tasks.length !== totalTasks);
-                tbm.updateTaskCountControl(tasks.length);
+                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
+                tbm.updateTaskCountControl(tbm.allTasks.length);
 
-                // Clear and load tasks for the map
+                // Clear and load tasks
                 tbm.api_tasks = {};
-                processedTasks.forEach(api_task => tbm.loadTask(api_task));
+                tasks.forEach(api_task => tbm.loadTask(api_task));
 
-                if (tbm.runningInApp) {
-                    // Initialize or update the DataTable with the processed task data
-                    if ($.fn.DataTable.isDataTable('#taskGridTable')) {
-                        $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
-                    } else {
-                        $('#taskGridTable').DataTable({
-                            data: processedTasks,
-                            columns: [
-                                { data: 'EntrySeqID', title: 'Task ID' },
-                                { data: 'Title', title: 'Title' },
-                                { data: 'LastUpdate', title: 'Last Update' },
-                                { data: 'SoaringType', title: 'Soaring Type' },
-                                { data: 'Duration', title: 'Duration' },
-                                { data: 'Difficulty', title: 'Difficulty' }
-                            ],
-                            paging: false,       // Disable pagination
-                            searching: true,     // Enable search/filter
-                            ordering: true,      // Enable sorting
-                            info: true           // Enable info display
-                        });
-                    }
-                }
                 // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
                 tbm.tb.setupSearchFiltersPanel();
@@ -256,43 +234,6 @@ class TaskBrowserMap {
             .finally(() => {
                 document.getElementById('loadingSpinner').style.display = 'none';
             });
-    }
-
-    processTaskData(tasks) {
-        return tasks.map(task => {
-            // Combine soaring types
-            const soaringTypes = [];
-            if (task.SoaringRidge) soaringTypes.push('Ridge');
-            if (task.SoaringThermals) soaringTypes.push('Thermals');
-            if (task.SoaringWaves) soaringTypes.push('Waves');
-            if (task.SoaringDynamic) soaringTypes.push('Dynamic');
-
-            task.SoaringType = soaringTypes.join(', ');
-            if (task.SoaringExtraInfo) {
-                task.SoaringType += ` (${task.SoaringExtraInfo})`;
-            }
-
-            // Format duration
-            if (task.DurationMin && task.DurationMax) {
-                task.Duration = `${task.DurationMin} to ${task.DurationMax} minutes`;
-            } else if (task.DurationMin || task.DurationMax) {
-                task.Duration = `${task.DurationMin || task.DurationMax} minutes`;
-            } else {
-                task.Duration = 'Not specified';
-            }
-
-            // Format difficulty rating
-            if (task.DifficultyRating === "0. None / Custom") {
-                task.Difficulty = task.DifficultyExtraInfo || 'Custom';
-            } else {
-                task.Difficulty = task.DifficultyRating;
-                if (task.DifficultyExtraInfo) {
-                    task.Difficulty += ` (${task.DifficultyExtraInfo})`;
-                }
-            }
-
-            return task;
-        });
     }
 
     filterTasksByMapBounds() {
