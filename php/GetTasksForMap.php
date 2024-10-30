@@ -74,7 +74,34 @@ try {
 
     // Final query with dynamic WHERE clause
     $query = "
-        SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML
+        SELECT 
+            EntrySeqID, 
+            TaskID, 
+            Title, 
+            LatMin, 
+            LatMax, 
+            LongMin, 
+            LongMax, 
+            PLNXML,
+            MainAreaPOI,
+            DepartureName,
+            DepartureICAO,
+            ArrivalName,
+            ArrivaICAO,
+            SoaringRidge,
+            SoaringThermals,
+            SoaringWaves,
+            SoaringDynamic,
+            SoaringExtraInfo,
+            DurationMin,
+            DurationMax,
+            TaskDistance,
+            TotalDistance,
+            RecommendedGliders,
+            DifficultyRating,
+            DifficultyExtraInfo,
+            Credits,
+            Countries
         FROM Tasks
         WHERE " . implode(' AND ', $whereClauses) . "
         ORDER BY LastUpdate DESC

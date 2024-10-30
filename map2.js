@@ -208,8 +208,8 @@ class TaskBrowserMap {
             .then(data => {
                 const { tasks, totalTasks, oldestDate, newestDate } = data;
 
-                // Store all fetched tasks locally
-                tbm.allTasks = tasks;
+                // Process the task data to format necessary fields
+                const processedTasks = tbm.processTaskData(tasks);
 
                 // Update dates and total tasks from the database
                 tbm.oldestDate = oldestDate.split(' ')[0];
@@ -217,12 +217,33 @@ class TaskBrowserMap {
                 tbm.totalTasksInDB = totalTasks;
 
                 // Set filtering flag
-                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
-                tbm.updateTaskCountControl(tbm.allTasks.length);
+                tbm.filtering = (tasks.length !== totalTasks);
+                tbm.updateTaskCountControl(tasks.length);
 
-                // Clear and load tasks
+                // Clear and load tasks for the map
                 tbm.api_tasks = {};
-                tasks.forEach(api_task => tbm.loadTask(api_task));
+                processedTasks.forEach(api_task => tbm.loadTask(api_task));
+
+                // Initialize or update the DataTable with the processed task data
+                if ($.fn.DataTable.isDataTable('#taskGridTable')) {
+                    $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
+                } else {
+                    $('#taskGridTable').DataTable({
+                        data: processedTasks,
+                        columns: [
+                            { data: 'EntrySeqID', title: 'Task ID' },
+                            { data: 'Title', title: 'Title' },
+                            { data: 'LastUpdate', title: 'Last Update' },
+                            { data: 'SoaringType', title: 'Soaring Type' },
+                            { data: 'Duration', title: 'Duration' },
+                            { data: 'Difficulty', title: 'Difficulty' }
+                        ],
+                        paging: false,       // Disable pagination
+                        searching: true,     // Enable search/filter
+                        ordering: true,      // Enable sorting
+                        info: true           // Enable info display
+                    });
+                }
 
                 // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
@@ -234,6 +255,43 @@ class TaskBrowserMap {
             .finally(() => {
                 document.getElementById('loadingSpinner').style.display = 'none';
             });
+    }
+
+    processTaskData(tasks) {
+        return tasks.map(task => {
+            // Combine soaring types
+            const soaringTypes = [];
+            if (task.SoaringRidge) soaringTypes.push('Ridge');
+            if (task.SoaringThermals) soaringTypes.push('Thermals');
+            if (task.SoaringWaves) soaringTypes.push('Waves');
+            if (task.SoaringDynamic) soaringTypes.push('Dynamic');
+
+            task.SoaringType = soaringTypes.join(', ');
+            if (task.SoaringExtraInfo) {
+                task.SoaringType += ` (${task.SoaringExtraInfo})`;
+            }
+
+            // Format duration
+            if (task.DurationMin && task.DurationMax) {
+                task.Duration = `${task.DurationMin} to ${task.DurationMax} minutes`;
+            } else if (task.DurationMin || task.DurationMax) {
+                task.Duration = `${task.DurationMin || task.DurationMax} minutes`;
+            } else {
+                task.Duration = 'Not specified';
+            }
+
+            // Format difficulty rating
+            if (task.DifficultyRating === "0. None / Custom") {
+                task.Difficulty = task.DifficultyExtraInfo || 'Custom';
+            } else {
+                task.Difficulty = task.DifficultyRating;
+                if (task.DifficultyExtraInfo) {
+                    task.Difficulty += ` (${task.DifficultyExtraInfo})`;
+                }
+            }
+
+            return task;
+        });
     }
 
     filterTasksByMapBounds() {
