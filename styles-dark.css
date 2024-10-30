@@ -754,71 +754,72 @@ body {
     height: 50px;
 }
 
+#taskGridOverlay {
+    background-color: #1e1e1e;
+    color: #dcdcdc;
+    padding: 10px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Take full height of the intended overlay space */
+    overflow: hidden; /* Prevent any overflow outside this element */
+}
+
 #taskGridContainer {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    height: 100%; /* Ensure container uses full height */
 }
 
-#taskGridTable_wrapper .dataTables_scrollBody {
-    max-height: calc(100% - 100px); /* Adjust based on header/footer */
-    overflow-y: auto;
+/* DataTable wrapper to take full height of taskGridContainer */
+#taskGridTable_wrapper {
+    display: block;
+    flex-direction: column;
+    height: 100%; /* Full height within container */
+    overflow: hidden;
 }
 
-#taskGridTable {
-    width: 100% !important;
-    table-layout: auto; /* Ensures columns are evenly distributed */
-}
+    /* Scrollable body section for DataTable rows */
+    #taskGridTable_wrapper .dataTables_scroll {
+        height: 88%; /* Full height within container */
+        overflow-y: auto; /* Enable scrolling for rows */
+    }
 
-/* Dark background for the DataTable container */
-#taskGridOverlay {
-    background-color: #1e1e1e; /* Dark gray background for the overlay */
-    color: #dcdcdc; /* Lighter gray text for readability */
-}
+    /* Scrollable body section for DataTable rows */
+    #taskGridTable_wrapper .dataTables_scrollBody {
+        flex-grow: 1; /* Allow this section to grow and fill available space */
+        overflow-y: auto; /* Enable scrolling for rows */
+        max-height: 85% !important;
+    }
 
-/* Styling the DataTable Header */
-#taskGridTable thead th {
-    background-color: #333333; /* Slightly darker than overlay */
-    color: #ffffff; /* White text for headers */
-    padding: 8px; /* Add some padding for readability */
-    border-bottom: 1px solid #444444; /* Subtle border between header and rows */
-}
-
-    /* Highlight the currently sorted column header */
-    #taskGridTable thead th.sorting_asc,
-    #taskGridTable thead th.sorting_desc {
-        background-color: #636262; /* Darker color to highlight sorted header */
-        color: #ffffff; /* White text for better contrast */
-        font-weight: bold; /* Emphasize with bold text */
-        border-bottom: 2px solid #7289da; /* Add a bottom border to make it stand out */
+    #taskGridTable_wrapper .dataTables_info {
+        color: #dcdcdc;
     }
 
 /* Styling DataTable Rows */
 #taskGridTable tbody tr {
-    background-color: #2b2b2ba8; /* Dark background for rows */
-    color: #dcdcdc; /* Lighter text color */
+    background-color: #2b2b2ba8;
+    color: #dcdcdc;
 }
 
-    /* Alternate row color for readability */
     #taskGridTable tbody tr:nth-child(even) {
-        background-color: #252525cf; /* Slightly lighter dark gray */
+        background-color: #252525cf;
     }
 
-    /* Hover effect for rows */
     #taskGridTable tbody tr:hover {
-        background-color: #7289da; /* Medium gray on hover */
+        background-color: #7289da;
     }
 
 /* Style for table text */
 #taskGridTable tbody td {
-    color: #dcdcdc; /* Light gray text color */
-    padding: 8px; /* Ensure padding for table cells */
+    color: #dcdcdc;
+    padding: 8px;
 }
 
     /* Reset background color and text color for sorted column cells to match default row styling */
     #taskGridTable tbody td.sorting_1,
     #taskGridTable tbody td.sorting_2,
     #taskGridTable tbody td.sorting_3 {
-        background-color: inherit !important; /* Use the row's default background */
-        color: inherit !important; /* Use the row's default text color */
+        background-color: inherit !important;
+        color: inherit !important;
     }
