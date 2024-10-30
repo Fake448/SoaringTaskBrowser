@@ -117,9 +117,9 @@ class TaskBrowser {
         const content = `
             <label>Between:</label></br>
             <div style="display: flex; align-items: center;">
-                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="margin-right: 10px;" disabled>
+                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="width: 120px; margin-right: 10px;" disabled>
                 <span>and</span>
-                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="margin-left: 10px;" disabled>
+                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="width: 120px; margin-left: 10px;" disabled>
             </div>
             <div style="margin-top: 10px;">
                 <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
