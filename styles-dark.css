@@ -763,6 +763,7 @@ body {
     flex-direction: column;
     height: 100%; /* Take full height of the intended overlay space */
     overflow: hidden; /* Prevent any overflow outside this element */
+    cursor: default; /* Change to default cursor */
 }
 
 #taskGridContainer {
