@@ -275,7 +275,7 @@ function displayEventsStaticPortion() {
             <h3>Monday</h3>
             <p>-</p>
             <h3>Tuesday</h3>
-            🕤 09:30 UTC: Ausglide Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/1066655140733517844">Event Channel</a></br>
+            🕤 08:30 UTC: Ausglide Tuesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/876123356385149009/1066655140733517844">Event Channel</a></br>
             🕖 19:15 UTC: UKVGA Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042887084048515">Event Channel</a></br>
             <h3>Wednesday</h3>
             🕧 00:30 UTC: Diamonds Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/793376245915189268/1097353400015921252">Event Channel</a></br>
