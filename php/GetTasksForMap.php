@@ -69,6 +69,7 @@ try {
         ORDER BY LastUpdate DESC
         LIMIT :taskCount
     ";
+    logMessage("Query: " . $query);
 
     $stmt = $pdo->prepare($query);
     $stmt->bindValue(':startDate', $params[':startDate']);
