@@ -33,6 +33,16 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
+
+        // Initialize the DataTable
+        $(document).ready(function () {
+            $('#taskGridTable').DataTable({
+                "paging": false,
+                "searching": true,
+                "ordering": true,
+                "info": true
+            });
+        });
     }
 
     // Function to initialize the search and filters panel with default content and events
