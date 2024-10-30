@@ -275,17 +275,17 @@ function displayEventsStaticPortion() {
             <h3>Monday</h3>
             <p>-</p>
             <h3>Tuesday</h3>
-            🕘 09:30 UTC: Ausglide Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/1066655140733517844">Event Channel</a></br>
-            🕕 18:15 UTC: UKVGA Tuesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042887084048515">Event Channel</a></br>
-            🕦 23:30 UTC: Diamonds Tuesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/793376245915189268/1097353400015921252">Event Channel</a></br>
+            🕤 09:30 UTC: Ausglide Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/1066655140733517844">Event Channel</a></br>
+            🕖 19:15 UTC: UKVGA Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042887084048515">Event Channel</a></br>
             <h3>Wednesday</h3>
-            🕔 17:45 UTC: SSC Wednesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/876123356385149009/1128345453063327835">Event Channel</a></br>
+            🕧 00:30 UTC: Diamonds Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/793376245915189268/1097353400015921252">Event Channel</a></br>
+            🕡 18:45 UTC: SSC Wednesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/1128345453063327835">Event Channel</a></br>
             <h3>Thursday</h3>
-            🕕 18:15 UTC: UKVGA Thursday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042920869175357">Event Channel</a></br>
+            🕖 19:15 UTC: UKVGA Thursday <em>(Normal time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042920869175357">Event Channel</a></br>
             <h3>Friday</h3>
             🕘 21:00 UTC: Friday Soaring Club - <a href="discord://discord.com/channels/793376245915189268/1097354088892596234">Event Channel</a></br>
             <h3>Saturday</h3>
-            🕔 17:45 UTC: SSC Saturday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/876123356385149009/987611111509590087">Event Channel</a></br>
+            🕡 18:45 UTC: SSC Saturday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/987611111509590087">Event Channel</a></br>
         </div>
     `, eventsTabGeneralInfo);
 
