@@ -497,6 +497,7 @@ class TaskBrowserMap {
         if (tbm.runningInApp) {
             tbm.postSelectedTask(entrySeqID); // Notify the app
         } else {
+            tbm.tb.selectGridTask(entrySeqID);
             tbm.tb.getTaskDetails(entrySeqID, false); // Display task details on the right panel
         }
     }
@@ -769,12 +770,14 @@ class TaskBrowserMap {
         }
 
         tbm.tb.clearTaskDetails();
+        tbm.tb.deselectGridTask();
 
         // Hide the task control panel
         const taskControlPanel = document.getElementById('taskControlPanel');
         taskControlPanel.style.display = 'none';
 
         tbm.showSelectedOnly();
+
     }
 
     showSelectedOnly() {

@@ -838,3 +838,9 @@ table.dataTable thead .sorting {
         background-color: inherit !important;
         color: inherit !important;
     }
+
+/* Style for the selected row in the DataTable */
+#taskGridTable tbody tr.selected {
+    background-color: #0000ff !important; /* Darker background for the selected row */
+    color: #ffffff; /* White text color for visibility */
+}

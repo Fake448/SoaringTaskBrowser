@@ -1666,8 +1666,61 @@ class TaskBrowser {
         });
     }
 
+    // Function to deselect any selected task in the grid
+    deselectGridTask() {
+        $('#taskGridTable tbody tr').removeClass('selected'); // Remove the "selected" class from any selected row
+    }
+
+    // Function to select a specific task in the grid by EntrySeqID and scroll into view if necessary
+    selectGridTask(entrySeqID) {
+        // First, deselect any currently selected task
+        this.deselectGridTask();
+
+        // Find the row with the matching EntrySeqID
+        const table = $('#taskGridTable').DataTable();
+        let rowFound = false;
+
+        table.rows().every(function () {
+            const rowData = this.data();
+            if (rowData.EntrySeqID === entrySeqID) {
+                const rowNode = $(this.node());
+
+                // Add 'selected' class to the matching row
+                rowNode.addClass('selected');
+
+                // Get the scroll container and row positions
+                const scrollBody = $(table.settings()[0].nScrollBody);
+                const rowOffset = rowNode.offset().top;
+                const scrollBodyOffset = scrollBody.offset().top;
+
+                const rowTop = rowOffset - scrollBodyOffset + scrollBody.scrollTop(); // Row’s position relative to the scroll container
+                const rowBottom = rowTop + rowNode.outerHeight();
+                const scrollTop = scrollBody.scrollTop();
+                const scrollBottom = scrollTop + scrollBody.innerHeight();
+
+                // Scroll if the row is outside the visible area
+                if (rowTop < scrollTop) {
+                    // Scroll up to the top of the row
+                    scrollBody.scrollTop(rowTop);
+                } else if (rowBottom > scrollBottom) {
+                    // Scroll down to bring the bottom of the row into view
+                    scrollBody.scrollTop(rowBottom - scrollBody.innerHeight());
+                }
+
+                rowFound = true;
+                return false; // Stop searching after finding the match
+            }
+        });
+
+        // Optionally log if the row was found (for debugging)
+        if (!rowFound) {
+            console.warn(`EntrySeqID ${entrySeqID} not found in grid.`);
+        }
+    }
+
     populateDataTable(tasks) {
-        const processedTasks = this.processTasks(tasks); // Process tasks as needed
+        let tb = this;
+        const processedTasks = tb.processTasks(tasks); // Process tasks as needed
 
         // Check if the DataTable is already initialized
         if ($.fn.DataTable.isDataTable('#taskGridTable')) {
@@ -1675,7 +1728,7 @@ class TaskBrowser {
             $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
         } else {
             // Initialize DataTable if it doesn’t exist
-            $('#taskGridTable').DataTable({
+            const table = $('#taskGridTable').DataTable({
                 data: processedTasks,
                 columns: [
                     { data: 'EntrySeqID', title: 'ID', name: 'EntrySeqID' },
@@ -1693,7 +1746,32 @@ class TaskBrowser {
                 scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
                 scroller: true           // Smooth scrolling
             });
+
+            // Add click, mouseover, and mouseout events to each row in the DataTable
+            $('#taskGridTable tbody').on('click', 'tr', function () {
+                const rowData = table.row(this).data();
+                if (rowData && rowData.EntrySeqID) {
+                    // Remove "selected" class from any other row
+                    tb.deselectGridTask(); // Clear any selection before refreshing data
+
+                    // Call the map function to select the task from the DataTable click
+                    tb.tbm.selectTaskFromClick(rowData.EntrySeqID, false);
+
+                    // Add "selected" class to the clicked row
+                    $(this).addClass('selected');
+
+                }
+            }).on('mouseover', 'tr', function () {
+                const rowData = table.row(this).data();
+                if (rowData && rowData.EntrySeqID) {
+                    tb.tbm.highlightTask(tb.tbm, rowData.EntrySeqID);
+                }
+            }).on('mouseout', 'tr', function () {
+                const rowData = table.row(this).data();
+                if (rowData && rowData.EntrySeqID) {
+                    tb.tbm.unhighlightTask(tb.tbm, rowData.EntrySeqID);
+                }
+            });
         }
     }
-
 }
