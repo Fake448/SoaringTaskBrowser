@@ -1678,7 +1678,7 @@ class TaskBrowser {
             $('#taskGridTable').DataTable({
                 data: processedTasks,
                 columns: [
-                    { data: 'EntrySeqID', title: 'Task ID', name: 'EntrySeqID' },
+                    { data: 'EntrySeqID', title: 'ID', name: 'EntrySeqID' },
                     { data: 'Title', title: 'Title', name: 'Title' },
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
