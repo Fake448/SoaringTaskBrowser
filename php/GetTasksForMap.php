@@ -87,7 +87,7 @@ try {
             DepartureName,
             DepartureICAO,
             ArrivalName,
-            ArrivaICAO,
+            ArrivalICAO,
             SoaringRidge,
             SoaringThermals,
             SoaringWaves,
