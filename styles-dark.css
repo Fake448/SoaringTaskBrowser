@@ -62,7 +62,7 @@ body {
 .tabContent {
     display: none;
     flex-grow: 1;
-    padding: 6px;
+    padding: 5px;
     overflow-y: auto;
     background-color: #23272a;
     border: 1px solid #99aab5;
