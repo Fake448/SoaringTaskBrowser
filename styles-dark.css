@@ -754,7 +754,71 @@ body {
     height: 50px;
 }
 
+#taskGridContainer {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+#taskGridTable_wrapper .dataTables_scrollBody {
+    max-height: calc(100% - 100px); /* Adjust based on header/footer */
+    overflow-y: auto;
+}
+
 #taskGridTable {
     width: 100% !important;
-    table-layout: fixed; /* Ensures columns are evenly distributed */
+    table-layout: auto; /* Ensures columns are evenly distributed */
 }
+
+/* Dark background for the DataTable container */
+#taskGridOverlay {
+    background-color: #1e1e1e; /* Dark gray background for the overlay */
+    color: #dcdcdc; /* Lighter gray text for readability */
+}
+
+/* Styling the DataTable Header */
+#taskGridTable thead th {
+    background-color: #333333; /* Slightly darker than overlay */
+    color: #ffffff; /* White text for headers */
+    padding: 8px; /* Add some padding for readability */
+    border-bottom: 1px solid #444444; /* Subtle border between header and rows */
+}
+
+    /* Highlight the currently sorted column header */
+    #taskGridTable thead th.sorting_asc,
+    #taskGridTable thead th.sorting_desc {
+        background-color: #636262; /* Darker color to highlight sorted header */
+        color: #ffffff; /* White text for better contrast */
+        font-weight: bold; /* Emphasize with bold text */
+        border-bottom: 2px solid #7289da; /* Add a bottom border to make it stand out */
+    }
+
+/* Styling DataTable Rows */
+#taskGridTable tbody tr {
+    background-color: #2b2b2ba8; /* Dark background for rows */
+    color: #dcdcdc; /* Lighter text color */
+}
+
+    /* Alternate row color for readability */
+    #taskGridTable tbody tr:nth-child(even) {
+        background-color: #252525cf; /* Slightly lighter dark gray */
+    }
+
+    /* Hover effect for rows */
+    #taskGridTable tbody tr:hover {
+        background-color: #7289da; /* Medium gray on hover */
+    }
+
+/* Style for table text */
+#taskGridTable tbody td {
+    color: #dcdcdc; /* Light gray text color */
+    padding: 8px; /* Ensure padding for table cells */
+}
+
+    /* Reset background color and text color for sorted column cells to match default row styling */
+    #taskGridTable tbody td.sorting_1,
+    #taskGridTable tbody td.sorting_2,
+    #taskGridTable tbody td.sorting_3 {
+        background-color: inherit !important; /* Use the row's default background */
+        color: inherit !important; /* Use the row's default text color */
+    }

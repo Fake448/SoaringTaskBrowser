@@ -34,15 +34,6 @@ class TaskBrowser {
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
 
-        // Initialize the DataTable
-        $(document).ready(function () {
-            $('#taskGridTable').DataTable({
-                "paging": false,
-                "searching": true,
-                "ordering": true,
-                "info": true
-            });
-        });
     }
 
     // Function to initialize the search and filters panel with default content and events
@@ -1596,10 +1587,40 @@ class TaskBrowser {
     }
 
     toggleTableVisibility() {
+        let tb = this;
         const taskGridOverlay = document.getElementById("taskGridOverlay");
+
         if (taskGridOverlay.style.display === "none" || !taskGridOverlay.style.display) {
             // Show overlay
             taskGridOverlay.style.display = "flex";
+
+            // Process tasks if not already done (assuming tbm.allTasks holds the fetched tasks)
+            const processedTasks = tb.processTasks(tb.tbm.allTasks);
+
+            // Initialize or update the DataTable with the processed task data
+            if ($.fn.DataTable.isDataTable('#taskGridTable')) {
+                // If DataTable already exists, clear and reload with new data
+                $('#taskGridTable').DataTable().clear().rows.add(processedTasks).draw();
+            } else {
+                // Initialize DataTable
+                $('#taskGridTable').DataTable({
+                    data: processedTasks,
+                    columns: [
+                        { data: 'EntrySeqID', title: 'Task ID' },
+                        { data: 'Title', title: 'Title' },
+                        { data: 'SoaringType', title: 'Soaring Type' },
+                        { data: 'Duration', title: 'Duration' },
+                        { data: 'Difficulty', title: 'Difficulty' }
+                    ],
+                    paging: false,           // Disable pagination
+                    searching: true,         // Enable search/filter
+                    ordering: true,          // Enable sorting
+                    info: true,              // Enable info display
+                    scrollY: 'calc(100vh - 300px)',  // Adjust for your header/footer heights
+                    scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
+                    scroller: true           // Smooth scrolling
+                });
+            }
 
             // Add scroll prevention to keep the map from zooming when scrolling over the overlay
             taskGridOverlay.addEventListener("wheel", function (event) {
@@ -1615,4 +1636,41 @@ class TaskBrowser {
             });
         }
     }
+
+    processTasks(tasks) {
+        return tasks.map(task => {
+            // Combine soaring types
+            const soaringTypes = [];
+            if (task.SoaringRidge) soaringTypes.push('Ridge');
+            if (task.SoaringThermals) soaringTypes.push('Thermals');
+            if (task.SoaringWaves) soaringTypes.push('Waves');
+            if (task.SoaringDynamic) soaringTypes.push('Dynamic');
+            task.SoaringType = soaringTypes.join(', ');
+            if (task.SoaringExtraInfo) {
+                task.SoaringType += ` (${task.SoaringExtraInfo})`;
+            }
+
+            // Format duration
+            if (task.DurationMin && task.DurationMax) {
+                task.Duration = `${task.DurationMin} to ${task.DurationMax} minutes`;
+            } else if (task.DurationMin || task.DurationMax) {
+                task.Duration = `${task.DurationMin || task.DurationMax} minutes`;
+            } else {
+                task.Duration = 'Not specified';
+            }
+
+            // Format difficulty rating
+            if (task.DifficultyRating === "0. None / Custom") {
+                task.Difficulty = task.DifficultyExtraInfo || 'Custom';
+            } else {
+                task.Difficulty = task.DifficultyRating;
+                if (task.DifficultyExtraInfo) {
+                    task.Difficulty += ` (${task.DifficultyExtraInfo})`;
+                }
+            }
+
+            return task;
+        });
+    }
+
 }
