@@ -69,6 +69,20 @@
                                 <img src="images/XClose.png" alt="Deselect current task">
                             </button>
                         </div>
+                        <!-- Task Grid Overlay Container (inserted here for overlay effect) -->
+                        <div id="taskGridOverlay" style="position: absolute; top: 50px; right: 0; width: 30%; height: 50%; overflow-y: auto; background-color: rgba(255, 255, 255, 0.9); display: none; z-index: 1000;">
+                            <table id="taskGridTable" class="display" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Task ID</th>
+                                        <th>Title</th>
+                                        <th>Last Update</th>
+                                        <th>Soaring Type</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
                     </div>
                     <div id="resizer"></div>
                     <div id="taskDetailContainer" style="display:none"></div>
