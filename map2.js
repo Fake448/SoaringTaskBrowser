@@ -16,6 +16,15 @@ class TaskBrowserMap {
         // Default values for taskCount, startDate, and endDate
         tbm.startDate = '2000-01-01'; // example default minimum date
         tbm.endDate = '2200-01-01'; // max date
+        // Default values for soaring types (all selected)
+        tbm.soaringTypes = {
+            soaringRidge: true,
+            soaringThermals: true,
+            soaringWaves: true,
+            soaringDynamic: true
+        };
+        // Default filter type for soaring types (e.g., "any" for OR filtering)
+        tbm.soaringTypeFilter = 'any';
 
         // B21 update, these are used by B21_Task / B21_WP
         tbm.settings = {
@@ -162,7 +171,7 @@ class TaskBrowserMap {
         // Show the loading spinner
         document.getElementById('loadingSpinner').style.display = 'block';
 
-        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate);
+        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
 
         tbm.clearPolylines();
 
@@ -172,6 +181,14 @@ class TaskBrowserMap {
         url.searchParams.append('startDate', tbm.startDate);
         url.searchParams.append('endDate', tbm.endDate);
 
+        // Add soaring type filter type (any, all, only, exclude)
+        url.searchParams.append('soaringTypeFilter', tbm.soaringTypeFilter);
+
+        // Add each soaring type as a parameter based on user selection
+        Object.entries(tbm.soaringTypes).forEach(([type, isSelected]) => {
+            url.searchParams.append(type.toLowerCase(), isSelected ? '1' : '0');
+        });
+
         fetch(url)
             .then(response => response.json())
             .then(data => {
@@ -180,15 +197,20 @@ class TaskBrowserMap {
                 // Store all fetched tasks locally
                 tbm.allTasks = tasks;
 
+                // Update dates and total tasks from the database
                 tbm.oldestDate = oldestDate.split(' ')[0];
                 tbm.newestDate = newestDate.split(' ')[0];
                 tbm.totalTasksInDB = totalTasks;
 
+                // Set filtering flag
                 tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
                 tbm.updateTaskCountControl(tbm.allTasks.length);
 
+                // Clear and load tasks
                 tbm.api_tasks = {};
                 tasks.forEach(api_task => tbm.loadTask(api_task));
+
+                // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
                 tbm.tb.setupSearchFiltersPanel();
             })

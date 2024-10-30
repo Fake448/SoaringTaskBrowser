@@ -41,11 +41,9 @@ class TaskBrowser {
         if (!tb.searchPanelAlreadySetup) {
             const searchFiltersContainer = document.getElementById('searchAndFilters');
             tb.addPanelTitle(searchFiltersContainer);
-            tb.addHorizontalLine(searchFiltersContainer);
             tb.addTaskCountControls(searchFiltersContainer);
-            tb.addHorizontalLine(searchFiltersContainer);
             tb.addDateRangePicker(searchFiltersContainer);
-            tb.addHorizontalLine(searchFiltersContainer);
+            tb.addSoaringTypeFilter(searchFiltersContainer);
             tb.addApplyButton(searchFiltersContainer);
             tb.searchPanelAlreadySetup = true;
         }
@@ -56,50 +54,40 @@ class TaskBrowser {
         const hr = document.createElement('hr');
         hr.style.marginTop = '5px';
         hr.style.marginBottom = '5px';
-        hr.style.marginRight = '5px';
         container.appendChild(hr);
     }
 
     // Function to add panel title
     addPanelTitle(container) {
         container.innerHTML += `
-            <p style="text-align: center; font-weight: bold; margin-top: 20px;">Search and Filter Tasks</p>
+            <p style="text-align: center; font-weight: bold; margin-top: 10px; margin-bottom: 10px;">Search and Filter Tasks</p>
         `;
     }
 
-    // Function to add task count slider and input controls
+    // Function to add task count slider and input controls as a collapsible section
     addTaskCountControls(container) {
         let tb = this;
 
-        // Task count label and "Max" button
-        const taskCountLabelContainer = document.createElement('div');
-        taskCountLabelContainer.style.display = 'flex';
-        taskCountLabelContainer.style.alignItems = 'center';
-        taskCountLabelContainer.style.justifyContent = 'space-between';
-        taskCountLabelContainer.style.marginBottom = '5px';
-
-        taskCountLabelContainer.innerHTML = `
-            <label>Max Tasks to Fetch:</label>
-            <button id="maxButton" class="button-style" style="font-size: 12px; padding: 2px 6px; margin-right: 5px;">Max</button>
+        // HTML content for Task Count Controls
+        const content = `
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <label>Max Tasks to Fetch:</label>
+                <button id="maxButton" class="button-style" style="font-size: 12px; padding: 2px 6px;">Max</button>
+            </div>
+            <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="flex: 1; margin-right: 10px;">
+                <input type="number" id="taskCountInput" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="width: 60px; text-align: right;">
+            </div>
         `;
-        container.appendChild(taskCountLabelContainer);
 
-        // Slider and input
-        const sliderContainer = document.createElement('div');
-        sliderContainer.style.display = 'flex';
-        sliderContainer.style.alignItems = 'center';
-        sliderContainer.style.marginBottom = '20px';
+        // Generate the collapsible section with the Task Count Controls content
+        tb.generateCollapsibleSection("Max Tasks", content, container, "maxTasksSection");
+        tb.expandCollapsibleSection('maxTasksSection');
 
-        sliderContainer.innerHTML = `
-            <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="flex: 1; margin-right: 10px;">
-            <input type="number" id="taskCountInput" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="width: 60px; margin-right: 5px; text-align: right;">
-        `;
-        container.appendChild(sliderContainer);
-
-        // Elements
-        const maxButton = taskCountLabelContainer.querySelector('#maxButton');
-        const taskCountSlider = sliderContainer.querySelector('#taskCountSlider');
-        const taskCountInput = sliderContainer.querySelector('#taskCountInput');
+        // After generating the collapsible section, add event listeners for slider, input, and Max button
+        const maxButton = container.querySelector('#maxButton');
+        const taskCountSlider = container.querySelector('#taskCountSlider');
+        const taskCountInput = container.querySelector('#taskCountInput');
 
         // Set max value on Max button click
         maxButton.addEventListener('click', () => {
@@ -121,43 +109,38 @@ class TaskBrowser {
         });
     }
 
-    // Function to add date range picker with quick select dropdown
+    // Function to add date range picker with quick select dropdown as a collapsible section
     addDateRangePicker(container) {
         let tb = this;
 
-        const dateRangeContainer = document.createElement('div');
-        dateRangeContainer.style.marginBottom = '10px';
-        dateRangeContainer.innerHTML = `
-            <label>Last updated between:</label></br>
+        // HTML content for the Date Range Picker
+        const content = `
+            <label>Between:</label></br>
             <div style="display: flex; align-items: center;">
                 <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="margin-right: 10px;" disabled>
                 <span>and</span>
                 <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="margin-left: 10px;" disabled>
             </div>
+            <div style="margin-top: 10px;">
+                <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
+                    <option value="any">Any date (all)</option>
+                    <option value="custom">Custom dates</option>
+                    <option value="2weeks">Last 2 weeks</option>
+                    <option value="1month">Last month</option>
+                    <option value="3months">Last 3 months</option>
+                    <option value="6months">Last 6 months</option>
+                    <option value="1year">Last year</option>
+                </select>
+            </div>
         `;
-        container.appendChild(dateRangeContainer);
 
-        // Date range quick select dropdown
-        const dateRangeDropdownContainer = document.createElement('div');
-        dateRangeDropdownContainer.style.marginBottom = '20px';
-        dateRangeDropdownContainer.style.marginRight = '5px';
-        dateRangeDropdownContainer.innerHTML = `
-            <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
-                <option value="any">Any date (all)</option>
-                <option value="custom">Custom dates</option>
-                <option value="2weeks">Last 2 weeks</option>
-                <option value="1month">Last month</option>
-                <option value="3months">Last 3 months</option>
-                <option value="6months">Last 6 months</option>
-                <option value="1year">Last year</option>
-            </select>
-        `;
-        container.appendChild(dateRangeDropdownContainer);
+        // Generate the collapsible section with the Date Range Picker content
+        tb.generateCollapsibleSection("Last Update", content, container);
 
-        // Elements
-        const startDateInput = dateRangeContainer.querySelector('#startDate');
-        const endDateInput = dateRangeContainer.querySelector('#endDate');
-        const dateRangeSelect = dateRangeDropdownContainer.querySelector('#dateRangeSelect');
+        // After generating the collapsible section, add event listeners to handle dropdown selection logic
+        const startDateInput = container.querySelector('#startDate');
+        const endDateInput = container.querySelector('#endDate');
+        const dateRangeSelect = container.querySelector('#dateRangeSelect');
 
         // Adjust dates based on quick select dropdown
         dateRangeSelect.addEventListener('change', (event) => {
@@ -217,6 +200,43 @@ class TaskBrowser {
         });
     }
 
+    // Function to add soaring type filters using generateCollapsibleSection
+    addSoaringTypeFilter(container) {
+        let tb = this;
+        const content = `
+            <div style="display: flex; flex-direction: column; margin-top: 5px;">
+                <div>
+                    <input type="checkbox" id="soaringRidge" name="soaringType" value="Ridge" checked>
+                    <label for="soaringRidge">Ridge</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="soaringThermals" name="soaringType" value="Thermals" checked>
+                    <label for="soaringThermals">Thermals</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="soaringWaves" name="soaringType" value="Waves" checked>
+                    <label for="soaringWaves">Waves</label>
+                </div>
+                <div>
+                    <input type="checkbox" id="soaringDynamic" name="soaringType" value="Dynamic" checked>
+                    <label for="soaringDynamic">Dynamic</label>
+                </div>
+            </div>
+            <div style="margin-top: 10px;">
+                <label for="soaringTypeFilter">Filter Type:</label>
+                <select id="soaringTypeFilter" style="width: 100%; margin-top: 5px;">
+                    <option value="any">Any selected (OR)</option>
+                    <option value="all">All selected (AND)</option>
+                    <option value="only">Only selected</option>
+                    <option value="exclude">Exclude selected</option>
+                </select>
+            </div>
+        `;
+
+        // Call generateCollapsibleSection to create the collapsible section
+        tb.generateCollapsibleSection("Soaring Type", content, container);
+    }
+
     // Function to add apply button
     addApplyButton(container) {
         let tb = this;
@@ -236,19 +256,33 @@ class TaskBrowser {
 
     // Function to apply filters based on selected options
     applyFilters() {
+        let tb = this;
         const taskCount = document.getElementById('taskCountInput').value;
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
 
-        console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}`);
+        // Gather soaring type filter selections
+        const soaringTypes = {
+            Ridge: document.getElementById('soaringRidge').checked,
+            Thermals: document.getElementById('soaringThermals').checked,
+            Waves: document.getElementById('soaringWaves').checked,
+            Dynamic: document.getElementById('soaringDynamic').checked
+        };
+
+        // Get the filter type (any, all, only, exclude)
+        const soaringTypeFilter = document.getElementById('soaringTypeFilter').value;
+
+        console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}, Soaring Types = ${JSON.stringify(soaringTypes)}, Filter Type = ${soaringTypeFilter}`);
 
         // Update the TBM instance variables
-        this.tbm.taskCount = taskCount;
-        this.tbm.startDate = startDate;
-        this.tbm.endDate = endDate;
+        tb.tbm.taskCount = taskCount;
+        tb.tbm.startDate = startDate;
+        tb.tbm.endDate = endDate;
+        tb.tbm.soaringTypes = soaringTypes;
+        tb.tbm.soaringTypeFilter = soaringTypeFilter;
 
         // Call fetchTasks with updated filters
-        this.tbm.fetchTasks();
+        tb.tbm.fetchTasks();
     }
 
     initCountryCodes() {
@@ -1051,6 +1085,13 @@ class TaskBrowser {
     handleKeyDown(event) {
         if (event.key === 'Escape') {
             TB.closeImageModal();
+        }
+    }
+
+    expandCollapsibleSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (section && section.classList.contains('collapsible')) {
+            section.classList.remove('collapsed');
         }
     }
 
