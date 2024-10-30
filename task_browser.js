@@ -1584,4 +1584,25 @@ class TaskBrowser {
             tb.hideSearchFiltersPanel();
         }
     }
+
+    toggleTableVisibility() {
+        const taskGridOverlay = document.getElementById("taskGridOverlay");
+        if (taskGridOverlay.style.display === "none" || !taskGridOverlay.style.display) {
+            // Show overlay
+            taskGridOverlay.style.display = "flex";
+
+            // Add scroll prevention to keep the map from zooming when scrolling over the overlay
+            taskGridOverlay.addEventListener("wheel", function (event) {
+                event.stopPropagation();
+            }, { passive: false });
+        } else {
+            // Hide overlay
+            taskGridOverlay.style.display = "none";
+
+            // Remove the event listener if you want to ensure it’s only active when overlay is visible
+            taskGridOverlay.removeEventListener("wheel", function (event) {
+                event.stopPropagation();
+            });
+        }
+    }
 }
