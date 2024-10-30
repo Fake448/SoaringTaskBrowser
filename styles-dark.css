@@ -779,22 +779,36 @@ body {
     overflow: hidden;
 }
 
-    /* Scrollable body section for DataTable rows */
-    #taskGridTable_wrapper .dataTables_scroll {
-        height: 88%; /* Full height within container */
-        overflow-y: auto; /* Enable scrolling for rows */
-    }
+#taskGridOverlay .dataTables_scrollHeadInner {
+    display: flex !important;
+    width: 100% !important;
+    height: 45px;
+    background-color: #000000c7;
+    border-bottom: 1px solid #dddddd;
+}
 
-    /* Scrollable body section for DataTable rows */
-    #taskGridTable_wrapper .dataTables_scrollBody {
-        flex-grow: 1; /* Allow this section to grow and fill available space */
-        overflow-y: auto; /* Enable scrolling for rows */
-        max-height: 85% !important;
-    }
+/* Scrollable body section for DataTable rows */
+#taskGridTable_wrapper .dataTables_scroll {
+    height: 88%; /* Full height within container */
+    overflow-y: auto; /* Enable scrolling for rows */
+}
 
-    #taskGridTable_wrapper .dataTables_info {
-        color: #dcdcdc;
-    }
+/* Scrollable body section for DataTable rows */
+#taskGridTable_wrapper .dataTables_scrollBody {
+    flex-grow: 1; /* Allow this section to grow and fill available space */
+    overflow-y: auto; /* Enable scrolling for rows */
+    max-height: 88% !important;
+}
+
+#taskGridTable_wrapper .dataTables_info {
+    color: #dcdcdc;
+}
+
+table.dataTable thead .sorting {
+    color: #d2d2d2;
+    padding: 4px;
+    text-align: left;
+}
 
 /* Styling DataTable Rows */
 #taskGridTable tbody tr {
