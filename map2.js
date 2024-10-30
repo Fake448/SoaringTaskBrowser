@@ -171,7 +171,7 @@ class TaskBrowserMap {
         // Show the loading spinner
         document.getElementById('loadingSpinner').style.display = 'block';
 
-        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
+        'console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
 
         tbm.clearPolylines();
 
@@ -184,10 +184,24 @@ class TaskBrowserMap {
         // Add soaring type filter type (any, all, only, exclude)
         url.searchParams.append('soaringTypeFilter', tbm.soaringTypeFilter);
 
+        // Map soaring type names to expected PHP parameter names
+        const soaringTypeKeys = {
+            Ridge: 'soaringRidge',
+            Thermals: 'soaringThermals',
+            Waves: 'soaringWaves',
+            Dynamic: 'soaringDynamic'
+        };
+
         // Add each soaring type as a parameter based on user selection
         Object.entries(tbm.soaringTypes).forEach(([type, isSelected]) => {
-            url.searchParams.append(type.toLowerCase(), isSelected ? '1' : '0');
+            const key = soaringTypeKeys[type];
+            if (key) {
+                url.searchParams.append(key, isSelected ? '1' : '0');
+            }
         });
+
+        // Log constructed URL to verify query parameters
+        'console.log("Constructed URL:", url.toString());
 
         fetch(url)
             .then(response => response.json())

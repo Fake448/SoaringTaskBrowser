@@ -21,7 +21,7 @@ try {
     $soaringTypeFilter = $_GET['soaringTypeFilter'] ?? 'any';
 
     // Log the received parameters
-    logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
+    //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
 
     // Determine if all types are selected with "any" filter
     $allTypesSelected = array_reduce($soaringTypes, fn($carry, $value) => $carry && $value, true);
@@ -61,7 +61,7 @@ try {
     }
 
     // Log the generated soaring conditions
-    logMessage("Generated Soaring Conditions: " . json_encode($soaringConditions));
+    //logMessage("Generated Soaring Conditions: " . json_encode($soaringConditions));
 
     // Append soaring type conditions to WHERE clause if they are defined
     if (!empty($soaringConditions)) {
@@ -82,7 +82,7 @@ try {
     ";
 
     // Log the final query to inspect the generated SQL
-    logMessage("Final Query: " . $query);
+    //logMessage("Final Query: " . $query);
 
     $stmt = $pdo->prepare($query);
     $stmt->bindValue(':startDate', $params[':startDate']);
