@@ -1596,7 +1596,7 @@ class TaskBrowser {
 
             // Populate the DataTable with current tasks
             tb.populateDataTable(tb.tbm.allTasks);
-            $('#taskGridTable').DataTable().column('Duration:name').order('desc').draw();
+            $('#taskGridTable').DataTable().column('Updated:name').order('desc').draw();
 
             // Disable map interactions only when hovering over the overlay
             taskGridOverlay.addEventListener("mouseenter", () => {
@@ -1683,7 +1683,7 @@ class TaskBrowser {
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
                     { data: 'Difficulty', title: 'Difficulty', name: 'Difficulty' },
-                    { data: 'Updated', title: 'LastUpdate', name: 'Updated' }
+                    { data: 'LastUpdate', title: 'Updated', name: 'Updated' }
                 ],
                 paging: false,           // Disable pagination
                 searching: true,         // Enable search/filter
