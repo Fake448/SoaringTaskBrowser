@@ -101,7 +101,8 @@ try {
             DifficultyRating,
             DifficultyExtraInfo,
             Credits,
-            Countries
+            Countries,
+            LastUpdate
         FROM Tasks
         WHERE " . implode(' AND ', $whereClauses) . "
         ORDER BY LastUpdate DESC

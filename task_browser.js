@@ -1587,6 +1587,7 @@ class TaskBrowser {
     }
 
     toggleTableVisibility() {
+        let tb = this;
         const taskGridOverlay = document.getElementById("taskGridOverlay");
 
         if (taskGridOverlay.style.display === "none" || !taskGridOverlay.style.display) {
@@ -1594,7 +1595,20 @@ class TaskBrowser {
             taskGridOverlay.style.display = "flex";
 
             // Populate the DataTable with current tasks
-            this.populateDataTable(this.tbm.allTasks);
+            tb.populateDataTable(tb.tbm.allTasks);
+
+            // Disable map interactions only when hovering over the overlay
+            taskGridOverlay.addEventListener("mouseenter", () => {
+                tb.tbm.map.dragging.disable();  // Disable drag
+                tb.tbm.map.scrollWheelZoom.disable();  // Disable scroll zoom
+                tb.tbm.map.doubleClickZoom.disable();  // Optionally disable double-click zoom
+            });
+
+            taskGridOverlay.addEventListener("mouseleave", () => {
+                tb.tbm.map.dragging.enable();  // Re-enable drag
+                tb.tbm.map.scrollWheelZoom.enable();  // Re-enable scroll zoom
+                tb.tbm.map.doubleClickZoom.enable();  // Re-enable double-click zoom
+            });
 
             // Add scroll prevention to keep the map from zooming when scrolling over the overlay
             taskGridOverlay.addEventListener("wheel", function (event) {
@@ -1604,7 +1618,11 @@ class TaskBrowser {
             // Hide overlay
             taskGridOverlay.style.display = "none";
 
-            // Remove the event listener to stop scroll prevention when overlay is hidden
+            // Remove event listeners related to map interaction control
+            taskGridOverlay.removeEventListener("mouseenter", tb.disableMapInteractions);
+            taskGridOverlay.removeEventListener("mouseleave", tb.enableMapInteractions);
+
+            // Remove scroll prevention event listener
             taskGridOverlay.removeEventListener("wheel", function (event) {
                 event.stopPropagation();
             });
@@ -1663,7 +1681,8 @@ class TaskBrowser {
                     { data: 'Title', title: 'Title' },
                     { data: 'SoaringType', title: 'Soaring Type' },
                     { data: 'Duration', title: 'Duration' },
-                    { data: 'Difficulty', title: 'Difficulty' }
+                    { data: 'Difficulty', title: 'Difficulty' },
+                    { data: 'Updated', title: 'LastUpdate' }
                 ],
                 paging: false,           // Disable pagination
                 searching: true,         // Enable search/filter
