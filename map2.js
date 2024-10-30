@@ -229,6 +229,7 @@ class TaskBrowserMap {
                 // Apply map bounds filtering and update UI
                 tbm.filterTasksByMapBounds();
                 tbm.tb.setupSearchFiltersPanel();
+                tbm.tb.sortTasksGrid("Updated", "desc");
             })
             .catch(error => {
                 console.error('Error fetching tasks:', error);

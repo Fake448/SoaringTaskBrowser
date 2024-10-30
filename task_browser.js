@@ -284,6 +284,11 @@ class TaskBrowser {
 
         // Call fetchTasks with updated filters
         tb.tbm.fetchTasks();
+
+    }
+
+    sortTasksGrid(columnName, direction) {
+        $('#taskGridTable').DataTable().column(`${columnName}:name`).order(direction).draw();
     }
 
     initCountryCodes() {
@@ -1596,7 +1601,11 @@ class TaskBrowser {
 
             // Populate the DataTable with current tasks
             tb.populateDataTable(tb.tbm.allTasks);
-            $('#taskGridTable').DataTable().column('Updated:name').order('desc').draw();
+
+            // Reselect the current task if one is selected
+            if (tb.tbm.currentEntrySeqID) {
+                tb.selectGridTask(tb.tbm.currentEntrySeqID);
+            }
 
             // Disable map interactions only when hovering over the overlay
             taskGridOverlay.addEventListener("mouseenter", () => {
