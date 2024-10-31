@@ -425,7 +425,7 @@ body {
     position: absolute;
     width: 400px;
     height: 400px;
-    z-index: 1000;
+    z-index: 999;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -464,7 +464,7 @@ body {
     left: 50px;
     width: 35px;
     height: 35px;
-    z-index: 1000;
+    z-index: 1200;
     color: white;
     border: none;
     padding: 5px 5px;
@@ -491,7 +491,7 @@ body {
     left: 90px;
     width: 35px;
     height: 35px;
-    z-index: 1000;
+    z-index: 1200;
     color: white;
     border: none;
     padding: 5px 5px;
@@ -518,7 +518,7 @@ body {
     left: 130px;
     width: 35px;
     height: 35px;
-    z-index: 1000;
+    z-index: 1200;
     color: white;
     border: none;
     padding: 5px 5px;
@@ -543,7 +543,7 @@ body {
     border-radius: 5px;
     padding: 5px;
     display: none; /* Initially hidden */
-    z-index: 1000; /* Ensure it appears above map layers */
+    z-index: 1200; /* Ensure it appears above map layers */
 }
 
     #taskControlPanel button {

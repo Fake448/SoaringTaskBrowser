@@ -1745,7 +1745,24 @@ class TaskBrowser {
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
                     { data: 'Difficulty', title: 'Difficulty', name: 'Difficulty' },
-                    { data: 'LastUpdate', title: 'Updated', name: 'Updated' }
+                    {
+                        data: 'LastUpdate',
+                        title: 'Updated',
+                        name: 'Updated',
+                        render: function (data, type, row) {
+                            if (data) {
+                                const date = new Date(data);
+                                if (!isNaN(date.getTime())) {
+                                    // Format date as yyyy-MM-dd HH:mm
+                                    const formattedDate = date.toISOString().slice(0, 16).replace('T', ' ');
+                                    return type === 'display' || type === 'filter' ? formattedDate : date.getTime();
+                                }
+                            }
+                            return type === 'display' ? 'N/A' : 0; // Fallback if data is missing or invalid
+                        },
+                        // Set ordering to use the original date for accurate sorting
+                        type: 'num' // Ensures sorting by underlying timestamp value
+                    }
                 ],
                 paging: false,           // Disable pagination
                 searching: true,         // Enable search/filter
@@ -1768,7 +1785,6 @@ class TaskBrowser {
 
                     // Add "selected" class to the clicked row
                     $(this).addClass('selected');
-
                 }
             }).on('mouseover', 'tr', function () {
                 const rowData = table.row(this).data();

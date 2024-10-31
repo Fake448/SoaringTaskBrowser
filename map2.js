@@ -347,13 +347,16 @@ class TaskBrowserMap {
         if (tbm.currentEntrySeqID !== entrySeqID) {
             tbm.api_tasks[entrySeqID].polyline.setStyle({ color: '#9900cc', weight: tbm.hoverWeight });
 
-            // Calculate the offset position for the popup
-            const offset = L.point(10, -10); // Adjust these values as needed
-            const popupPosition = tbm.map.layerPointToLatLng(tbm.map.latLngToLayerPoint(event.latlng).add(offset));
+            // Only show popup if event is provided (i.e., when hovering directly on the map)
+            if (event) {
+                // Calculate the offset position for the popup
+                const offset = L.point(10, -10); // Adjust these values as needed
+                const popupPosition = tbm.map.layerPointToLatLng(tbm.map.latLngToLayerPoint(event.latlng).add(offset));
 
-            // Open the popup at the offset position
-            const popup = tbm.api_tasks[entrySeqID].polyline.getPopup();
-            popup.setLatLng(popupPosition).openOn(tbm.map);
+                // Open the popup at the offset position
+                const popup = tbm.api_tasks[entrySeqID].polyline.getPopup();
+                popup.setLatLng(popupPosition).openOn(tbm.map);
+            }
         }
     }
 
