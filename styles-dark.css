@@ -805,6 +805,14 @@ body {
     color: #dcdcdc;
 }
 
+#taskGridTable_wrapper .dataTables_filter {
+    color: #dcdcdc;
+}
+
+    #taskGridTable_wrapper .dataTables_filter input {
+        color: #dcdcdc;
+    }
+
 table.dataTable thead .sorting {
     color: #d2d2d2;
     padding: 4px;
