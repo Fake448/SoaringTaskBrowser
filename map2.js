@@ -176,7 +176,7 @@ class TaskBrowserMap {
         // Show the loading spinner
         document.getElementById('loadingSpinner').style.display = 'block';
 
-        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter);
+        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter, tbm.durationMin, tbm.durationMax, tbm.includeNoDuration);
 
         tbm.clearPolylines();
 
