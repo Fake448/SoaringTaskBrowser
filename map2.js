@@ -26,6 +26,11 @@ class TaskBrowserMap {
         // Default filter type for soaring types (e.g., "any" for OR filtering)
         tbm.soaringTypeFilter = 'any';
 
+à        // Default values for duration filters
+        tbm.durationMin = 0;               // Min duration in minutes
+        tbm.durationMax = 9999;            // Max duration in minutes
+        tbm.includeNoDuration = true;      // Include tasks with no duration specified
+
         // B21 update, these are used by B21_Task / B21_WP
         tbm.settings = {
             altitude_units: "feet",
@@ -180,6 +185,10 @@ class TaskBrowserMap {
         url.searchParams.append('taskCount', tbm.taskCount);
         url.searchParams.append('startDate', tbm.startDate);
         url.searchParams.append('endDate', tbm.endDate);
+        // Add duration parameters to the URL
+        url.searchParams.append('durationMin', tbm.durationMin);
+        url.searchParams.append('durationMax', tbm.durationMax);
+        url.searchParams.append('includeNoDuration', tbm.includeNoDuration ? '1' : '0');
 
         // Add soaring type filter type (any, all, only, exclude)
         url.searchParams.append('soaringTypeFilter', tbm.soaringTypeFilter);

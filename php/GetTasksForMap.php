@@ -10,6 +10,9 @@ try {
     $startDate = $_GET['startDate'] ?? '2000-01-01'; // Use default min date if not provided
     $endDate = $_GET['endDate'] ?? date('Y-m-d'); // Use today's date if not provided
     $endDate = date('Y-m-d', strtotime($endDate . ' +1 day')); // Include endDate fully
+    $durationMin = isset($_GET['durationMin']) ? (int)$_GET['durationMin'] : 0;
+    $durationMax = isset($_GET['durationMax']) ? (int)$_GET['durationMax'] : PHP_INT_MAX;
+    $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
 
     // Get soaring type filters from query parameters
     $soaringTypes = [
@@ -70,6 +73,22 @@ try {
         } else {
             $whereClauses[] = '(' . implode(' AND ', $soaringConditions) . ')';
         }
+    }
+
+    $durationConditions = [];
+    // Tasks with both DurationMin and DurationMax specified
+    $durationConditions[] = "(DurationMin IS NOT NULL AND DurationMax IS NOT NULL AND DurationMin >= :durationMin AND DurationMax <= :durationMax)";
+    // Tasks with only DurationMin specified (interpreted as "around" that minimum value)
+    $durationConditions[] = "(DurationMin IS NOT NULL AND DurationMax IS NULL AND DurationMin >= :durationMin AND DurationMin <= :durationMax)";
+    // Tasks with only DurationMax specified (interpreted as "around" that maximum value)
+    $durationConditions[] = "(DurationMin IS NULL AND DurationMax IS NOT NULL AND DurationMax >= :durationMin AND DurationMax <= :durationMax)";
+    // Tasks with no duration specified (optional, if "include tasks with no duration" is checked)
+    if ($includeNoDuration) {
+        $durationConditions[] = "(DurationMin IS NULL AND DurationMax IS NULL)";
+    }
+    // Append to the main WHERE clause
+    if (!empty($durationConditions)) {
+        $whereClauses[] = '(' . implode(' OR ', $durationConditions) . ')';
     }
 
     // Final query with dynamic WHERE clause
