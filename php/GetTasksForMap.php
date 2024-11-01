@@ -63,7 +63,7 @@ try {
         $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
     }
     // Log parameters just before binding to verify they are correct
-    logMessage("All statement: " .$stmt;
+    logMessage("Binding Parameters: " . json_encode($params));
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
