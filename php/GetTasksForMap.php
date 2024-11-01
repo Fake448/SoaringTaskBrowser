@@ -129,7 +129,7 @@ try {
     ";
 
     // Log the final query to inspect the generated SQL
-    //logMessage("Final Query: " . $query);
+    logMessage("Final Query: " . $query);
 
     $stmt = $pdo->prepare($query);
     $stmt->bindValue(':startDate', $params[':startDate']);
@@ -137,6 +137,7 @@ try {
     $stmt->bindValue(':taskCount', $params[':taskCount'], PDO::PARAM_INT);
     $stmt->bindValue(':durationMin', $durationMin, PDO::PARAM_INT);
     $stmt->bindValue(':durationMax', $durationMax, PDO::PARAM_INT);
+    logMessage("Parameters: startDate={$params[':startDate']}, endDate={$params[':endDate']}, durationMin={$params[':durationMin']}, durationMax={$params[':durationMax']}, taskCount={$params[':taskCount']}");
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
