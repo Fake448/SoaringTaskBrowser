@@ -62,6 +62,8 @@ try {
     foreach ($params as $key => $value) {
         $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
     }
+    // Log parameters just before binding to verify they are correct
+    logMessage("$stmt";
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
