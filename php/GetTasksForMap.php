@@ -65,8 +65,26 @@ try {
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Response handling
-    $response = ['tasks' => $tasks];
+    // Additional query to get total task count without filters
+    $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks";
+    $countStmt = $pdo->prepare($countQuery);
+    $countStmt->execute();
+    $totalTasks = $countStmt->fetch(PDO::FETCH_ASSOC)['totalTasks'];
+
+    // Additional query to get oldest and newest dates
+    $dateQuery = "SELECT MIN(LastUpdate) as oldestDate, MAX(LastUpdate) as newestDate FROM Tasks";
+    $dateStmt = $pdo->prepare($dateQuery);
+    $dateStmt->execute();
+    $dates = $dateStmt->fetch(PDO::FETCH_ASSOC);
+
+    // Construct response
+    $response = [
+        'tasks' => $tasks,
+        'totalTasks' => $totalTasks,
+        'oldestDate' => $dates['oldestDate'],
+        'newestDate' => $dates['newestDate']
+    ];
+
     header('Content-Type: application/json');
     echo json_encode($response);
 
