@@ -815,8 +815,8 @@ body {
 
 table.dataTable thead .sorting {
     color: #d2d2d2;
-    padding: 4px;
     text-align: left;
+    padding-left: 8px;
 }
 
 /* Styling DataTable Rows */
@@ -836,7 +836,10 @@ table.dataTable thead .sorting {
 /* Style for table text */
 #taskGridTable tbody td {
     color: #dcdcdc;
-    padding: 8px;
+    padding-left: 8px;
+    padding-top: 1px;
+    padding-bottom: 1px;
+    padding-right: 2px;
 }
 
     /* Reset background color and text color for sorted column cells to match default row styling */

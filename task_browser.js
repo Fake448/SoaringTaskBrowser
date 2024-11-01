@@ -1773,6 +1773,15 @@ class TaskBrowser {
                 scroller: true           // Smooth scrolling
             });
 
+            // Observe resizing of the overlay element
+            const taskGridOverlay = document.getElementById('taskGridOverlay');
+            const resizeObserver = new ResizeObserver(() => {
+                table.columns.adjust();
+                const scrollBodyWidth = $('#taskGridTable_wrapper .dataTables_scrollBody table').outerWidth();
+                $('#taskGridTable_wrapper .dataTables_scrollHeadInner').width(scrollBodyWidth);
+            });
+            resizeObserver.observe(taskGridOverlay);
+
             // Sync horizontal scroll between header and body
             $('#taskGridTable_wrapper .dataTables_scrollBody').on('scroll', function () {
                 const scrollLeft = $(this).scrollLeft();
