@@ -45,6 +45,7 @@ class TaskBrowser {
             tb.addTaskCountControls(searchFiltersContainer);
             tb.addDateRangePicker(searchFiltersContainer);
             tb.addSoaringTypeFilter(searchFiltersContainer);
+            tb.addDurationFilter(searchFiltersContainer);
             tb.addApplyButton(searchFiltersContainer);
             tb.searchPanelAlreadySetup = true;
         }
@@ -238,6 +239,29 @@ class TaskBrowser {
         tb.generateCollapsibleSection("Soaring Type", content, container);
     }
 
+    // Function to add duration filter inputs as a collapsible section
+    addDurationFilter(container) {
+        let tb = this;
+
+        const content = `
+        <div style="display: flex; flex-direction: column; margin-top: 5px;">
+            <label for="durationMin">Duration (minutes):</label>
+            <div style="display: flex; align-items: center;">
+                <input type="number" id="durationMin" min="0" placeholder="Min" style="width: 60px; margin-right: 10px;">
+                <span>to</span>
+                <input type="number" id="durationMax" min="0" placeholder="Max" style="width: 60px; margin-left: 10px;">
+            </div>
+            <div style="margin-top: 10px;">
+                <input type="checkbox" id="includeNoDuration" checked>
+                <label for="includeNoDuration">Include tasks with no duration</label>
+            </div>
+        </div>
+    `;
+
+        // Generate collapsible section for duration
+        tb.generateCollapsibleSection("Task Duration", content, container);
+    }
+
     // Function to add apply button
     addApplyButton(container) {
         let tb = this;
@@ -255,7 +279,6 @@ class TaskBrowser {
         });
     }
 
-    // Function to apply filters based on selected options
     applyFilters() {
         let tb = this;
         const taskCount = document.getElementById('taskCountInput').value;
@@ -273,7 +296,12 @@ class TaskBrowser {
         // Get the filter type (any, all, only, exclude)
         const soaringTypeFilter = document.getElementById('soaringTypeFilter').value;
 
-        console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}, Soaring Types = ${JSON.stringify(soaringTypes)}, Filter Type = ${soaringTypeFilter}`);
+        // Get duration filter values
+        const durationMin = document.getElementById('durationMin').value || 0;
+        const durationMax = document.getElementById('durationMax').value || 9999;
+        const includeNoDuration = document.getElementById('includeNoDuration').checked;
+
+        console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}, Soaring Types = ${JSON.stringify(soaringTypes)}, Filter Type = ${soaringTypeFilter}, Duration Min = ${durationMin}, Duration Max = ${durationMax}, Include No Duration = ${includeNoDuration}`);
 
         // Update the TBM instance variables
         tb.tbm.taskCount = taskCount;
@@ -281,10 +309,12 @@ class TaskBrowser {
         tb.tbm.endDate = endDate;
         tb.tbm.soaringTypes = soaringTypes;
         tb.tbm.soaringTypeFilter = soaringTypeFilter;
+        tb.tbm.durationMin = parseInt(durationMin, 10);
+        tb.tbm.durationMax = parseInt(durationMax, 10);
+        tb.tbm.includeNoDuration = includeNoDuration;
 
         // Call fetchTasks with updated filters
         tb.tbm.fetchTasks();
-
     }
 
     sortTasksGrid(columnName, direction) {
