@@ -129,7 +129,7 @@ try {
     ";
 
     // Log the final query to inspect the generated SQL
-    //logMessage("Final Query: " . $query);
+    logMessage("Final Query: " . $query);
 
     $stmt = $pdo->prepare($query);
     $stmt->bindValue(':startDate', $params[':startDate']);
