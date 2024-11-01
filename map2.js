@@ -26,7 +26,7 @@ class TaskBrowserMap {
         // Default filter type for soaring types (e.g., "any" for OR filtering)
         tbm.soaringTypeFilter = 'any';
 
-à        // Default values for duration filters
+        // Default values for duration filters
         tbm.durationMin = 0;               // Min duration in minutes
         tbm.durationMax = 9999;            // Max duration in minutes
         tbm.includeNoDuration = true;      // Include tasks with no duration specified
