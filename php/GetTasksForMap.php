@@ -13,7 +13,6 @@ try {
     $durationMin = isset($_GET['durationMin']) ? (int)$_GET['durationMin'] : 0;
     $durationMax = isset($_GET['durationMax']) ? (int)$_GET['durationMax'] : PHP_INT_MAX;
     $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
-    logMessage("Duration parameters: " . $durationMin .$durationMax .$includeNoDuration);
 
     // Get soaring type filters from query parameters
     $soaringTypes = [
@@ -25,7 +24,7 @@ try {
     $soaringTypeFilter = $_GET['soaringTypeFilter'] ?? 'any';
 
     // Log the received parameters
-    //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
+    logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNotSpecified: $includeNoDuration, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
 
     // Determine if all types are selected with "any" filter
     $allTypesSelected = array_reduce($soaringTypes, fn($carry, $value) => $carry && $value, true);
