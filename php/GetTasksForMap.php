@@ -29,13 +29,13 @@ try {
 
     // Duration conditions
     $durationConditions = [
-        "((NOT (DurationMin IS NULL OR DurationMin = "" OR DurationMin = 0)) AND (NOT (DurationMax IS NULL OR DurationMax = "" OR DurationMax = 0)) AND DurationMin >= :durationMin AND DurationMax <= :durationMax)",
-        "((NOT (DurationMin IS NULL OR DurationMin = "" OR DurationMin = 0)) AND (DurationMax IS NULL OR DurationMax = "" OR DurationMax = 0) AND DurationMin >= :durationMin AND DurationMin <= :durationMax)",
-        "((DurationMin IS NULL OR DurationMin = "" OR DurationMin = 0) AND (NOT (DurationMax IS NULL OR DurationMax = "" OR DurationMax = 0)) AND DurationMax >= :durationMin AND DurationMax <= :durationMax)"
+        "((NOT (DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0)) AND (NOT (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0)) AND DurationMin >= :durationMin AND DurationMax <= :durationMax)",
+        "((NOT (DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0)) AND (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0) AND DurationMin >= :durationMin AND DurationMin <= :durationMax)",
+        "((DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0) AND (NOT (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0)) AND DurationMax >= :durationMin AND DurationMax <= :durationMax)"
     ];
     // Tasks with no duration specified (optional, if "include tasks with no duration" is checked)
     if ($includeNoDuration) {
-        $durationConditions[] = "((DurationMin = 0 OR DurationMin = "" OR DurationMin IS NULL) AND (DurationMax = 0 OR DurationMax = "" OR DurationMax IS NULL))";
+        $durationConditions[] = "((DurationMin = 0 OR DurationMin = '' OR DurationMin IS NULL) AND (DurationMax = 0 OR DurationMax = '' OR DurationMax IS NULL))";
     }
     $whereClauses[] = '(' . implode(' OR ', $durationConditions) . ')';
 
