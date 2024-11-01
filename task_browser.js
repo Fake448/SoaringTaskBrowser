@@ -1773,6 +1773,12 @@ class TaskBrowser {
                 scroller: true           // Smooth scrolling
             });
 
+            // Sync horizontal scroll between header and body
+            $('#taskGridTable_wrapper .dataTables_scrollBody').on('scroll', function () {
+                const scrollLeft = $(this).scrollLeft();
+                $('#taskGridTable_wrapper .dataTables_scrollHead').scrollLeft(scrollLeft);
+            });
+
             // Add click, mouseover, and mouseout events to each row in the DataTable
             $('#taskGridTable tbody').on('click', 'tr', function () {
                 const rowData = table.row(this).data();
