@@ -5,7 +5,7 @@ try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Get the filter values from query parameters
+    // Parameter assignments
     $taskCount = isset($_GET['taskCount']) ? (int)$_GET['taskCount'] : PHP_INT_MAX;
     $startDate = $_GET['startDate'] ?? '2000-01-01';
     $endDate = $_GET['endDate'] ?? date('Y-m-d');
@@ -14,10 +14,11 @@ try {
     $durationMax = isset($_GET['durationMax']) ? (int)$_GET['durationMax'] : PHP_INT_MAX;
     $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
 
-    // Log received parameters
-    logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNotSpecified: $includeNoDuration");
+    // Debug log parameters
+    logMessage("Received Parameters: Task Count = $taskCount, Start Date = $startDate, End Date = $endDate, DurationMin = $durationMin, DurationMax = $durationMax, IncludeNoDuration = $includeNoDuration");
 
-    // Prepare params array, adding durationMin and durationMax explicitly here
+    // WHERE clause setup
+    $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
     $params = [
         ':startDate' => $startDate,
         ':endDate' => $endDate,
@@ -26,22 +27,18 @@ try {
         ':durationMax' => $durationMax
     ];
 
-    // Log parameters just before binding to verify they are correct
-    logMessage("Binding Parameters: " . json_encode($params));
-
-    // Build the query
-    $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
-    
-    $durationConditions = [];
-    $durationConditions[] = "(DurationMin IS NOT NULL AND DurationMax IS NOT NULL AND DurationMin >= :durationMin AND DurationMax <= :durationMax)";
-    $durationConditions[] = "(DurationMin IS NOT NULL AND DurationMax IS NULL AND DurationMin >= :durationMin AND DurationMin <= :durationMax)";
-    $durationConditions[] = "(DurationMin IS NULL AND DurationMax IS NOT NULL AND DurationMax >= :durationMin AND DurationMax <= :durationMax)";
+    // Duration conditions
+    $durationConditions = [
+        "(DurationMin IS NOT NULL AND DurationMax IS NOT NULL AND DurationMin >= :durationMin AND DurationMax <= :durationMax)",
+        "(DurationMin IS NOT NULL AND DurationMax IS NULL AND DurationMin >= :durationMin AND DurationMin <= :durationMax)",
+        "(DurationMin IS NULL AND DurationMax IS NOT NULL AND DurationMax >= :durationMin AND DurationMax <= :durationMax)"
+    ];
     if ($includeNoDuration) {
         $durationConditions[] = "(DurationMin IS NULL AND DurationMax IS NULL)";
     }
     $whereClauses[] = '(' . implode(' OR ', $durationConditions) . ')';
 
-    // Construct final SQL query
+    // Final query
     $query = "
         SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML,
                MainAreaPOI, DepartureName, DepartureICAO, ArrivalName, ArrivalICAO,
@@ -54,16 +51,18 @@ try {
         LIMIT :taskCount
     ";
 
-    // Log the final query
-    logMessage("Final Query: " . $query);
+    // Debug the final query with parameter substitution
+    $debugQuery = $query;
+    foreach ($params as $key => $value) {
+        $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
+    }
+    logMessage("Debug Query: $debugQuery");
 
-    // Prepare and execute the query
+    // Execute
     $stmt = $pdo->prepare($query);
     foreach ($params as $key => $value) {
         $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
     }
-    // Log parameters just before binding to verify they are correct
-    logMessage("Binding Parameters: " . json_encode($params));
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
