@@ -135,6 +135,8 @@ try {
     $stmt->bindValue(':startDate', $params[':startDate']);
     $stmt->bindValue(':endDate', $params[':endDate']);
     $stmt->bindValue(':taskCount', $params[':taskCount'], PDO::PARAM_INT);
+    $stmt->bindValue(':durationMin', $durationMin, PDO::PARAM_INT);
+    $stmt->bindValue(':durationMax', $durationMax, PDO::PARAM_INT);
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
