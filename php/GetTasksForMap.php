@@ -13,6 +13,7 @@ try {
     $durationMin = isset($_GET['durationMin']) ? (int)$_GET['durationMin'] : 0;
     $durationMax = isset($_GET['durationMax']) ? (int)$_GET['durationMax'] : PHP_INT_MAX;
     $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
+    logMessage("Duration parameters: " . $durationMin .$durationMax .$includeNoDuration);
 
     // Get soaring type filters from query parameters
     $soaringTypes = [
