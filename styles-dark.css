@@ -543,7 +543,7 @@ body {
     border-radius: 5px;
     padding: 5px;
     display: none; /* Initially hidden */
-    z-index: 1200; /* Ensure it appears above map layers */
+    z-index: 1000; /* Ensure it appears above map layers */
 }
 
     #taskControlPanel button {
