@@ -15,7 +15,7 @@ try {
     $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
 
     // Debug log parameters
-    logMessage("Received Parameters: Task Count = $taskCount, Start Date = $startDate, End Date = $endDate, DurationMin = $durationMin, DurationMax = $durationMax, IncludeNoDuration = $includeNoDuration");
+    //logMessage("Received Parameters: Task Count = $taskCount, Start Date = $startDate, End Date = $endDate, DurationMin = $durationMin, DurationMax = $durationMax, IncludeNoDuration = $includeNoDuration");
 
     // WHERE clause setup
     $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
@@ -57,7 +57,7 @@ try {
     foreach ($params as $key => $value) {
         $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
     }
-    logMessage("Debug Query: $debugQuery");
+    //logMessage("Debug Query: $debugQuery");
 
     // Execute
     $stmt = $pdo->prepare($query);
