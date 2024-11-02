@@ -798,7 +798,7 @@ body {
 #taskGridTable_wrapper .dataTables_scrollBody {
     flex-grow: 1; /* Allow this section to grow and fill available space */
     overflow-y: auto; /* Enable scrolling for rows */
-    max-height: 88% !important;
+    max-height: 87% !important;
 }
 
 #taskGridTable_wrapper .dataTables_info {
