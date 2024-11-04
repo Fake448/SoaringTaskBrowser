@@ -5,7 +5,7 @@ try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Parameter assignments
+    // Get the filter values from query parameters
     $taskCount = isset($_GET['taskCount']) ? (int)$_GET['taskCount'] : PHP_INT_MAX;
     $startDate = $_GET['startDate'] ?? '2000-01-01';
     $endDate = $_GET['endDate'] ?? date('Y-m-d');
@@ -14,10 +14,19 @@ try {
     $durationMax = isset($_GET['durationMax']) ? (int)$_GET['durationMax'] : PHP_INT_MAX;
     $includeNoDuration = isset($_GET['includeNoDuration']) ? (bool)$_GET['includeNoDuration'] : true;
 
-    // Debug log parameters
-    //logMessage("Received Parameters: Task Count = $taskCount, Start Date = $startDate, End Date = $endDate, DurationMin = $durationMin, DurationMax = $durationMax, IncludeNoDuration = $includeNoDuration");
+    // Get soaring type filters from query parameters
+    $soaringTypes = [
+        'soaringRidge' => isset($_GET['soaringRidge']) ? (int)$_GET['soaringRidge'] : 1,
+        'soaringThermals' => isset($_GET['soaringThermals']) ? (int)$_GET['soaringThermals'] : 1,
+        'soaringWaves' => isset($_GET['soaringWaves']) ? (int)$_GET['soaringWaves'] : 1,
+        'soaringDynamic' => isset($_GET['soaringDynamic']) ? (int)$_GET['soaringDynamic'] : 1
+    ];
+    $soaringTypeFilter = $_GET['soaringTypeFilter'] ?? 'any';
 
-    // WHERE clause setup
+    // Logging
+    //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNoDuration: $includeNoDuration, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
+
+    // Base WHERE clause for date range
     $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
     $params = [
         ':startDate' => $startDate,
@@ -27,25 +36,62 @@ try {
         ':durationMax' => $durationMax
     ];
 
-    // Duration conditions
+    // Add soaring type conditions if required
+    $soaringConditions = [];
+    $allTypesSelected = array_reduce($soaringTypes, fn($carry, $value) => $carry && $value, true);
+    if (!($soaringTypeFilter === 'any' && $allTypesSelected)) {
+        foreach ($soaringTypes as $column => $value) {
+            if ($value) {
+                switch ($soaringTypeFilter) {
+                    case 'any':
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'all':
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'only':
+                        $soaringConditions[] = "$column = 1";
+                        break;
+                    case 'exclude':
+                        $soaringConditions[] = "$column = 0";
+                        break;
+                }
+            } elseif ($soaringTypeFilter === 'only') {
+                $soaringConditions[] = "$column = 0";
+            }
+        }
+    }
+
+    // Add soaring type conditions to WHERE clause
+    if (!empty($soaringConditions)) {
+        $whereClauses[] = $soaringTypeFilter === 'any' 
+            ? '(' . implode(' OR ', $soaringConditions) . ')'
+            : '(' . implode(' AND ', $soaringConditions) . ')';
+    }
+
+    // Add duration conditions
     $durationConditions = [
         "((NOT (DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0)) AND (NOT (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0)) AND DurationMin >= :durationMin AND DurationMax <= :durationMax)",
         "((NOT (DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0)) AND (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0) AND DurationMin >= :durationMin AND DurationMin <= :durationMax)",
         "((DurationMin IS NULL OR DurationMin = '' OR DurationMin = 0) AND (NOT (DurationMax IS NULL OR DurationMax = '' OR DurationMax = 0)) AND DurationMax >= :durationMin AND DurationMax <= :durationMax)"
     ];
-    // Tasks with no duration specified (optional, if "include tasks with no duration" is checked)
+
+    // Include tasks with no duration if specified
     if ($includeNoDuration) {
         $durationConditions[] = "((DurationMin = 0 OR DurationMin = '' OR DurationMin IS NULL) AND (DurationMax = 0 OR DurationMax = '' OR DurationMax IS NULL))";
     }
+
+    // Add duration conditions to WHERE clause
     $whereClauses[] = '(' . implode(' OR ', $durationConditions) . ')';
 
     // Final query
     $query = "
-        SELECT EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML,
-               MainAreaPOI, DepartureName, DepartureICAO, ArrivalName, ArrivalICAO,
-               SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo,
-               DurationMin, DurationMax, TaskDistance, TotalDistance, RecommendedGliders,
-               DifficultyRating, DifficultyExtraInfo, Credits, Countries, LastUpdate
+        SELECT 
+            EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML,
+            MainAreaPOI, DepartureName, DepartureICAO, ArrivalName, ArrivalICAO,
+            SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo,
+            DurationMin, DurationMax, TaskDistance, TotalDistance, RecommendedGliders,
+            DifficultyRating, DifficultyExtraInfo, Credits, Countries, LastUpdate
         FROM Tasks
         WHERE " . implode(' AND ', $whereClauses) . "
         ORDER BY LastUpdate DESC
@@ -57,9 +103,9 @@ try {
     foreach ($params as $key => $value) {
         $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
     }
-    //logMessage("Debug Query: $debugQuery");
+    logMessage("Debug Query: $debugQuery");
 
-    // Execute
+    // Execute query with parameters
     $stmt = $pdo->prepare($query);
     foreach ($params as $key => $value) {
         $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
@@ -67,19 +113,19 @@ try {
     $stmt->execute();
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Additional query to get total task count without filters
+    // Additional query for total task count
     $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks";
     $countStmt = $pdo->prepare($countQuery);
     $countStmt->execute();
     $totalTasks = $countStmt->fetch(PDO::FETCH_ASSOC)['totalTasks'];
 
-    // Additional query to get oldest and newest dates
+    // Additional query for oldest and newest dates
     $dateQuery = "SELECT MIN(LastUpdate) as oldestDate, MAX(LastUpdate) as newestDate FROM Tasks";
     $dateStmt = $pdo->prepare($dateQuery);
     $dateStmt->execute();
     $dates = $dateStmt->fetch(PDO::FETCH_ASSOC);
 
-    // Construct response
+    // Response
     $response = [
         'tasks' => $tasks,
         'totalTasks' => $totalTasks,
