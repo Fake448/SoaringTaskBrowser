@@ -82,8 +82,14 @@ class TaskBrowser {
             </div>
         `;
 
+        // Define the reset callback for this section
+        const resetCallback = () => {
+            document.getElementById('taskCountSlider').value = 300; // Default value
+            document.getElementById('taskCountInput').value = 300;
+        };
+
         // Generate the collapsible section with the Task Count Controls content
-        tb.generateCollapsibleSection("Max Tasks", content, container, "maxTasksSection");
+        tb.generateCollapsibleSection("Max Tasks", content, container, "maxTasksSection", null, resetCallback);
         tb.expandCollapsibleSection('maxTasksSection');
 
         // After generating the collapsible section, add event listeners for slider, input, and Max button
@@ -136,8 +142,22 @@ class TaskBrowser {
             </div>
         `;
 
-        // Generate the collapsible section with the Date Range Picker content
-        tb.generateCollapsibleSection("Last Update", content, container);
+        // Define the reset callback for this section
+        const resetCallback = () => {
+            // Reset to default values
+            document.getElementById('startDate').value = tb.tbm.oldestDate;
+            document.getElementById('endDate').value = tb.tbm.newestDate;
+
+            // Reset the dropdown selection to "Any date (all)"
+            document.getElementById('dateRangeSelect').value = "any";
+
+            // Disable date inputs since "Any date" does not require custom date selection
+            document.getElementById('startDate').disabled = true;
+            document.getElementById('endDate').disabled = true;
+        };
+
+        // Generate the collapsible section with the Date Range Picker content and reset callback
+        tb.generateCollapsibleSection("Last Update", content, container, "lastUpdateSection", null, resetCallback);
 
         // After generating the collapsible section, add event listeners to handle dropdown selection logic
         const startDateInput = container.querySelector('#startDate');
@@ -235,8 +255,20 @@ class TaskBrowser {
             </div>
         `;
 
-        // Call generateCollapsibleSection to create the collapsible section
-        tb.generateCollapsibleSection("Soaring Type", content, container);
+        // Define the reset callback for this section
+        const resetCallback = () => {
+            // Reset all checkboxes to checked
+            document.getElementById('soaringRidge').checked = true;
+            document.getElementById('soaringThermals').checked = true;
+            document.getElementById('soaringWaves').checked = true;
+            document.getElementById('soaringDynamic').checked = true;
+
+            // Reset the dropdown selection to "Any selected (OR)"
+            document.getElementById('soaringTypeFilter').value = "any";
+        };
+
+        // Call generateCollapsibleSection to create the collapsible section with the reset callback
+        tb.generateCollapsibleSection("Soaring Type", content, container, "soaringTypeSection", null, resetCallback);
     }
 
     // Function to add duration filter inputs as a collapsible section
@@ -258,8 +290,18 @@ class TaskBrowser {
         </div>
     `;
 
-        // Generate collapsible section for duration
-        tb.generateCollapsibleSection("Task Duration", content, container);
+        // Define the reset callback for the Duration section
+        const resetCallback = () => {
+            // Reset duration fields to default or empty values
+            document.getElementById('durationMin').value = ""; // or a specific default value, like 0
+            document.getElementById('durationMax').value = ""; // or a specific default value, like 9999
+
+            // Reset the checkbox to checked
+            document.getElementById('includeNoDuration').checked = true;
+        };
+
+        // Generate the collapsible section with the Duration content and reset callback
+        tb.generateCollapsibleSection("Task Duration", content, container, "taskDurationSection", null, resetCallback);
     }
 
     // Function to add apply button
@@ -1131,7 +1173,7 @@ class TaskBrowser {
         }
     }
 
-    generateCollapsibleSection(title, content, container, id = null, highlightClass = null) {
+    generateCollapsibleSection(title, content, container, id = null, highlightClass = null, resetCallback = null) {
         const section = document.createElement('div');
         section.className = 'tool-entry collapsible collapsed';
 
@@ -1139,6 +1181,7 @@ class TaskBrowser {
             section.id = id;
         }
 
+        // Title element
         const titleElement = document.createElement('div');
         titleElement.className = 'title';
         titleElement.innerText = title;
@@ -1147,17 +1190,33 @@ class TaskBrowser {
             titleElement.classList.add(highlightClass);
         }
 
+        // Add the "Reset" button if a resetCallback function is provided
+        if (resetCallback) {
+            const resetButton = document.createElement('button');
+            resetButton.className = 'collapsible-reset-button';
+            resetButton.innerText = 'Reset';
+            resetButton.addEventListener('click', (event) => {
+                event.stopPropagation(); // Prevent the section from toggling when clicked
+                resetCallback(); // Call the reset function
+            });
+            titleElement.appendChild(resetButton); // Add button to the title
+        }
+
+        // Content element
         const contentElement = document.createElement('div');
         contentElement.className = 'content';
         contentElement.innerHTML = content;
 
+        // Append title and content to section
         section.appendChild(titleElement);
         section.appendChild(contentElement);
 
+        // Toggle visibility on title click
         titleElement.addEventListener('click', () => {
             section.classList.toggle('collapsed');
         });
 
+        // Append section to the container
         container.appendChild(section);
     }
 

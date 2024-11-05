@@ -204,6 +204,9 @@ body {
     }
 
     .tool-entry .title {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
         padding: 8px;
         font-size: 16px;
         font-weight: bold;
@@ -244,6 +247,21 @@ body {
             margin-bottom: 3px;
             padding-left: 5; /* Adjust this value if necessary */
         }
+
+.collapsible-reset-button {
+    background-color: #7289da;
+    color: white;
+    border: 1px solid #5b6eae;
+    border-radius: 3px;
+    padding: 8px 8px; /* Smaller padding to match the button size in the image */
+    cursor: pointer;
+    border-radius: 3px;
+    font-size: 12px;
+}
+
+    .collapsible-reset-button:hover {
+        background-color: #5b6eae;
+    }
 
 .link-preview {
     display: flex;
