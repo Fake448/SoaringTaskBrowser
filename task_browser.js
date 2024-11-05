@@ -84,8 +84,7 @@ class TaskBrowser {
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            document.getElementById('taskCountSlider').value = 300; // Default value
-            document.getElementById('taskCountInput').value = 300;
+            tb.resetTaskCount();
         };
 
         // Generate the collapsible section with the Task Count Controls content
@@ -144,16 +143,7 @@ class TaskBrowser {
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            // Reset to default values
-            document.getElementById('startDate').value = tb.tbm.oldestDate;
-            document.getElementById('endDate').value = tb.tbm.newestDate;
-
-            // Reset the dropdown selection to "Any date (all)"
-            document.getElementById('dateRangeSelect').value = "any";
-
-            // Disable date inputs since "Any date" does not require custom date selection
-            document.getElementById('startDate').disabled = true;
-            document.getElementById('endDate').disabled = true;
+            tb.resetDateRange();
         };
 
         // Generate the collapsible section with the Date Range Picker content and reset callback
@@ -257,14 +247,7 @@ class TaskBrowser {
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            // Reset all checkboxes to checked
-            document.getElementById('soaringRidge').checked = true;
-            document.getElementById('soaringThermals').checked = true;
-            document.getElementById('soaringWaves').checked = true;
-            document.getElementById('soaringDynamic').checked = true;
-
-            // Reset the dropdown selection to "Any selected (OR)"
-            document.getElementById('soaringTypeFilter').value = "any";
+            tb.resetSoaringType();
         };
 
         // Call generateCollapsibleSection to create the collapsible section with the reset callback
@@ -292,31 +275,53 @@ class TaskBrowser {
 
         // Define the reset callback for the Duration section
         const resetCallback = () => {
-            // Reset duration fields to default or empty values
-            document.getElementById('durationMin').value = ""; // or a specific default value, like 0
-            document.getElementById('durationMax').value = ""; // or a specific default value, like 9999
-
-            // Reset the checkbox to checked
-            document.getElementById('includeNoDuration').checked = true;
+            tb.resetDuration();
         };
 
         // Generate the collapsible section with the Duration content and reset callback
         tb.generateCollapsibleSection("Task Duration", content, container, "taskDurationSection", null, resetCallback);
     }
 
-    // Function to add apply button
+    // Function to add apply and reset all buttons
     addApplyButton(container) {
         let tb = this;
 
+        // Create the Apply button
         const applyButton = document.createElement('button');
         applyButton.textContent = "Apply";
-        applyButton.style.display = 'block';
-        applyButton.style.margin = '20px auto';
         applyButton.classList.add('button-style'); // Assuming this class exists for button styling
-        container.appendChild(applyButton);
+
+        // Create the Reset All button
+        const resetAllButton = document.createElement('button');
+        resetAllButton.textContent = "Reset All";
+        resetAllButton.classList.add('button-style'); // Reuse button styling, or define a specific class if needed
+
+        // Style the buttons to appear side by side
+        const buttonContainer = document.createElement('div');
+        buttonContainer.style.display = 'flex';
+        buttonContainer.style.justifyContent = 'space-between';
+        buttonContainer.style.width = '80%'; // Adjust width as needed
+        buttonContainer.style.margin = '20px auto'; // Center the container
+
+        // Append buttons to the container
+        buttonContainer.appendChild(resetAllButton);
+        buttonContainer.appendChild(applyButton);
+
+        // Append the container to the main container
+        container.appendChild(buttonContainer);
 
         // Apply button event
         applyButton.addEventListener('click', () => {
+            tb.applyFilters();
+        });
+
+        // Reset All button event
+        resetAllButton.addEventListener('click', () => {
+            // Call all individual reset functions
+            tb.resetTaskCount();
+            tb.resetDateRange();
+            tb.resetSoaringType();
+            tb.resetDuration();
             tb.applyFilters();
         });
     }
@@ -357,6 +362,43 @@ class TaskBrowser {
 
         // Call fetchTasks with updated filters
         tb.tbm.fetchTasks();
+    }
+
+    // Reset Task Count section
+    resetTaskCount() {
+        document.getElementById('taskCountSlider').value = 300; // Default value
+        document.getElementById('taskCountInput').value = 300;
+    }
+
+    // Reset Date Range section
+    resetDateRange() {
+        let tb = this;
+
+        const startDateInput = document.getElementById('startDate');
+        const endDateInput = document.getElementById('endDate');
+        const dateRangeSelect = document.getElementById('dateRangeSelect');
+
+        startDateInput.value = tb.tbm.oldestDate;
+        endDateInput.value = tb.tbm.newestDate;
+        dateRangeSelect.value = 'any'; // Reset dropdown to default
+        startDateInput.disabled = true; // Lock date inputs
+        endDateInput.disabled = true;
+    }
+
+    // Reset Soaring Type section
+    resetSoaringType() {
+        document.getElementById('soaringRidge').checked = true;
+        document.getElementById('soaringThermals').checked = true;
+        document.getElementById('soaringWaves').checked = true;
+        document.getElementById('soaringDynamic').checked = true;
+        document.getElementById('soaringTypeFilter').value = 'any'; // Reset filter type to default
+    }
+
+    // Reset Task Duration section
+    resetDuration() {
+        document.getElementById('durationMin').value = ""; // or a specific default value
+        document.getElementById('durationMax').value = ""; // or a specific default value
+        document.getElementById('includeNoDuration').checked = true; // Check "Include no duration" by default
     }
 
     sortTasksGrid(columnName, direction) {
