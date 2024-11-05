@@ -99,11 +99,11 @@ try {
     ";
 
     // Debug the final query with parameter substitution
-    $debugQuery = $query;
-    foreach ($params as $key => $value) {
-        $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
-    }
-    logMessage("Debug Query: $debugQuery");
+    //$debugQuery = $query;
+    //foreach ($params as $key => $value) {
+    //    $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
+    //}
+    //logMessage("Debug Query: $debugQuery");
 
     // Execute query with parameters
     $stmt = $pdo->prepare($query);
