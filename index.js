@@ -305,7 +305,7 @@ function displayEventsStaticPortion() {
         <p>To gain access to the several club events listed on the Hub, you will first need to register on their Discord server. Here are invite links to do so.</p>
         <ul>
             <li><strong>AusGlide</strong> and <strong>Sim Soaring Club</strong> (on same SSC Discord): <a href="discord://discord.gg/h9H2MZyrg2" target="_blank">https://discord.gg/h9H2MZyrg2</a></li>
-            <li><strong>💎 Diamonds</strong> and <strong>Friday Soaring Club</strong> (on same SSC Discord): <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">https://discord.gg/got-gravel-793376245915189268</a></li>
+            <li><strong>💎 Diamonds</strong> and <strong>Friday Soaring Club</strong> (on same GG Discord): <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">https://discord.gg/got-gravel-793376245915189268</a></li>
             <li><strong>UK Virtual Gliding Association</strong> (UKVGA Discord): <a href="discord://discord.gg/9PtUtaH9tz" target="_blank">https://discord.gg/9PtUtaH9tz</a></li>
             <li><strong>Planeur France FS2020</strong>: <a href="discord://discord.gg/h2GuWXJaGK" target="_blank">https://discord.gg/h2GuWXJaGK</a></li>
         </ul>
