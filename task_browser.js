@@ -847,10 +847,17 @@ class TaskBrowser {
         } else {
             mslPressure = (mslPressure / 100).toFixed(2) + ' hPa'; // Convert Pa to hPa
         }
-        if (parseFloat(mslPressure) !== 29.92) { // Check for non-standard value
-            mslPressure += ' ⚠️';
+        // Check for non-standard value
+        if (parseFloat(mslPressure) !== 29.92) {
+            if (task.SuppressBaroPressureWarningSymbol === 0) { // Add warning sign if suppression is not active
+                mslPressure += ' ⚠️';
+            }
+            if (task.BaroPressureExtraInfo) { // Add extra info if available
+                mslPressure += ` (${task.BaroPressureExtraInfo})`;
+            } else { // Fallback message if BaroPressureExtraInfo is null
+                mslPressure += ` (Non standard: Set your altimeter!)`;
+            }
         }
-
         // MSL Temperature conversion
         let mslTemperature = tb.wsg_weather.mslTemperature;
         if (userSettings.temperature === 'fahrenheit') {
