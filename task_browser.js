@@ -852,9 +852,10 @@ class TaskBrowser {
             if (task.SuppressBaroPressureWarningSymbol === 0) { // Add warning sign if suppression is not active
                 mslPressure += ' ⚠️';
             }
-            if (task.BaroPressureExtraInfo) { // Add extra info if available
+            // Handle BaroPressureExtraInfo cases
+            if (task.BaroPressureExtraInfo !== null && task.BaroPressureExtraInfo !== "") {
                 mslPressure += ` (${task.BaroPressureExtraInfo})`;
-            } else { // Fallback message if BaroPressureExtraInfo is null
+            } else if (task.BaroPressureExtraInfo === null) {
                 mslPressure += ` (Non standard: Set your altimeter!)`;
             }
         }
