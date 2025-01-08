@@ -41,6 +41,7 @@ try {
             TaskDistance,
             TotalDistance,
             RecommendedGliders,
+            RecommendedAddOnsList,
             DifficultyRating,
             DifficultyExtraInfo,
             LongDescription,
@@ -54,7 +55,9 @@ try {
             RepostText,
             LastUpdate,
             LastUpdateDescription,
-            TotDownloads
+            TotDownloads,
+            SuppressBaroPressureWarningSymbol,
+            BaroPressureExtraInfo
         FROM Tasks
         WHERE EntrySeqID = :entrySeqID
     ";
