@@ -1136,6 +1136,51 @@ class TaskBrowser {
         }
     }
 
+    generateTaskDetailsRecommendedAddOns(task) {
+        let tb = this;
+
+        // Check if RecommendedAddOnsList is not empty
+        if (task.RecommendedAddOnsList) {
+            let addOns;
+
+            try {
+                // Parse the JSON structure
+                addOns = JSON.parse(task.RecommendedAddOnsList);
+            } catch (error) {
+                console.error("Invalid JSON in RecommendedAddOnsList:", error);
+                return; // Do not generate the section if JSON is invalid
+            }
+
+            // If there are no add-ons, do not generate the section
+            if (!Array.isArray(addOns) || addOns.length === 0) {
+                return;
+            }
+
+            // Build content for the recommended add-ons
+            let content = "";
+            for (let addOn of addOns) {
+                // Ensure each add-on has the required fields
+                if (addOn.Name && addOn.URL && addOn.Type) {
+                    // Determine the emoji based on the add-on type
+                    const typeEmoji = addOn.Type === "Freeware" ? "🆓" : "💵";
+
+                    // Add a list item for the add-on
+                    content += `<li><a href="${addOn.URL}" target="_blank" rel="noopener noreferrer">${addOn.Name}</a> ${typeEmoji}</li>`;
+                }
+            }
+
+            // If no valid add-ons were added, exit
+            if (content === "") return;
+
+            // Create the collapsible section
+            tb.generateCollapsibleSection(
+                "📀 Recommended Add-ons",
+                `<ul>${content}</ul>`,
+                taskDetailContainer
+            );
+        }
+    }
+
     showTaskDetailsStandalone(task) {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
@@ -1149,6 +1194,7 @@ class TaskBrowser {
         tb.generateTaskDetailsWinds(task);
         tb.generateTaskDetailsClouds(task);
         tb.generateTaskDetailsWaypoints(task);
+        tb.generateTaskDetailsRecommendedAddOns(task);
 
         // Show the task control panel
         const taskControlPanel = document.getElementById('taskControlPanel');
