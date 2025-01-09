@@ -1342,32 +1342,36 @@ class TaskBrowser {
 
     downloadDPHXFile(url, filename) {
         let tb = this;
+
         // Increment download count
         tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
 
-        // ---- New line calling the local web server for testing purpose ----
-        fetch(`http://localhost:54513/?taskID=${tb.currentTask.EntrySeqID}`)
+        // Attempt to call the local web server first
+        fetch(`http://localhost:54513/?taskID=${tb.currentTask.TaskID}`)
             .then(() => {
                 console.log("Local server call successful");
+                // If successful, we do NOT download the file from the server 
             })
             .catch(err => {
+                // Local call failed, so we do a normal file download as fallback
                 console.warn("Could not contact local app: ", err);
-            });
 
-        fetch(url)
-            .then(response => response.blob())
-            .then(blob => {
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = url;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            })
-            .catch(err => console.error('Error downloading file:', err));
+                // Now do the normal file download
+                fetch(url)
+                    .then(response => response.blob())
+                    .then(blob => {
+                        const fileUrl = window.URL.createObjectURL(blob);
+                        const a = document.createElement('a');
+                        a.style.display = 'none';
+                        a.href = fileUrl;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        window.URL.revokeObjectURL(fileUrl);
+                        document.body.removeChild(a);
+                    })
+                    .catch(err2 => console.error("Error downloading file as fallback:", err2));
+            });
     }
 
     downloadTextFile(content, filename) {
