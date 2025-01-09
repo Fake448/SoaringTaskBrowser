@@ -1351,6 +1351,7 @@ class TaskBrowser {
             .then(() => {
                 console.log("Local server call successful");
                 // If successful, we do NOT download the file from the server 
+                alert("Download successful! The DPHX file is now open in your local application.");
             })
             .catch(err => {
                 // Local call failed, so we do a normal file download as fallback
