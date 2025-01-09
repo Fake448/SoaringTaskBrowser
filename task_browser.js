@@ -1345,6 +1345,15 @@ class TaskBrowser {
         // Increment download count
         tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
 
+        // ---- New line calling the local web server for testing purpose ----
+        fetch(`http://localhost:54513/?taskID=${tb.currentTask.EntrySeqID}`)
+            .then(() => {
+                console.log("Local server call successful");
+            })
+            .catch(err => {
+                console.warn("Could not contact local app: ", err);
+            });
+
         fetch(url)
             .then(response => response.blob())
             .then(blob => {
