@@ -57,7 +57,8 @@ try {
             LastUpdateDescription,
             TotDownloads,
             SuppressBaroPressureWarningSymbol,
-            BaroPressureExtraInfo
+            BaroPressureExtraInfo,
+            ExtraFilesList
         FROM Tasks
         WHERE EntrySeqID = :entrySeqID
     ";
