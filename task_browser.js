@@ -1374,6 +1374,35 @@ class TaskBrowser {
             .catch(err => console.error('Error incrementing download count:', err));
     }
 
+    downloadExtraFile(filename) {
+        const taskID = this.currentTask.TaskID;
+        const url = `php/DownloadExtraFile.php`; 
+
+        // Send the request to the PHP script
+        fetch(`${url}?taskID=${taskID}&filename=${encodeURIComponent(filename)}`)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error("Failed to download the file.");
+                }
+                return response.blob(); // Expecting the file as a binary response
+            })
+            .then((blob) => {
+                // Trigger download
+                const downloadUrl = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(downloadUrl);
+            })
+            .catch((error) => {
+                console.error("Error downloading the extra file:", error);
+                alert("An error occurred while downloading the file.");
+            });
+    }
+
     downloadDPHXFile(url, filename) {
         let tb = this;
 
