@@ -787,6 +787,39 @@ class TaskBrowser {
         tb.generateCollapsibleSection("📁 Files", filesContent, taskDetailContainer);
     }
 
+    generateTaskDetailsExtraFiles(task) {
+        let tb = this;
+
+        // Parse ExtraFilesList JSON
+        let extraFiles = [];
+        try {
+            extraFiles = JSON.parse(task.ExtraFilesList);
+        } catch (error) {
+            console.error("Invalid JSON in ExtraFilesList:", error);
+            return; // Do not generate the section if JSON is invalid
+        }
+
+        // If no extra files are present, do not generate the section
+        if (!Array.isArray(extraFiles) || extraFiles.length === 0) {
+            return;
+        }
+
+        // Build the content for the Extra Files section
+        let extraFilesContent = "<p>Download individual extra files:</p><ul>";
+        extraFiles.forEach((file) => {
+            extraFilesContent += `
+        <li>
+            <a href="#" onclick="TB.downloadExtraFile('${file}')">
+                ${file}
+            </a>
+        </li>`;
+        });
+        extraFilesContent += "</ul>";
+
+        // Create the collapsible section
+        tb.generateCollapsibleSection("🗄️ Extra Files", extraFilesContent, taskDetailContainer);
+    }
+
     generateTaskDetailsRestriction(task) {
         let tb = this;
         // Get user settings for altitude
@@ -1189,6 +1222,7 @@ class TaskBrowser {
         taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
         tb.generateTaskDetailsFullDescription(task);
         tb.generateTaskDetailsFiles(task);
+        tb.generateTaskDetailsExtraFiles(task);
         tb.generateTaskDetailsRestriction(task);
         tb.generateTaskDetailsWeather(task);
         tb.generateTaskDetailsWinds(task);
