@@ -1357,7 +1357,7 @@ class TaskBrowser {
             })
             .catch(err => {
                 // Local call failed, so we do a normal file download as fallback
-                console.warn("Could not contact local app: ", err);
+                console.warn("Could not contact local app (check same port on both sides?): ", err);
 
                 // Now do the normal file download
                 fetch(url)
