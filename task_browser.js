@@ -1347,7 +1347,7 @@ class TaskBrowser {
         tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
 
         // Attempt to call the local web server first
-        fetch(`http://localhost:54513/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}&lastUpdate=${encodeURIComponent(tb.currentTask.LastUpdate)}`)
+        fetch(`http://localhost:54513/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}`)
             .then(() => {
                 console.log("Local server call successful");
                 // If successful, we do NOT download the file from the server 
