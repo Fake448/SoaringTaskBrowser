@@ -1347,7 +1347,9 @@ class TaskBrowser {
         tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
 
         // Attempt to call the local web server first
-        fetch(`http://localhost:54513/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}`)
+        const port = tb.userSettings?.DPHXlocalPort || 54513;
+        const localUrl = `http://localhost:${port}/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}`;
+        fetch(localUrl)
             .then(() => {
                 console.log("Local server call successful");
                 // If successful, we do NOT download the file from the server 
@@ -1679,7 +1681,8 @@ class TaskBrowser {
             gateMeasurement: 'imperial',
             windSpeed: 'knots',
             pressure: 'inHg',
-            temperature: 'fahrenheit'
+            temperature: 'fahrenheit',
+            DPHXlocalPort: 54513 
         };
 
         // Merge default settings with saved settings
@@ -1695,7 +1698,18 @@ class TaskBrowser {
         document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
         document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
         document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
+        const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
+        if (DPHXlocalPortInput) {
+            DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
+        }
         tb.ApplyingSettings = false;
+
+        // Add event listener so that changes trigger a save
+        if (DPHXlocalPortInput) {
+            DPHXlocalPortInput.addEventListener('change', () => {
+                tb.saveUserSettings();  // We’ll validate & then save
+            });
+        }
 
         // Attach change event listeners to save settings when any radio button is changed
         document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
@@ -1720,6 +1734,26 @@ class TaskBrowser {
                 pressure: document.querySelector('input[name="pressure"]:checked').value,
                 temperature: document.querySelector('input[name="temperature"]:checked').value
             };
+            // Read the DPHXlocalPort field
+            const localPortInput = document.getElementById('DPHXlocalPort');
+            const portError = document.getElementById('portError');
+
+            let portValue = parseInt(localPortInput.value, 10);
+
+            // Validate the port
+            if (Number.isNaN(portValue) || portValue < 1 || portValue > 65535) {
+                // Show error
+                portError.style.display = 'block';
+                portError.textContent = "Invalid port. Must be 1-65535.";
+                // Revert to previous or default
+                portValue = tb.userSettings.DPHXlocalPort || 54513;
+                localPortInput.value = portValue;
+            } else {
+                portError.style.display = 'none';
+            }
+
+            settings.DPHXlocalPort = portValue;
+
             tb.setJsonCookie('userSettings', settings, 300);
             tb.userSettings = settings;
         }

@@ -153,6 +153,18 @@
                         <label><input type="radio" name="temperature" value="celsius"> Celsius</label>
                         <label><input type="radio" name="temperature" value="fahrenheit"> Fahrenheit</label>
                     </fieldset>
+                    <fieldset>
+                        <legend>DPHX Listening Port</legend>
+                        <label for="DPHXlocalPort">Port:</label>
+                        <input type="number"
+                               id="DPHXlocalPort"
+                               name="DPHXlocalPort"
+                               min="1"
+                               max="65535"
+                               value="54513"
+                               style="width: 100px;" />
+                        <p id="portError" style="display: none; color: red;"></p>
+                    </fieldset>
                 </form>
             </div>
             <div id="aboutTab" class="tabContent"></div>
