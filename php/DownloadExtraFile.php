@@ -46,19 +46,29 @@ if (!file_exists($taskFolder)) {
 // Serve the requested file
 $requestedFile = "$taskFolder/$filename";
 if (file_exists($requestedFile)) {
+    $fileExtension = pathinfo($requestedFile, PATHINFO_EXTENSION);
+    $mimeTypes = [
+        'jpg' => 'image/jpeg',
+        'jpeg' => 'image/jpeg',
+        'png' => 'image/png',
+        'gif' => 'image/gif',
+        'bmp' => 'image/bmp',
+        'webp' => 'image/webp',
+    ];
+
+    $mimeType = $mimeTypes[$fileExtension] ?? 'application/octet-stream';
+
     header('Content-Description: File Transfer');
-    header('Content-Type: application/octet-stream');
-    header('Content-Disposition: attachment; filename="' . basename($requestedFile) . '"');
+    header('Content-Type: ' . $mimeType);
+    header('Content-Disposition: inline; filename="' . basename($requestedFile) . '"');
     header('Expires: 0');
     header('Cache-Control: must-revalidate');
     header('Pragma: public');
     header('Content-Length: ' . filesize($requestedFile));
     readfile($requestedFile);
-    cleanupOldTempFolders($tempDir); // Cleanup happens after serving the file
     exit;
 } else {
     http_response_code(404);
-    cleanupOldTempFolders($tempDir); // Cleanup still happens if file is not found
     die("Requested file not found.");
 }
 

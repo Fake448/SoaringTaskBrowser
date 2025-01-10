@@ -1376,26 +1376,40 @@ class TaskBrowser {
 
     downloadExtraFile(filename) {
         const taskID = this.currentTask.TaskID;
-        const url = `php/DownloadExtraFile.php`; 
+        const url = `php/DownloadExtraFile.php`;
 
-        // Send the request to the PHP script
+        // List of image extensions
+        const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'];
+
+        // Extract the file extension
+        const fileExtension = filename.split('.').pop().toLowerCase();
+
+        // Check if the file is an image
+        const isImage = imageExtensions.includes(fileExtension);
+
         fetch(`${url}?taskID=${taskID}&filename=${encodeURIComponent(filename)}`)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error("Failed to download the file.");
                 }
-                return response.blob(); // Expecting the file as a binary response
+                return response.blob();
             })
             .then((blob) => {
-                // Trigger download
-                const downloadUrl = URL.createObjectURL(blob);
-                const a = document.createElement("a");
-                a.href = downloadUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(downloadUrl);
+                if (isImage) {
+                    // Show image in the modal
+                    const imageUrl = URL.createObjectURL(blob);
+                    this.showImageModal(imageUrl);
+                } else {
+                    // Trigger file download for non-image files
+                    const downloadUrl = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(downloadUrl);
+                }
             })
             .catch((error) => {
                 console.error("Error downloading the extra file:", error);
