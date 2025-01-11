@@ -805,7 +805,7 @@ class TaskBrowser {
         }
 
         // Build the content for the Extra Files section
-        let extraFilesContent = "<p>Download individual extra files:</p><ul>";
+        let extraFilesContent = "<ul>";
         extraFiles.forEach((file) => {
             extraFilesContent += `
         <li>
