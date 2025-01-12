@@ -97,7 +97,7 @@ try {
     echo json_encode($metadata);
 
 } catch (Exception $e) {
-    error_log('Failed to fetch link metadata: ' . $e->getMessage());
+    error_log('Failed to fetch link metadata: ' . $e->getMessage() . ' (URL: ' . $url . ')');
     echo json_encode(['ogTitle' => '', 'ogDescription' => '', 'ogImage' => '']);
 }
 ?>
