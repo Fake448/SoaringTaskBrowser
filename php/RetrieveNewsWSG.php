@@ -9,6 +9,9 @@ try {
     $pdoTasks = new PDO("sqlite:$databasePath");
     $pdoTasks->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // Cleanup old news entries
+    cleanUpNewsEntries($pdoNews);
+
     // Get the optional newsType parameter (default to 0 if not set or invalid)
     $newsType = isset($_GET['newsType']) ? filter_var($_GET['newsType'], FILTER_VALIDATE_INT) : 0;
 
