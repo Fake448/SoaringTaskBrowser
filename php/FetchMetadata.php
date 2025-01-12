@@ -9,7 +9,7 @@ if (!$url) {
 }
 
 // Skip Discord links
-if (strpos($url, 'discord://') !== false || strpos($url, 'discord.com') !== false) {
+if (strpos($url, 'discord://') !== false || strpos($url, 'discord.com') !== false || strpos($url, 'www.ssc-tracker.org') !== false) {
     echo json_encode(['ogTitle' => '', 'ogDescription' => '', 'ogImage' => '']);
     exit;
 }
