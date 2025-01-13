@@ -607,7 +607,7 @@ class TaskBrowser {
         return text.replace(/\(\$%\$\)/g, '\n');
     }
 
-    convertToMarkdown(text) {
+    convertToMarkdown(text, removeParagraphTag = false) {
         let tb = this;
 
         // Function to add target="_blank" to all href links
@@ -625,6 +625,12 @@ class TaskBrowser {
         text = tb.restoreLineBreaks(text);
 
         let renderedMarkdown = tb.md.render(text);
+
+        // Optionally remove <p> tags
+        if (removeParagraphTag) {
+            renderedMarkdown = renderedMarkdown.replace(/^<p>/, '').replace(/<\/p>$/, '');
+        }
+
         renderedMarkdown = addTargetBlank(renderedMarkdown);
         return convertDiscordLinks(renderedMarkdown);
     }

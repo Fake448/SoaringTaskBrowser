@@ -393,10 +393,15 @@ function displayEvents(events) {
             titleSuffix = ' (In progress)';
         }
 
+        const msfsServerLine = event.MSFSServer ? `🖧 MSFS ${event.MSFSServer}</br>` : '';
+        const voiceChannelLine = event.VoiceChannel ? `🗣 ${TB.convertToMarkdown(event.VoiceChannel, true)}</br>` : '';
+
         const eventContent = `
             ${eventClubImage ? `<img src="${eventClubImage}" alt="${event.Title}" title="${event.Title}" style="height: 80px; vertical-align: middle; margin-bottom: 1px;">` : ''}
             <h3>${event.Subtitle}</h3>
             <p>${TB.convertToMarkdown(event.Comments)}</p>
+            ${msfsServerLine}
+            ${voiceChannelLine}
             ${soaringInfo}
             <p><strong>Event meetup time:</strong> ${localEventDate} local</p>
             ${moreInfoContent}

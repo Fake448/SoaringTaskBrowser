@@ -50,7 +50,7 @@ try {
             logMessage("Fetching task details for EntrySeqID: " . $entry['EntrySeqID']);
             $stmtTask = $pdoTasks->prepare("
                 SELECT 
-                    SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo 
+                    SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, SimDateTimeExtraInfo, RecommendedGliders
                 FROM Tasks 
                 WHERE EntrySeqID = :entrySeqID
             ");
