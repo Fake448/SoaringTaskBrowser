@@ -20,11 +20,16 @@ try {
         $newsType = 0;
     }
 
-    // Prepare and execute the query to fetch all news entries
+    // Prepare and execute the query to fetch all news entries with a join to Events
     $stmtNews = $pdoNews->prepare("
         SELECT 
-            Key, Published, Title, Subtitle, Comments, Credits, EventDate, News, NewsType, EntrySeqID, URLToGo, Expiration 
-        FROM News 
+            News.Key, Published, Title, Subtitle, Comments, Credits, EventDate, News, NewsType, EntrySeqID, URLToGo, Expiration,
+            Events.EventMeetDateTime, Events.UseEventSyncFly, Events.SyncFlyDateTime, Events.UseEventLaunch, Events.EventLaunchDateTime,
+            Events.UseEventStartTask, Events.EventStartTaskDateTime, Events.EventDescription, Events.GroupEventTeaserEnabled,
+            Events.GroupEventTeaserMessage, Events.GroupEventTeaserImage, Events.VoiceChannel, Events.MSFSServer, Events.TrackerGroup,
+            Events.EligibleAward, Events.BeginnersGuide
+        FROM News
+        LEFT JOIN Events ON News.Key = Events.EventKey
         WHERE NewsType = :newsType AND Expiration > datetime('now') 
         ORDER BY NewsType DESC, EventDate ASC, Published DESC
     ");
