@@ -372,6 +372,10 @@ function displayEvents(events) {
             <img src="images/ShareLink.png" alt="Share event (copy link to clipboard)" style="height: 20px; vertical-align: middle;">
         </button>`;
 
+        trackerButton = `<button class="button-style" onclick="TB.setSSCTracker('${event.TrackerGroup}',${event.EntrySeqID})" title="Set SSC-Tracker app">
+            <img src="images/tracker.png" alt="Select this event and task on the tracker app" style="height: 20px; vertical-align: middle;">
+        </button>`;
+
         if (moreInfoLink) {
             moreInfoContent = `<p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>`;
         }
@@ -398,6 +402,7 @@ function displayEvents(events) {
             ${moreInfoContent}
             ${taskButton}
             ${shareButton}
+            ${trackerButton}
         `;
 
         TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass);

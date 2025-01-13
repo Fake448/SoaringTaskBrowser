@@ -1482,20 +1482,80 @@ class TaskBrowser {
         tb.downloadTextFile(tb.currentTask.WPRXML, fileName);
     }
 
+    async setSSCTracker(group, entrySeqID, URLInfo) {
+        let tb = this;
+
+        try {
+            // Await task details
+            const taskDetails = await tb.getTaskDetails(entrySeqID);
+
+            if (!taskDetails) {
+                console.error(`No task details found for EntrySeqID: ${entrySeqID}`);
+                return;
+            }
+
+            // Retrieve necessary data
+            const port = tb.userSettings?.TrackerlocalPort || 55055;
+            const baseUrl = `http://localhost:${port}/settask`;
+
+            // Extract just the filename with extension from a full path
+            const extractFilename = (filePath) => {
+                return filePath.split(/(\\|\/)/g).pop(); // Handles both Windows and Unix-style paths
+            };
+
+            // Build the query string payload
+            const params = new URLSearchParams({
+                GroupName: group,
+                WPRFilename: extractFilename(taskDetails.WPRFilename) || "default.wpr",
+                WPRContent: taskDetails.WPRXML || "",
+                PLNFilename: extractFilename(taskDetails.PLNFilename) || "default.pln",
+                PLNContent: taskDetails.PLNXML || "",
+                URLInfo: URLInfo || ""
+            });
+
+            const urlWithParams = `${baseUrl}?${params.toString()}`;
+
+            // Make the GET request
+            const response = await fetch(urlWithParams);
+
+            if (!response.ok) {
+                throw new Error(`Failed to call SSC Tracker: ${response.statusText}`);
+            }
+
+            const data = await response.json();
+            console.log('SSC Tracker set successfully:', data);
+        } catch (error) {
+            console.error('Error setting SSC Tracker:', error);
+        }
+    }
+
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
         let tb = this;
-        let fetch_promise;
-        if (DEBUG_LOCAL) {
-            fetch_promise = test_fetch_task_details(entrySeqID);
-        } else {
-            fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
-        }
-        fetch_promise
-            .then(response => response.json())
-            .then(task_details => { tb.handleTaskDetails(task_details, forceZoomToTask); })
-            .catch(error => {
-                console.error('Error fetching task details:', error);
-            });
+
+        return new Promise((resolve, reject) => {
+            let fetch_promise;
+            if (DEBUG_LOCAL) {
+                fetch_promise = test_fetch_task_details(entrySeqID);
+            } else {
+                fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
+            }
+
+            fetch_promise
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`Failed to fetch task details: ${response.statusText}`);
+                    }
+                    return response.json();
+                })
+                .then(task_details => {
+                    tb.handleTaskDetails(task_details, forceZoomToTask);
+                    resolve(task_details); // Resolve with task details
+                })
+                .catch(error => {
+                    console.error('Error fetching task details:', error);
+                    reject(error); // Reject on error
+                });
+        });
     }
 
     handleTaskDetails(task_details, forceZoomToTask = false) {
@@ -1759,7 +1819,7 @@ class TaskBrowser {
             windSpeed: 'knots',
             pressure: 'inHg',
             temperature: 'fahrenheit',
-            DPHXlocalPort: 54513 
+            DPHXlocalPort: 54513
         };
 
         // Merge default settings with saved settings
