@@ -317,6 +317,9 @@ function displayEvents(events) {
     const settings = TB.userSettings;
     const timeFormat = settings?.timeFormat || 'usa'; // Default to 12 hours if not set
 
+    // Retrieve the saved array of open event IDs
+    const savedEventIds = TB.getJsonCookie('CurrentGroupEventsOpened') || [];
+
     // Mapping of club IDs to their respective logos
     const clubLogos = {
         'DIAMTU': 'images/SoaringDiamondsClub.jpg',
@@ -398,6 +401,26 @@ function displayEvents(events) {
         `;
 
         TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass);
+        // Add click listener to save the opened sections
+        const eventElement = document.getElementById(event.Key);
+        eventElement.addEventListener('click', () => {
+            if (!eventElement.classList.contains('collapsed')) {
+                if (!savedEventIds.includes(event.Key)) {
+                    savedEventIds.push(event.Key); // Add the ID if not already in the array
+                }
+            } else {
+                const index = savedEventIds.indexOf(event.Key);
+                if (index > -1) {
+                    savedEventIds.splice(index, 1); // Remove the ID if it's collapsed
+                }
+            }
+            TB.setJsonCookie('CurrentGroupEventsOpened', savedEventIds, 300); // Save the updated array
+        });
+
+        // Restore the state of previously opened sections
+        if (savedEventIds.includes(event.Key)) {
+            eventElement.classList.remove('collapsed');
+        }
     });
 
     // Add this function to handle the tab switch and task selection
