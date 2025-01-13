@@ -13,7 +13,7 @@ try {
     cleanUpNewsEntries($pdoNews);
 
     // Get the optional newsType parameter (default to 0 if not set or invalid)
-    $newsType = isset($_GET['newsType']) ? filter_var($_GET['newsType'], FILTER_VALIDATE_INT) : 0;
+    $newsType = isset($_GET['newsType']) ? filter_var($_GET['newsType'], FILTER_VALIDATE_INT) : 1;
 
     // Ensure newsType is a valid integer
     if ($newsType === false) {
@@ -36,9 +36,18 @@ try {
     $stmtNews->execute([':newsType' => $newsType]);
     $newsEntries = $stmtNews->fetchAll(PDO::FETCH_ASSOC);
 
-    // Fetch the additional task details for each news entry
+    // Fetch additional task details for each news entry
     foreach ($newsEntries as &$entry) {
+        // Base64-encode the image if it exists
+        if (isset($entry['GroupEventTeaserImage']) && !empty($entry['GroupEventTeaserImage'])) {
+            $entry['GroupEventTeaserImage'] = base64_encode($entry['GroupEventTeaserImage']);
+        } else {
+            $entry['GroupEventTeaserImage'] = null;
+        }
+
+        // Fetch task details only if EntrySeqID exists
         if ($entry['EntrySeqID']) {
+            logMessage("Fetching task details for EntrySeqID: " . $entry['EntrySeqID']);
             $stmtTask = $pdoTasks->prepare("
                 SELECT 
                     SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo 
@@ -47,16 +56,23 @@ try {
             ");
             $stmtTask->execute([':entrySeqID' => $entry['EntrySeqID']]);
             $taskDetails = $stmtTask->fetch(PDO::FETCH_ASSOC);
-            
-            // Merge the task details into the news entry
+
+            // Merge the task details into the current entry
             if ($taskDetails) {
                 $entry = array_merge($entry, $taskDetails);
+            } else {
+                logMessage("No task details found for EntrySeqID: " . $entry['EntrySeqID']);
             }
         }
     }
 
-    // Return the news entries as JSON
-    echo json_encode(['status' => 'success', 'data' => $newsEntries]);
+    // Encode and return the JSON response
+    $jsonOutput = json_encode(['status' => 'success', 'data' => $newsEntries]);
+    if ($jsonOutput === false) {
+        logMessage("JSON encoding error: " . json_last_error_msg());
+        throw new Exception("Failed to encode JSON response.");
+    }
+    echo $jsonOutput;
 
 } catch (Exception $e) {
     logMessage("Error: " . $e->getMessage());
