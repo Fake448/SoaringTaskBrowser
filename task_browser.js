@@ -1486,14 +1486,6 @@ class TaskBrowser {
         let tb = this;
 
         try {
-            // Await task details
-            const taskDetails = await tb.getTaskDetails(entrySeqID);
-
-            if (!taskDetails) {
-                console.error(`No task details found for EntrySeqID: ${entrySeqID}`);
-                return;
-            }
-
             // Retrieve necessary data
             const port = tb.userSettings?.TrackerlocalPort || 55055;
             const baseUrl = `http://localhost:${port}/settask`;
@@ -1503,13 +1495,34 @@ class TaskBrowser {
                 return filePath.split(/(\\|\/)/g).pop(); // Handles both Windows and Unix-style paths
             };
 
+            // Declare placeholders for task details
+            let WPRFilename = "";
+            let WPRContent = "";
+            let PLNFilename = "";
+            let PLNContent = "";
+
+            // If EntrySeqID is not 0, fetch task details
+            if (entrySeqID !== 0) {
+                const taskDetails = await tb.getTaskDetails(entrySeqID);
+                if (!taskDetails) {
+                    console.error(`No task details found for EntrySeqID: ${entrySeqID}`);
+                    return;
+                }
+
+                // Populate task details
+                WPRFilename = extractFilename(taskDetails.WPRFilename) || "";
+                WPRContent = taskDetails.WPRXML || "";
+                PLNFilename = extractFilename(taskDetails.PLNFilename) || "";
+                PLNContent = taskDetails.PLNXML || "";
+            }
+
             // Build the query string payload
             const params = new URLSearchParams({
                 GroupName: group,
-                WPRFilename: extractFilename(taskDetails.WPRFilename) || "default.wpr",
-                WPRContent: taskDetails.WPRXML || "",
-                PLNFilename: extractFilename(taskDetails.PLNFilename) || "default.pln",
-                PLNContent: taskDetails.PLNXML || "",
+                WPRFilename: WPRFilename,
+                WPRContent: WPRContent,
+                PLNFilename: PLNFilename,
+                PLNContent: PLNContent,
                 URLInfo: URLInfo || ""
             });
 
@@ -1525,7 +1538,7 @@ class TaskBrowser {
             const data = await response.json();
             console.log('SSC Tracker set successfully:', data);
         } catch (error) {
-            alert("Unable to set tracker. Maybe the app is not running?")
+            alert("Unable to set tracker. Maybe the app is not running?");
             console.error('Error setting SSC Tracker:', error);
         }
     }
