@@ -1525,6 +1525,7 @@ class TaskBrowser {
             const data = await response.json();
             console.log('SSC Tracker set successfully:', data);
         } catch (error) {
+            alert("Unable to set tracker. Maybe the app is not running?")
             console.error('Error setting SSC Tracker:', error);
         }
     }
