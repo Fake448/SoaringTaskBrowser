@@ -386,10 +386,10 @@ function displayEvents(events) {
             rows.push(createEventRow("⌚", `<strong>Sim date/time:</strong> ${simDateFormatted}${extraInfo}<p>`));
         }
         if (event.SoaringRidge || event.SoaringThermals || event.SoaringWaves || event.SoaringDynamic) {
-            rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)}<p>`));
+            rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)} ${TB.addDetailWithinBrackets(event.SoaringExtraInfo)}<p>`));
         }
         if (event.DurationMin || event.DurationMax) {
-            rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)}<p>`));
+            rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)} ${TB.addDetailWithinBrackets(event.DurationExtraInfo)}<p>`));
         }
 
         rows.push(createEventRow(
