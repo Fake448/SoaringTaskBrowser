@@ -66,6 +66,20 @@ class TaskBrowser {
         `;
     }
 
+    formatCountdown(minutesToEvent) {
+        if (minutesToEvent <= 0) {
+            return "000:00:00:00";
+        }
+
+        const totalSeconds = Math.floor(minutesToEvent * 60);
+        const days = Math.floor(totalSeconds / (3600 * 24)).toString().padStart(3, '0');
+        const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600).toString().padStart(2, '0');
+        const minutes = Math.floor((totalSeconds % 3600) / 60).toString().padStart(2, '0');
+        const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+
+        return `${days}:${hours}:${minutes}:${seconds}`;
+    };
+
     // Function to add task count slider and input controls as a collapsible section
     addTaskCountControls(container) {
         let tb = this;
@@ -628,7 +642,7 @@ class TaskBrowser {
 
         // Optionally remove <p> tags
         if (removeParagraphTag) {
-            renderedMarkdown = renderedMarkdown.replace(/^<p>/, '').replace(/<\/p>$/, '');
+            renderedMarkdown = renderedMarkdown.replace(/^<p>/, '').replace(/<\/p>\s*$/, '');
         }
 
         renderedMarkdown = addTargetBlank(renderedMarkdown);

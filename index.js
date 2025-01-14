@@ -333,36 +333,105 @@ function displayEvents(events) {
 
     events.forEach(event => {
         // Ensure the date is parsed correctly as UTC
-        const eventDate = new Date(event.EventDate.replace(' ', 'T') + 'Z'); // Ensure the date is ISO format and UTC
+        const eventDate = new Date(event.EventDate.replace(' ', 'T') + 'Z');
 
         const localEventDate = eventDate.toLocaleString(navigator.language, {
             month: 'long',
             day: 'numeric',
             hour: 'numeric',
             minute: 'numeric',
-            hour12: timeFormat === 'usa'
+            hour12: TB.userSettings.timeFormat === 'usa' // Use 'usa' for 12-hour format
         });
 
         const dayOfWeek = eventDate.toLocaleDateString(navigator.language, { weekday: 'long' });
 
-        // Extract club ID from the event key by removing "E-" prefix and any numbers
+        // Extract club ID from the event key
         const clubId = event.Key.replace('E-', '').replace(/[0-9]/g, '');
-        let eventClubImage = clubLogos[clubId] || '';
+        const eventClubImage = clubLogos[clubId] || '';
 
         let moreInfoLink = event.URLToGo;
         if (moreInfoLink && moreInfoLink.includes("discord.com")) {
             moreInfoLink = moreInfoLink.replace("https://", "discord://");
         }
 
-        let soaringInfo = "<em>The task has not yet been published.</em>";
-        let taskButton = "";
-        let moreInfoContent = "";
+        // Build table rows for the event details
+        const rows = [];
+        if (event.MSFSServer) {
+            rows.push(createEventRow("🖧", `<strong>MSFS Server:</strong> ${event.MSFSServer}<p>`));
+        }
+        if (event.VoiceChannel) {
+            rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
+        }
+        if (event.RecommendedGliders) {
+            rows.push(createEventRow("✈️", `<strong>Glider type:</strong> ${event.RecommendedGliders}<p>`));
+        }
+        if (event.SimDateTime) {
+            // Use the raw SimDateTime without timezone transformation
+            const simDateTime = new Date(event.SimDateTime);
 
-        if (event.EntrySeqID) {
-            soaringInfo = `
-                ↗️ ${event.SoaringRidge ? 'Ridge' : ''}${event.SoaringThermals ? ' Thermals' : ''}${event.SoaringWaves ? ' Waves' : ''}${event.SoaringDynamic ? ' Dynamic' : ''} ${TB.addDetailWithinBrackets(event.SoaringExtraInfo)}<br>
-                ⏳ ${TB.formatDuration(event.DurationMin, event.DurationMax)} ${TB.addDetailWithinBrackets(event.DurationExtraInfo)}<br>
-            `;
+            // Format the date
+            const simDateFormatted = simDateTime.toLocaleString(navigator.language, {
+                month: 'long',
+                day: 'numeric',
+                ...(event.IncludeYear === 1 ? { year: 'numeric' } : {}), // Include year if IncludeYear = 1
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: TB.userSettings.timeFormat === 'usa' // Use 'usa' for 12-hour format
+            });
+
+            // Add extra information if available
+            const extraInfo = event.SimDateTimeExtraInfo ? ` ${TB.addDetailWithinBrackets(event.SimDateTimeExtraInfo)}` : '';
+
+            // Push the row with the formatted date and extra info
+            rows.push(createEventRow("⌚", `<strong>Sim date/time:</strong> ${simDateFormatted}${extraInfo}<p>`));
+        }
+        if (event.SoaringRidge || event.SoaringThermals || event.SoaringWaves || event.SoaringDynamic) {
+            rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)}<p>`));
+        }
+        if (event.DurationMin || event.DurationMax) {
+            rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)}<p>`));
+        }
+
+        rows.push(createEventRow(
+            "💼",
+            `<strong>Meet/briefing time:</strong> ${localEventDate}<br>At this time we meet in the voice chat and get ready.<p>`)
+        );
+
+        if (event.UseEventSyncFly == 1) {
+            const syncFlyDate = event.SyncFlyDateTime ? new Date(event.SyncFlyDateTime.replace(' ', 'T') + 'Z') : null;
+            rows.push(createEventRow(
+                "⏱️",
+                `<strong>Synchronized Fly:</strong> ${syncFlyDate.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we simultaneously click the [FLY] button to sync our weather.<p>`)
+            );
+        }
+
+        if (event.UseEventLaunch == 1) {
+            const eventLaunchDateTime = event.EventLaunchDateTime ? new Date(event.EventLaunchDateTime.replace(' ', 'T') + 'Z') : null;
+            rows.push(createEventRow(
+                "🚀",
+                `<strong>Launch:</strong> ${eventLaunchDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we can start launching from the airfield.<p>`)
+            );
+        }
+
+        if (event.UseEventStartTask == 1) {
+            const eventStartTaskDateTime = event.EventStartTaskDateTime ? new Date(event.EventStartTaskDateTime.replace(' ', 'T') + 'Z') : null;
+            rows.push(createEventRow(
+                "🟢",
+                `<strong>Task Start:</strong> ${eventStartTaskDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we can start launching from the airfield.<p>`)
+            );
+        }
+
+        // Build table HTML
+        const tableHTML = `
+            <table class="event-details">
+                <tbody>
+                    ${rows.join('')}
+                </tbody>
+            </table>
+        `;
+
+        taskButton = "";
+        if (event.EntrySeqID != 0) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
@@ -375,10 +444,6 @@ function displayEvents(events) {
         trackerButton = `<button class="button-style" onclick="TB.setSSCTracker('${event.TrackerGroup}',${event.EntrySeqID},'${event.URLToGo}')" title="Set SSC-Tracker app">
             <img src="images/tracker.png" alt="Select this event and task on the tracker app" style="height: 20px; vertical-align: middle;">
         </button>`;
-
-        if (moreInfoLink) {
-            moreInfoContent = `<p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>`;
-        }
 
         // Determine highlight class
         const now = new Date(); // Define the current time
@@ -393,18 +458,25 @@ function displayEvents(events) {
             titleSuffix = ' (In progress)';
         }
 
-        const msfsServerLine = event.MSFSServer ? `🖧 MSFS ${event.MSFSServer}</br>` : '';
-        const voiceChannelLine = event.VoiceChannel ? `🗣 ${TB.convertToMarkdown(event.VoiceChannel, true)}</br>` : '';
+        // Determine the appropriate content for the comments/teaser message
+        let eventComments;
+        if (event.EntrySeqID === 0) {
+            if (event.GroupEventTeaserEnabled === 1) {
+                eventComments = TB.convertToMarkdown(event.GroupEventTeaserMessage);
+            } else {
+                eventComments = TB.convertToMarkdown(event.Comments);
+            }
+        } else {
+            eventComments = TB.convertToMarkdown(event.Comments);
+        }
 
+        // Build the event content
         const eventContent = `
             ${eventClubImage ? `<img src="${eventClubImage}" alt="${event.Title}" title="${event.Title}" style="height: 80px; vertical-align: middle; margin-bottom: 1px;">` : ''}
             <h3>${event.Subtitle}</h3>
-            <p>${TB.convertToMarkdown(event.Comments)}</p>
-            ${msfsServerLine}
-            ${voiceChannelLine}
-            ${soaringInfo}
-            <p><strong>Event meetup time:</strong> ${localEventDate} local</p>
-            ${moreInfoContent}
+            <p>${eventComments}</p>
+            ${tableHTML}
+            <p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>
             ${taskButton}
             ${shareButton}
             ${trackerButton}
@@ -431,24 +503,42 @@ function displayEvents(events) {
         if (savedEventIds.includes(event.Key)) {
             eventElement.classList.remove('collapsed');
         }
-    });
+        // Add this function to handle the tab switch and task selection
+        window.switchToMapAndSelectTask = function (entrySeqID) {
+            TB.switchTab('mapTab'); // Switch to the map tab
+            TB.tbm.selectTaskFromURL(entrySeqID); // Select the task on the map
+        };
 
-    // Add this function to handle the tab switch and task selection
-    window.switchToMapAndSelectTask = function (entrySeqID) {
-        TB.switchTab('mapTab'); // Switch to the map tab
-        TB.tbm.selectTaskFromURL(entrySeqID); // Select the task on the map
-    };
-
-    // Check URL params for an event ID and expand it if found
-    const params = new URLSearchParams(window.location.search);
-    const eventIdToExpand = params.get('event');
-    if (eventIdToExpand) {
-        const eventElement = document.getElementById(eventIdToExpand);
-        if (eventElement) {
-            eventElement.classList.remove('collapsed');
-            eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        // Check URL params for an event ID and expand it if found
+        const params = new URLSearchParams(window.location.search);
+        const eventIdToExpand = params.get('event');
+        if (eventIdToExpand) {
+            const eventElement = document.getElementById(eventIdToExpand);
+            if (eventElement) {
+                eventElement.classList.remove('collapsed');
+                eventElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
-    }
+
+    });
+}
+
+function createEventRow(emoji, text) {
+    return `
+        <tr>
+            <td style="text-align: center; width: 20px; vertical-align: top;">${emoji}</td>
+            <td style="vertical-align: top;">${text}</td>
+        </tr>
+    `;
+}
+
+function buildLiftType(event) {
+    const types = [];
+    if (event.SoaringRidge) types.push("Ridge");
+    if (event.SoaringThermals) types.push("Thermals");
+    if (event.SoaringWaves) types.push("Waves");
+    if (event.SoaringDynamic) types.push("Dynamic");
+    return types.join(", ");
 }
 
 function getUrlParams() {
