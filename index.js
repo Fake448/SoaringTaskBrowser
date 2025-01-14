@@ -401,7 +401,13 @@ function displayEvents(events) {
             const syncFlyDate = event.SyncFlyDateTime ? new Date(event.SyncFlyDateTime.replace(' ', 'T') + 'Z') : null;
             rows.push(createEventRow(
                 "⏱️",
-                `<strong>Synchronized Fly:</strong> ${syncFlyDate.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we simultaneously click the [FLY] button to sync our weather.<p>`)
+                `<strong>Synchronized Fly:</strong> ${syncFlyDate.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we simultaneously click the [FLY] button to sync our weather.<br>Remember to <strong>🛑WAIT🛑</strong> on the World Map for the signal!<p>`)
+            );
+        }
+        else {
+            rows.push(createEventRow(
+                "⏱️",
+                `<strong>Synchronized Fly:</strong> None <br>This event DOES NOT require to synchronize weather. You can click Fly at your convenience and wait at the airfield.<p>`)
             );
         }
 
@@ -421,6 +427,20 @@ function displayEvents(events) {
             );
         }
 
+        if (event.EligibleAward && event.EligibleAward != 'None') {
+            rows.push(createEventRow(
+                "🏅",
+                `${event.EligibleAward}.<p>`)
+            );
+        }
+
+        if (event.BeginnersGuide && event.BeginnersGuide != '') {
+            rows.push(createEventRow(
+                "‍🧑‍🎓",
+                `If it's your first time flying with us, please make sure to read the following guide:<br>${TB.convertToMarkdown(event.BeginnersGuide, true)}.<p>`)
+            );
+        }
+
         // Build table HTML
         const tableHTML = `
             <table class="event-details">
@@ -431,10 +451,12 @@ function displayEvents(events) {
         `;
 
         taskButton = "";
+        reviewTaskDetails = "";
         if (event.EntrySeqID != 0) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
+            reviewTaskDetails = 'Review task details and map before briefing!';
         }
 
         shareButton = `<button class="button-style" onclick="TB.copyTextToClipboard('https://wesimglide.org/index.html?event=${event.Key}')" title="Share event (copy link to clipboard)">
@@ -476,6 +498,7 @@ function displayEvents(events) {
             <h3>${event.Subtitle}</h3>
             <p>${eventComments}</p>
             ${tableHTML}
+            ${reviewTaskDetails}
             <p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>
             ${taskButton}
             ${shareButton}
