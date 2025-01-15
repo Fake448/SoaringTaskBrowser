@@ -860,3 +860,31 @@ table.dataTable thead .sorting {
     background-color: #0000ff !important; /* Darker background for the selected row */
     color: #ffffff; /* White text color for visibility */
 }
+
+.countdown-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.countdown-row {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.content-wrapper {
+    position: relative;
+}
+
+.countdown-section {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    text-align: right;
+    border: 1px solid #ccc;
+    padding: 10px;
+    border-radius: 5px;
+    background: #3a3d42;
+    font-size: 18px;
+}

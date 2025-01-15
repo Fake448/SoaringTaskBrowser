@@ -1323,7 +1323,7 @@ class TaskBrowser {
         }
     }
 
-    generateCollapsibleSection(title, content, container, id = null, highlightClass = null, resetCallback = null) {
+    generateCollapsibleSection(title, content, container, id = null, highlightClass = null, resetCallback = null, countdownSection = null) {
         const section = document.createElement('div');
         section.className = 'tool-entry collapsible collapsed';
 
@@ -1352,14 +1352,28 @@ class TaskBrowser {
             titleElement.appendChild(resetButton); // Add button to the title
         }
 
+        // Content wrapper with the countdown included
+        const contentWrapper = document.createElement('div');
+        contentWrapper.className = 'content-wrapper';
+
         // Content element
         const contentElement = document.createElement('div');
         contentElement.className = 'content';
         contentElement.innerHTML = content;
 
-        // Append title and content to section
+        // Countdown section (if any)
+        if (countdownSection) {
+            countdownSection.className = 'countdown-section';
+            countdownSection.style.marginTop = '10px'; // Optional styling adjustment
+            contentElement.appendChild(countdownSection);
+        }
+
+        // Append content to the wrapper
+        contentWrapper.appendChild(contentElement);
+
+        // Append title and content wrapper to section
         section.appendChild(titleElement);
-        section.appendChild(contentElement);
+        section.appendChild(contentWrapper);
 
         // Toggle visibility on title click
         titleElement.addEventListener('click', () => {

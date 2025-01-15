@@ -514,7 +514,23 @@ function displayEvents(events) {
             ${trackerButton}
         `;
 
-        TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass);
+        // Add countdowns
+        const countdowns = [];
+        if (event.EventMeetDateTime) {
+            countdowns.push({ name: 'Meeting', targetDateTime: event.EventMeetDateTime });
+        }
+        if (event.UseEventSyncFly && event.SyncFlyDateTime) {
+            countdowns.push({ name: 'Sync Fly', targetDateTime: event.SyncFlyDateTime });
+        }
+        if (event.UseEventStartTask && event.EventStartTaskDateTime) {
+            countdowns.push({ name: 'Task Start', targetDateTime: event.EventStartTaskDateTime });
+        }
+        let countdownSection = null;
+        if (countdowns.length > 0) {
+            countdownSection = createCountdownSection(countdowns);
+        }
+
+        TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass, null, countdownSection);
         // Add click listener to save the opened sections
         const eventElement = document.getElementById(event.Key);
         eventElement.addEventListener('click', () => {
@@ -621,6 +637,67 @@ function handleParams(params) {
     } else {
         TB.switchTab('homeTab');
     }
+
+}
+
+function createCountdownSection(countdowns) {
+    // Create a container for the countdown section
+    const countdownContainer = document.createElement('div');
+    countdownContainer.className = 'countdown-section';
+    countdownContainer.style.border = '1px solid gray';
+    countdownContainer.style.padding = '10px';
+    countdownContainer.style.margin = '10px';
+    countdownContainer.style.width = '150px';
+    countdownContainer.style.textAlign = 'center';
+
+    // Loop through each countdown info to build the grid
+    countdowns.forEach((countdown) => {
+        const countdownRow = document.createElement('div');
+        countdownRow.className = 'countdown-row';
+        countdownRow.style.marginBottom = '10px';
+
+        const nameElement = document.createElement('div');
+        nameElement.innerText = countdown.name;
+        nameElement.style.fontWeight = 'bold';
+        nameElement.style.marginBottom = '5px';
+
+        const timeElement = document.createElement('div');
+        timeElement.className = 'countdown-time';
+        timeElement.innerText = '000:00:00:00'; // Placeholder
+
+        countdownRow.appendChild(nameElement);
+        countdownRow.appendChild(timeElement);
+        countdownContainer.appendChild(countdownRow);
+
+        // Convert UTC to local time
+        const targetDate = new Date(countdown.targetDateTime + 'Z');
+
+        if (isNaN(targetDate.getTime())) {
+            console.error(`Invalid targetDateTime: ${countdown.targetDateTime}`);
+            timeElement.innerText = 'Invalid Date';
+            return;
+        }
+
+        const interval = setInterval(() => {
+            const now = new Date();
+            const diff = targetDate - now;
+
+            if (diff <= 0) {
+                timeElement.innerText = '000:00:00:00';
+                clearInterval(interval); // Stop the countdown when it reaches zero
+                return;
+            }
+
+            const days = String(Math.floor(diff / (1000 * 60 * 60 * 24))).padStart(3, '0');
+            const hours = String(Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))).padStart(2, '0');
+            const minutes = String(Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))).padStart(2, '0');
+            const seconds = String(Math.floor((diff % (1000 * 60)) / 1000)).padStart(2, '0');
+
+            timeElement.innerText = `${days}:${hours}:${minutes}:${seconds}`;
+        }, 1000);
+    });
+
+    return countdownContainer;
 }
 
 // URL parameter handling
