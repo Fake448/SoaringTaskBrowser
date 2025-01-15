@@ -334,7 +334,7 @@ function displayEvents(events) {
     events.forEach(event => {
         // Check if the task has been published for that event
         let taskPublished = true;
-        if (event.EntrySeqID = 0) {
+        if (event.EntrySeqID == 0) {
             taskPublished = false;
         }
 
