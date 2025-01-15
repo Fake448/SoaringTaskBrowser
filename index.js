@@ -401,13 +401,13 @@ function displayEvents(events) {
             const syncFlyDate = event.SyncFlyDateTime ? new Date(event.SyncFlyDateTime.replace(' ', 'T') + 'Z') : null;
             rows.push(createEventRow(
                 "⏱️",
-                `<strong>Synchronized Fly:</strong> ${syncFlyDate.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we simultaneously click the [FLY] button to sync our weather.<br>Remember to <strong>🛑WAIT🛑</strong> on the World Map for the signal!<p>`)
+                `<strong>Synchronized Fly:</strong> ${syncFlyDate.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we simultaneously click the [FLY]/[Start] button to sync our weather.<br>Remember to <strong>🛑WAIT🛑</strong> on the World Map for the signal!<p>`)
             );
         }
         else {
             rows.push(createEventRow(
                 "⏱️",
-                `<strong>Synchronized Fly:</strong> None <br>This event DOES NOT require to synchronize weather. You can click Fly at your convenience and wait at the airfield.<p>`)
+                `<strong>Synchronized Fly:</strong> None <br>This event DOES NOT require to synchronize weather. You can click Fly/Start at your convenience and wait at the airfield.<p>`)
             );
         }
 
@@ -415,7 +415,7 @@ function displayEvents(events) {
             const eventLaunchDateTime = event.EventLaunchDateTime ? new Date(event.EventLaunchDateTime.replace(' ', 'T') + 'Z') : null;
             rows.push(createEventRow(
                 "🚀",
-                `<strong>Launch:</strong> ${eventLaunchDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we can start launching from the airfield.<p>`)
+                `<strong>Launch:</strong> ${eventLaunchDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we can begin to launch from the airfield.<p>`)
             );
         }
 
@@ -423,7 +423,7 @@ function displayEvents(events) {
             const eventStartTaskDateTime = event.EventStartTaskDateTime ? new Date(event.EventStartTaskDateTime.replace(' ', 'T') + 'Z') : null;
             rows.push(createEventRow(
                 "🟢",
-                `<strong>Task Start:</strong> ${eventStartTaskDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we can start launching from the airfield.<p>`)
+                `<strong>Task Start:</strong> ${eventStartTaskDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we cross the starting line and start the task.<p>`)
             );
         }
 
