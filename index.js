@@ -369,7 +369,7 @@ function displayEvents(events) {
             rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
         }
         if (event.Credits) {
-            rows.push(createEventRow("📡", `<strong>Tracker Group:</strong> ${event.Credits}<p>`));
+            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.png"));
         }
         if (taskPublished && event.SimDateTime) {
             // Use the raw SimDateTime without timezone transformation
@@ -577,10 +577,14 @@ function displayEvents(events) {
     });
 }
 
-function createEventRow(emoji, text) {
+function createEventRow(emoji, text, iconPath = null) {
+    const iconElement = emoji
+        ? `<span>${emoji}</span>` // Use emoji if available
+        : `<img src="${iconPath}" alt="Icon" style="max-width: 15px; max-height: 15px; object-fit: contain;">`; // Use iconPath if emoji is null
+
     return `
         <tr>
-            <td style="text-align: center; width: 20px; vertical-align: top;">${emoji}</td>
+            <td style="text-align: center; width: 20px; vertical-align: top;">${iconElement}</td>
             <td style="vertical-align: top;">${text}</td>
         </tr>
     `;
