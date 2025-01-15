@@ -332,6 +332,12 @@ function displayEvents(events) {
     };
 
     events.forEach(event => {
+        // Check if the task has been published for that event
+        let taskPublished = true;
+        if (event.EntrySeqID != 0) {
+            taskPublished = false;
+        }
+
         // Ensure the date is parsed correctly as UTC
         const eventDate = new Date(event.EventDate.replace(' ', 'T') + 'Z');
 
@@ -362,10 +368,7 @@ function displayEvents(events) {
         if (event.VoiceChannel) {
             rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
         }
-        if (event.RecommendedGliders) {
-            rows.push(createEventRow("✈️", `<strong>Glider type:</strong> ${event.RecommendedGliders}<p>`));
-        }
-        if (event.SimDateTime) {
+        if (taskPublished && event.SimDateTime) {
             // Use the raw SimDateTime without timezone transformation
             const simDateTime = new Date(event.SimDateTime);
 
@@ -385,11 +388,17 @@ function displayEvents(events) {
             // Push the row with the formatted date and extra info
             rows.push(createEventRow("⌚", `<strong>Sim date/time:</strong> ${simDateFormatted}${extraInfo}<p>`));
         }
+        if (event.RecommendedGliders) {
+            rows.push(createEventRow("✈️", `<strong>Glider type:</strong> ${event.RecommendedGliders}<p>`));
+        }
         if (event.SoaringRidge || event.SoaringThermals || event.SoaringWaves || event.SoaringDynamic) {
             rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)} ${TB.addDetailWithinBrackets(event.SoaringExtraInfo)}<p>`));
         }
         if (event.DurationMin || event.DurationMax) {
             rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)} ${TB.addDetailWithinBrackets(event.DurationExtraInfo)}<p>`));
+        }
+        if (taskPublished && event.Notam) {
+            rows.push(createEventRow("⚠️", `${event.Notam}<p>`));
         }
 
         rows.push(createEventRow(
@@ -452,7 +461,7 @@ function displayEvents(events) {
 
         taskButton = "";
         reviewTaskDetails = "";
-        if (event.EntrySeqID != 0) {
+        if (taskPublished) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
