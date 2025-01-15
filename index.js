@@ -368,6 +368,9 @@ function displayEvents(events) {
         if (event.VoiceChannel) {
             rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
         }
+        if (event.Credits) {
+            rows.push(createEventRow("📡", `<strong>Tracker Group:</strong> ${event.Credits}<p>`));
+        }
         if (taskPublished && event.SimDateTime) {
             // Use the raw SimDateTime without timezone transformation
             const simDateTime = new Date(event.SimDateTime);
