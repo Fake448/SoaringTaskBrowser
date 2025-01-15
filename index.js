@@ -522,6 +522,9 @@ function displayEvents(events) {
         if (event.UseEventSyncFly && event.SyncFlyDateTime) {
             countdowns.push({ name: 'Sync Fly', targetDateTime: event.SyncFlyDateTime });
         }
+        if (event.UseEventLaunch && event.EventLaunchDateTime) {
+            countdowns.push({ name: 'Launch', targetDateTime: event.EventLaunchDateTime });
+        }
         if (event.UseEventStartTask && event.EventStartTaskDateTime) {
             countdowns.push({ name: 'Task Start', targetDateTime: event.EventStartTaskDateTime });
         }
