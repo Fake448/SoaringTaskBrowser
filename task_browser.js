@@ -1524,16 +1524,18 @@ class TaskBrowser {
             const port = tb.userSettings?.TrackerlocalPort || 55055;
             const baseUrl = `http://localhost:${port}/settask`;
 
-            // Extract just the filename with extension from a full path
+            // Extract just the filename without the extension from a full path
             const extractFilename = (filePath) => {
-                return filePath.split(/(\\|\/)/g).pop(); // Handles both Windows and Unix-style paths
+                const fullFilename = filePath.split(/(\\|\/)/g).pop(); // Get the filename with extension
+                const filenameWithoutExtension = fullFilename.split('.').slice(0, -1).join('.'); // Remove the extension
+                return filenameWithoutExtension;
             };
 
             // Declare placeholders for task details
-            let WPRFilename = "";
-            let WPRContent = "";
             let PLNFilename = "";
             let PLNContent = "";
+            let WPRFilename = "";
+            let WPRContent = "";
 
             // If EntrySeqID is not 0, fetch task details
             if (entrySeqID !== 0) {
@@ -1544,33 +1546,37 @@ class TaskBrowser {
                 }
 
                 // Populate task details
-                WPRFilename = extractFilename(taskDetails.WPRFilename) || "";
-                WPRContent = taskDetails.WPRXML || "";
                 PLNFilename = extractFilename(taskDetails.PLNFilename) || "";
                 PLNContent = taskDetails.PLNXML || "";
+                WPRFilename = extractFilename(taskDetails.WPRFilename) || "";
+                WPRContent = taskDetails.WPRXML || "";
             }
 
-            // Build the query string payload
-            const params = new URLSearchParams({
-                GroupName: group,
-                WPRFilename: WPRFilename,
-                WPRContent: WPRContent,
-                PLNFilename: PLNFilename,
-                PLNContent: PLNContent,
-                URLInfo: URLInfo || ""
+            // Build the payload as JSON
+            const payload = {
+                CMD: "SET",
+                GN: group,
+                TASK: PLNFilename,
+                TASKDATA: PLNContent,
+                WEATHER: WPRFilename,
+                WEATHERDATA: WPRContent,
+                TASKINFO: URLInfo
+            };
+
+            // Make the POST request
+            const response = await fetch(baseUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(payload), // Send JSON payload
             });
-
-            const urlWithParams = `${baseUrl}?${params.toString()}`;
-
-            // Make the GET request
-            const response = await fetch(urlWithParams);
 
             if (!response.ok) {
                 throw new Error(`Failed to call SSC Tracker: ${response.statusText}`);
             }
 
-            const data = await response.json();
-            console.log('SSC Tracker set successfully:', data);
+            console.log('SSC Tracker set successfully!');
         } catch (error) {
             alert("Unable to set tracker. Maybe the app is not running?");
             console.error('Error setting SSC Tracker:', error);
