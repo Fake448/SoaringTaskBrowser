@@ -47,7 +47,6 @@ try {
 
         // Fetch task details only if EntrySeqID exists
         if ($entry['EntrySeqID']) {
-            logMessage("Fetching task details for EntrySeqID: " . $entry['EntrySeqID']);
             $stmtTask = $pdoTasks->prepare("
                 SELECT 
                     SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, SimDateTimeExtraInfo, RecommendedGliders
