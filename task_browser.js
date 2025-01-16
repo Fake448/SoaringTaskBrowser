@@ -1563,20 +1563,34 @@ class TaskBrowser {
                 TASKINFO: URLInfo
             };
 
-            // Make the POST request
-            const response = await fetch(baseUrl, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload), // Send JSON payload
-            });
+            // Function to perform a single POST request
+            const makeRequest = async () => {
+                const response = await fetch(baseUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload), // Send JSON payload
+                });
 
-            if (!response.ok) {
-                throw new Error(`Failed to call SSC Tracker: ${response.statusText}`);
-            }
+                if (!response.ok) {
+                    throw new Error(`Failed to call SSC Tracker: ${response.statusText}`);
+                }
+            };
 
-            console.log('SSC Tracker set successfully!');
+            // Function to create a delay
+            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+            // Perform the first call
+            await makeRequest();
+            console.log('First SSC Tracker call successful.');
+
+            // Add a 5-second delay
+            await delay(5000);
+
+            // Perform the second call only if the first call succeeds
+            await makeRequest();
+            console.log('Second SSC Tracker call successful.');
         } catch (error) {
             alert("Unable to set tracker. Maybe the app is not running?");
             console.error('Error setting SSC Tracker:', error);
