@@ -1451,7 +1451,7 @@ class TaskBrowser {
             });
     }
 
-    downloadDPHXFile(url, filename) {
+    downloadDPHXFile(url, filename, source = "map") {
         let tb = this;
 
         // Increment download count
@@ -1459,7 +1459,7 @@ class TaskBrowser {
 
         // Attempt to call the local web server first
         const port = tb.userSettings?.DPHXlocalPort || 54513;
-        const localUrl = `http://localhost:${port}/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}`;
+        const localUrl = `http://localhost:${port}/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}&source=${source}`;
         fetch(localUrl)
             .then(() => {
                 console.log("Local server call successful");
