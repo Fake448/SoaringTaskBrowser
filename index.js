@@ -442,7 +442,7 @@ function displayEvents(events) {
         if (event.EligibleAward && event.EligibleAward != 'None') {
             rows.push(createEventRow(
                 "🏅",
-                `${event.EligibleAward}.<p>`)
+                `Pilots who finish this task successfully during the event will be eligible to apply for the ${event.EligibleAward} soaring badge.<p>`)
             );
         }
 
