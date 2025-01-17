@@ -470,7 +470,7 @@ function displayEvents(events) {
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
 
-            dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile(${event.TaskID}, ${event.EntrySeqID}, '${event.Title}','map')" title="Download DPHX file">
+            dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile(${event.TaskID}, ${event.EntrySeqID}, '${event.TaskTitle}','event')" title="Download DPHX file">
                 <img src="images/DPHXFile.png" alt="DPHX File" style="height: 20px; vertical-align: middle;">
             </button>`;
             reviewTaskDetails = 'Review task details and map before briefing!';
