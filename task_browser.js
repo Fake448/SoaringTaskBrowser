@@ -1451,7 +1451,7 @@ class TaskBrowser {
             });
     }
 
-    downloadDPHXFile(TaskID, EntrySeqID, Title, source = "map") {
+    downloadDPHXFile(theTaskID, EntrySeqID, Title, source = "map") {
         let tb = this;
 
         // Increment download count
@@ -1459,7 +1459,7 @@ class TaskBrowser {
 
         // Attempt to call the local web server first
         const port = tb.userSettings?.DPHXlocalPort || 54513;
-        const localUrl = `http://localhost:${port}/?taskID=${TaskID}&title=${encodeURIComponent(Title)}&source=${source}`;
+        const localUrl = `http://localhost:${port}/?taskID=${theTaskID}&title=${encodeURIComponent(Title)}&source=${source}`;
         fetch(localUrl)
             .then(() => {
                 console.log("Local server call successful");
@@ -1471,7 +1471,7 @@ class TaskBrowser {
                 console.warn("Could not contact local app (check same port on both sides?): ", err);
 
                 // Now do the normal file download
-                const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${TaskID}.dphx`;
+                const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${theTaskID}.dphx`;
                 fetch(url)
                     .then(response => response.blob())
                     .then(blob => {
@@ -1479,7 +1479,7 @@ class TaskBrowser {
                         const a = document.createElement('a');
                         a.style.display = 'none';
                         a.href = fileUrl;
-                        a.download = '${Title}.dphx';
+                        a.download = `${Title}.dphx`;
                         document.body.appendChild(a);
                         a.click();
                         window.URL.revokeObjectURL(fileUrl);
