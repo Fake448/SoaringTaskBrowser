@@ -49,7 +49,7 @@ try {
         if ($entry['EntrySeqID']) {
             $stmtTask = $pdoTasks->prepare("
                 SELECT 
-                    SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, SimDateTimeExtraInfo, RecommendedGliders
+                    TaskID, Title as TaskTitle, SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, SimDateTimeExtraInfo, RecommendedGliders
                 FROM Tasks 
                 WHERE EntrySeqID = :entrySeqID
             ");

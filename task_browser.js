@@ -785,7 +785,7 @@ class TaskBrowser {
         let filesContent = `
             <p><strong>Option 1:</strong> Download the single package DPHX file for use with the <a href="https://flightsim.to/file/62573/msfs-soaring-task-tools-dphx-unpack-load" target="_blank">DPHX Unpack & Load tool</a></p>
             <p>
-                <a href="#" onclick="TB.downloadDPHXFile('https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${task.TaskID}.dphx', '${task.Title}.dphx')">
+                <a href="#" onclick="TB.downloadDPHXFile(${task.TaskID}, ${task.EntrySeqID} '${task.Title}')">
                     <img src="images/DPHXFile.png" alt="DPHX File" class="file-icon" style="width: 40px; height: 40px;">
                     ${task.Title}.dphx
                 </a>
@@ -1275,7 +1275,7 @@ class TaskBrowser {
         // Add event listener to the download DPHX file button
         const directDPHXDownloadButton = document.getElementById('directDPHXDownload');
         directDPHXDownloadButton.onclick = function () {
-            tb.downloadDPHXFile(`https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${task.TaskID}.dphx`, `${task.Title}.dphx`);
+            tb.downloadDPHXFile(task.TaskID, task.EntrySeqID, task.Title);
         };
 
         // Add event listener to the toggle task details button
@@ -1451,15 +1451,15 @@ class TaskBrowser {
             });
     }
 
-    downloadDPHXFile(url, filename, source = "map") {
+    downloadDPHXFile(TaskID, EntrySeqID, Title, source = "map") {
         let tb = this;
 
         // Increment download count
-        tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
+        tb.incrementDownloadCount(EntrySeqID);
 
         // Attempt to call the local web server first
         const port = tb.userSettings?.DPHXlocalPort || 54513;
-        const localUrl = `http://localhost:${port}/?taskID=${tb.currentTask.TaskID}&title=${encodeURIComponent(tb.currentTask.Title)}&source=${source}`;
+        const localUrl = `http://localhost:${port}/?taskID=${TaskID}&title=${encodeURIComponent(Title)}&source=${source}`;
         fetch(localUrl)
             .then(() => {
                 console.log("Local server call successful");
@@ -1471,6 +1471,7 @@ class TaskBrowser {
                 console.warn("Could not contact local app (check same port on both sides?): ", err);
 
                 // Now do the normal file download
+                const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${TaskID}.dphx`;
                 fetch(url)
                     .then(response => response.blob())
                     .then(blob => {
@@ -1478,7 +1479,7 @@ class TaskBrowser {
                         const a = document.createElement('a');
                         a.style.display = 'none';
                         a.href = fileUrl;
-                        a.download = filename;
+                        a.download = '${Title}.dphx';
                         document.body.appendChild(a);
                         a.click();
                         window.URL.revokeObjectURL(fileUrl);

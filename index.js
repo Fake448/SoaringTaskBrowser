@@ -463,10 +463,15 @@ function displayEvents(events) {
         `;
 
         taskButton = "";
+        dphxButton = "";
         reviewTaskDetails = "";
         if (taskPublished) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
+            </button>`;
+
+            dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile(${event.TaskID}, ${event.EntrySeqID}, '${event.Title}','map')" title="Download DPHX file">
+                <img src="images/DPHXFile.png" alt="DPHX File" style="height: 20px; vertical-align: middle;">
             </button>`;
             reviewTaskDetails = 'Review task details and map before briefing!';
         }
@@ -514,6 +519,7 @@ function displayEvents(events) {
             <p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>
             ${taskButton}
             ${shareButton}
+            ${dphxButton}
             ${trackerButton}
         `;
 
