@@ -1963,7 +1963,7 @@ class TaskBrowser {
             tb.setJsonCookie('userSettings', settings, 300);
             tb.userSettings = settings;
         }
-    },
+    }
 
     validatePort(inputId, defaultValue) {
         const inputElement = document.getElementById(inputId);
