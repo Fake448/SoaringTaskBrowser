@@ -1278,6 +1278,12 @@ class TaskBrowser {
             tb.downloadDPHXFile(task.TaskID, task.EntrySeqID, task.Title);
         };
 
+        // Add event listener to the send task to tracker button
+        const sendTaskToTrackerButton = document.getElementById('sendTaskToTracker');
+        sendTaskToTrackerButton.onclick = function () {
+            tb.setSSCTracker("", task.EntrySeqID, `discord://discord.com/channels/1022705603489042472/${task.TaskID}`);
+        };
+
         // Add event listener to the toggle task details button
         const toggleTaskDetailsPanelButton = document.getElementById('toggleTaskDetailsPanel');
         toggleTaskDetailsPanelButton.onclick = function () {
