@@ -1885,7 +1885,8 @@ class TaskBrowser {
             windSpeed: 'knots',
             pressure: 'inHg',
             temperature: 'fahrenheit',
-            DPHXlocalPort: 54513
+            DPHXlocalPort: 54513,
+            TrackerlocalPort: 55055,
         };
 
         // Merge default settings with saved settings
@@ -1905,11 +1906,20 @@ class TaskBrowser {
         if (DPHXlocalPortInput) {
             DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
         }
+        const TrackerlocalPortInput = document.getElementById('TrackerlocalPort');
+        if (TrackerlocalPortInput) {
+            TrackerlocalPortInput.value = mergedSettings.TrackerlocalPort;
+        }
         tb.ApplyingSettings = false;
 
         // Add event listener so that changes trigger a save
         if (DPHXlocalPortInput) {
             DPHXlocalPortInput.addEventListener('change', () => {
+                tb.saveUserSettings();  // We’ll validate & then save
+            });
+        }
+        if (TrackerlocalPortInput) {
+            TrackerlocalPortInput.addEventListener('change', () => {
                 tb.saveUserSettings();  // We’ll validate & then save
             });
         }
@@ -1926,6 +1936,7 @@ class TaskBrowser {
 
     saveUserSettings() {
         const tb = this;
+
         if (!tb.ApplyingSettings) {
             const settings = {
                 uiTheme: document.querySelector('input[name="uiTheme"]:checked').value,
@@ -1937,29 +1948,41 @@ class TaskBrowser {
                 pressure: document.querySelector('input[name="pressure"]:checked').value,
                 temperature: document.querySelector('input[name="temperature"]:checked').value
             };
-            // Read the DPHXlocalPort field
-            const localPortInput = document.getElementById('DPHXlocalPort');
-            const portError = document.getElementById('portError');
 
-            let portValue = parseInt(localPortInput.value, 10);
+            // Validate and assign ports
+            settings.DPHXlocalPort = this.validatePort(
+                'DPHXlocalPort',
+                tb.userSettings.DPHXlocalPort || 54513
+            );
+            settings.TrackerlocalPort = this.validatePort(
+                'TrackerlocalPort',
+                tb.userSettings.TrackerlocalPort || 55055
+            );
 
-            // Validate the port
-            if (Number.isNaN(portValue) || portValue < 1 || portValue > 65535) {
-                // Show error
-                portError.style.display = 'block';
-                portError.textContent = "Invalid port. Must be 1-65535.";
-                // Revert to previous or default
-                portValue = tb.userSettings.DPHXlocalPort || 54513;
-                localPortInput.value = portValue;
-            } else {
-                portError.style.display = 'none';
-            }
-
-            settings.DPHXlocalPort = portValue;
-
+            // Save settings to cookies and update the local state
             tb.setJsonCookie('userSettings', settings, 300);
             tb.userSettings = settings;
         }
+    },
+
+    validatePort(inputId, defaultValue) {
+        const inputElement = document.getElementById(inputId);
+        const errorElement = inputElement.nextElementSibling; // Assuming the error element is the next sibling
+        let portValue = parseInt(inputElement.value, 10);
+
+        // Validate the port number
+        if (Number.isNaN(portValue) || portValue < 1 || portValue > 65535) {
+            // Show error message
+            errorElement.style.display = 'block';
+            errorElement.textContent = "Invalid port. Must be 1-65535.";
+            // Revert to default
+            portValue = defaultValue;
+            inputElement.value = portValue;
+        } else {
+            errorElement.style.display = 'none';
+        }
+
+        return portValue;
     }
 
     hideTaskDetailsPanel() {
