@@ -1579,19 +1579,10 @@ class TaskBrowser {
                 }
             };
 
-            // Function to create a delay
-            const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-            // Perform the first call
+            // Perform the call
             await makeRequest();
-            console.log('First SSC Tracker call successful.');
+            console.log('SSC Tracker call successful.');
 
-            // Add a 5-second delay
-            await delay(5000);
-
-            // Perform the second call only if the first call succeeds
-            await makeRequest();
-            console.log('Second SSC Tracker call successful.');
         } catch (error) {
             alert("Unable to set tracker. Maybe the app is not running?");
             console.error('Error setting SSC Tracker:', error);
