@@ -668,6 +668,7 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
         if (task.error) {
             console.error('Error retrieving task details:', task.error);
             alert('Error: ' + task.error);
+            window.close();
             return;
         }
 
@@ -681,10 +682,12 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
         } else {
             console.error('Invalid file type:', fileType);
             alert('Invalid file type requested.');
+            window.close();
         }
     } catch (err) {
         console.error('Error handling file request:', err);
         alert('Failed to retrieve file. Please try again.');
+        window.close();
     }
 }
 
