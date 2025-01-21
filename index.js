@@ -657,7 +657,11 @@ function handleParams(params) {
     } else {
         TB.switchTab('homeTab');
     }
+}
 
+function handleGetDPHXParam(taskID) {
+    // Call TB.downloadDPHXFile with fake parameters
+    TB.downloadDPHXFile(taskID, null, 'Test', 'discord');
 }
 
 function createCountdownSection(countdowns) {

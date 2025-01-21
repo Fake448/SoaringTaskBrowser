@@ -1488,6 +1488,9 @@ class TaskBrowser {
                 console.log("Local server call successful");
                 // If successful, we do NOT download the file from the server 
                 alert("Download successful! The DPHX file should now be opened in your local application.");
+                if (source == "discord") {
+                    window.close();
+                }
             })
             .catch(err => {
                 // Local call failed, so we do a normal file download as fallback
@@ -1507,6 +1510,12 @@ class TaskBrowser {
                         a.click();
                         window.URL.revokeObjectURL(fileUrl);
                         document.body.removeChild(a);
+                        if (source == "discord") {
+                            setTimeout(() => {
+                                alert("Download was started! Click to close.");
+                                window.close();
+                            }, 3000); // Delay to allow the browser's download prompt to appear
+                        }
                     })
                     .catch(err2 => console.error("Error downloading file as fallback:", err2));
             });
