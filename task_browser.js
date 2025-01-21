@@ -785,7 +785,7 @@ class TaskBrowser {
         let filesContent = `
             <p><strong>Option 1:</strong> Download the single package DPHX file for use with the <a href="https://flightsim.to/file/62573/msfs-soaring-task-tools-dphx-unpack-load" target="_blank">DPHX Unpack & Load tool</a></p>
             <p>
-                <a href="#" onclick="TB.downloadDPHXFile(${task.TaskID}, ${task.EntrySeqID}, '${task.Title}')">
+                <a href="#" onclick="TB.downloadDPHXFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
                     <img src="images/DPHXFile.png" alt="DPHX File" class="file-icon" style="width: 40px; height: 40px;">
                     ${task.Title}.dphx
                 </a>
