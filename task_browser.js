@@ -1414,6 +1414,18 @@ class TaskBrowser {
             .catch(err => console.error('Error incrementing download count:', err));
     }
 
+    incrementDownloadCountUsingTaskID(taskID) {
+        // Call the PHP script to increment the download count
+        fetch(`php/IncrementDownloadForTask.php?TaskID=${taskID}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status !== 'success') {
+                    console.error('Error incrementing download count:', data.message);
+                }
+            })
+            .catch(err => console.error('Error incrementing download count:', err));
+    }
+
     downloadExtraFile(filename) {
         const taskID = this.currentTask.TaskID;
         const url = `php/DownloadExtraFile.php`;
@@ -1461,7 +1473,12 @@ class TaskBrowser {
         let tb = this;
 
         // Increment download count
-        tb.incrementDownloadCount(EntrySeqID);
+        if (source == "discord") {
+            tb.incrementDownloadCountUsingTaskID(theTaskID);
+        }
+        else {
+            tb.incrementDownloadCount(EntrySeqID);
+        }
 
         // Attempt to call the local web server first
         const port = tb.userSettings?.DPHXlocalPort || 54513;
