@@ -615,6 +615,10 @@ function getUrlParams() {
 }
 
 function handleParams(params) {
+    if (params.getdphx) {
+        handleGetDPHXParam(params.getdphx); // Call the handler
+        return; // Exit as we're done
+    }
     if (params.task) {
         TB.switchTab('mapTab');
         TB.tbm.selectTaskFromURL(params.task); // Ensure task details are fetched
