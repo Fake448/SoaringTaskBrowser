@@ -667,7 +667,7 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
 
         if (task.error) {
             console.error('Error retrieving task details:', task.error);
-            alert('Error: ' + task.error);
+            alert(`Error: ${task.error}. Task ID: ${entrySeqID}`);
             window.close();
             return;
         }
@@ -680,13 +680,13 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
         } else if (fileType === "wpr") {
             TB.downloadWPRFile(task, "discord"); // Pass task object to downloadWPRFile
         } else {
-            console.error('Invalid file type:', fileType);
-            alert('Invalid file type requested.');
+            console.error(`Invalid file type requested: ${fileType}`);
+            alert(`Invalid file type requested: ${fileType}.`);
             window.close();
         }
     } catch (err) {
         console.error('Error handling file request:', err);
-        alert('Failed to retrieve file. Please try again.');
+        alert(`Failed to retrieve file. Error: ${err.message || err}. Task ID: ${entrySeqID}`);
         window.close();
     }
 }
