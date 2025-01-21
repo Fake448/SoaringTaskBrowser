@@ -1473,12 +1473,7 @@ class TaskBrowser {
         let tb = this;
 
         // Increment download count
-        if (source == "discord") {
-            tb.incrementDownloadCountUsingTaskID(theTaskID);
-        }
-        else {
-            tb.incrementDownloadCount(EntrySeqID);
-        }
+        tb.incrementDownloadCount(EntrySeqID);
 
         // Attempt to call the local web server first
         const port = tb.userSettings?.DPHXlocalPort || 54513;
