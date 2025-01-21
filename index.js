@@ -615,9 +615,9 @@ function getUrlParams() {
 }
 
 function handleParams(params) {
-    if (params.getdphx) {
-        handleGetDPHXParam(params.getdphx); // Call the handler
-        return; // Exit as we're done
+    if (params.getFileFromDiscord && params.entrySeqID) {
+        handleGetFileFromDiscord(params.getFileFromDiscord, params.entrySeqID); // Handle Discord request
+        return; // Exit after processing
     }
     if (params.task) {
         TB.switchTab('mapTab');
@@ -659,9 +659,33 @@ function handleParams(params) {
     }
 }
 
-function handleGetDPHXParam(taskID) {
-    // Call TB.downloadDPHXFile with fake parameters
-    TB.downloadDPHXFile(taskID, null, 'Test', 'discord');
+async function handleGetFileFromDiscord(fileType, entrySeqID) {
+    try {
+        // Fetch task details from the server
+        const response = await fetch(`php/GetTaskDetailsDiscord.php?entrySeqID=${entrySeqID}`);
+        const task = await response.json();
+
+        if (task.error) {
+            console.error('Error retrieving task details:', task.error);
+            alert('Error: ' + task.error);
+            return;
+        }
+
+        // Determine which file to download
+        if (fileType === "dphx") {
+            TB.downloadDPHXFile(task.TaskID, entrySeqID, task.Title, "discord");
+        } else if (fileType === "pln") {
+            TB.downloadPLNFile(task, "discord"); // Pass task object to downloadPLNFile
+        } else if (fileType === "wpr") {
+            TB.downloadWPRFile(task, "discord"); // Pass task object to downloadWPRFile
+        } else {
+            console.error('Invalid file type:', fileType);
+            alert('Invalid file type requested.');
+        }
+    } catch (err) {
+        console.error('Error handling file request:', err);
+        alert('Failed to retrieve file. Please try again.');
+    }
 }
 
 function createCountdownSection(countdowns) {

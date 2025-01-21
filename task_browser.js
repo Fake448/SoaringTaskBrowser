@@ -1521,7 +1521,7 @@ class TaskBrowser {
             });
     }
 
-    downloadTextFile(content, filename) {
+    downloadTextFile(content, filename, source = "map") {
         const blob = new Blob([content], { type: 'text/xml' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
@@ -1529,24 +1529,34 @@ class TaskBrowser {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+        if (source == "discord") {
+            setTimeout(() => {
+                alert("Download was started! Click to close.");
+                window.close();
+            }, 3000); // Delay to allow the browser's download prompt to appear
+        }
     }
 
     getFileNameFromPath(filePath) {
         return filePath.split('\\').pop().split('/').pop();
     }
 
-    downloadPLNFile() {
+    downloadPLNFile(task = null, source = "map") {
         let tb = this;
+        const taskToUse = task || tb.currentTask;
+
         // Increment download count
-        tb.incrementDownloadCount(tb.currentTask.EntrySeqID);
-        const fileName = tb.getFileNameFromPath(tb.currentTask.PLNFilename);
-        tb.downloadTextFile(tb.currentTask.PLNXML, fileName);
+        tb.incrementDownloadCount(taskToUse.EntrySeqID);
+        const fileName = tb.getFileNameFromPath(taskToUse.PLNFilename);
+        tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
     }
 
-    downloadWPRFile() {
+    downloadWPRFile(task = null, source = "map") {
         let tb = this;
-        const fileName = tb.getFileNameFromPath(tb.currentTask.WPRFilename);
-        tb.downloadTextFile(tb.currentTask.WPRXML, fileName);
+        const taskToUse = task || tb.currentTask;
+
+        const fileName = tb.getFileNameFromPath(taskToUse.WPRFilename);
+        tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
     }
 
     async setSSCTracker(group, entrySeqID, URLInfo) {
