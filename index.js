@@ -679,6 +679,8 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
             TB.downloadPLNFile(task, "discord"); // Pass task object to downloadPLNFile
         } else if (fileType === "wpr") {
             TB.downloadWPRFile(task, "discord"); // Pass task object to downloadWPRFile
+        } else if (fileType === "zip") {
+            TB.downloadZIPFile(task.TaskID, entrySeqID, task.Title, "discord"); 
         } else {
             console.error(`Invalid file type requested: ${fileType}`);
             alert(`Invalid file type requested: ${fileType}.`);

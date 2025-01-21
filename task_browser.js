@@ -803,6 +803,13 @@ class TaskBrowser {
                     Weather file (WPR): ${tb.getFileNameFromPath(tb.currentTask.WPRFilename)}
                 </a>
             </p>
+            <p><strong>Option 3:</strong> Download all files (including extras) as ZIP file</strong></p>
+            <p>
+                <a href="#" onclick="TB.downloadZIPFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
+                    <img src="images/ZIPFile.png" alt="ZIP File" class="file-icon">
+                    ${task.Title}.zip
+                </a>
+            </p>
             <p>Current downloads (PLN or DPHX): ${task.TotDownloads}</p>`;
         tb.generateCollapsibleSection("📁 Files", filesContent, taskDetailContainer);
     }
@@ -1466,6 +1473,51 @@ class TaskBrowser {
             .catch((error) => {
                 console.error("Error downloading the extra file:", error);
                 alert("An error occurred while downloading the file.");
+            });
+    }
+
+    downloadZIPFile(theTaskID, EntrySeqID, Title, source = "map") {
+        let tb = this;
+
+        // Increment download count
+        tb.incrementDownloadCount(EntrySeqID);
+
+        // Construct the file download URL
+        const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${theTaskID}.dphx`;
+
+        // Fetch the file and handle the download
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch file. HTTP status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create a temporary link and trigger the download
+                const fileUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = fileUrl;
+                a.download = `${Title}.zip`; // Rename the downloaded file to a .zip file
+                document.body.appendChild(a);
+                a.click();
+
+                // Clean up the temporary URL and element
+                window.URL.revokeObjectURL(fileUrl);
+                document.body.removeChild(a);
+
+                // Handle Discord-specific behavior
+                if (source === "discord") {
+                    setTimeout(() => {
+                        alert("Download was started! Click to close.");
+                        window.close();
+                    }, 3000); // Allow time for the browser to display the download prompt
+                }
+            })
+            .catch(err => {
+                console.error("Error downloading ZIP file:", err);
+                alert("Failed to download the ZIP file. Please try again later.");
             });
     }
 
