@@ -4,6 +4,7 @@ class TaskBrowser {
     constructor() {
         let tb = this;
         let shouldHandlePopState = true;
+        let fromURL = false;
     }
 
     init() {
@@ -128,6 +129,28 @@ class TaskBrowser {
             taskCountSlider.value = value;
             taskCountInput.value = value;
         });
+    }
+
+    expandAllCollapsibleSections() {
+        // Get the taskDetailContainer element
+        const taskDetailContainer = document.getElementById("taskDetailContainer");
+
+        if (taskDetailContainer) {
+            // Find all elements with the "collapsible" class inside taskDetailContainer
+            const collapsibleSections = taskDetailContainer.querySelectorAll(".collapsible");
+
+            // Iterate over each collapsible section and expand them
+            collapsibleSections.forEach(section => {
+                // Remove the "collapsed" class to expand
+                section.classList.remove("collapsed");
+
+                // Optionally ensure it's visible (depends on implementation)
+                section.style.display = "block";
+            });
+
+        } else {
+            console.error("taskDetailContainer not found.");
+        }
     }
 
     // Function to add date range picker with quick select dropdown as a collapsible section
@@ -1303,6 +1326,10 @@ class TaskBrowser {
                 tb.hideTaskDetailsPanel();
             }
         };
+
+        if (tb.fromURL) {
+            this.expandAllCollapsibleSections();
+        }
 
     }
 

@@ -491,8 +491,8 @@ class TaskBrowserMap {
         tbm.tb.getTaskDetails(entrySeqIDNbr, true); // Display task details on the right panel
 
         // 5. Call the selectTaskCommon to perform the common actions
+        tbm.tb.fromURL = true;
         tbm.selectTaskCommon(entrySeqIDNbr, true);
-
 
     }
 
@@ -500,6 +500,7 @@ class TaskBrowserMap {
     selectTaskFromClick(entrySeqID, forceZoomToTask = false) {
 
         let tbm = this;
+        tbm.tb.fromURL = false;
         console.log("selectTaskFromClick()", entrySeqID);
 
         // 1. Call the selectTaskCommon to perform the common actions
@@ -519,6 +520,7 @@ class TaskBrowserMap {
     selectTaskFromDPHXApp(entrySeqID, forceZoomToTask = false) {
 
         let tbm = this;
+        tbm.tb.fromURL = false;
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromDPHXApp()", entrySeqIDNbr);
 
