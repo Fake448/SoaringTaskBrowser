@@ -9,7 +9,20 @@ class TaskBrowser {
 
     init() {
         let tb = this;
+
+        // Automatically detect the mode based on the current path
+        const currentPath = window.location.pathname;
+        const isDownloadPage = currentPath.includes("download.html");
+
+        if (isDownloadPage) {
+            // Light initialization for download purposes
+            console.log("Initializing TaskBrowser in light mode for download page.");
+            tb.userSettings = tb.loadUserSettings();
+            return;
+        }
+
         tb.countryCodes = {};
+
         tb.md = window.markdownit({
             html: false,
             breaks: true,
