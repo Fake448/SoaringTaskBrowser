@@ -5,6 +5,7 @@ class TaskBrowser {
         let tb = this;
         let shouldHandlePopState = true;
         let fromURL = false;
+        tb.isDownloadPage = false;
     }
 
     init() {
@@ -12,9 +13,9 @@ class TaskBrowser {
 
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
-        const isDownloadPage = currentPath.includes("download.html");
+        tb.isDownloadPage = currentPath.includes("download.html");
 
-        if (isDownloadPage) {
+        if (tb.isDownloadPage) {
             // Light initialization for download purposes
             console.log("Initializing TaskBrowser in light mode for download page.");
             tb.userSettings = tb.loadUserSettings();
@@ -1550,7 +1551,7 @@ class TaskBrowser {
                 // Handle Discord-specific behavior
                 if (source === "discord") {
                     setTimeout(() => {
-                        alert("Download was started! Click to close.");
+                        //alert("Download was started! Click to close.");
                         window.close();
                     }, 3000); // Allow time for the browser to display the download prompt
                 }
@@ -1599,7 +1600,7 @@ class TaskBrowser {
                         document.body.removeChild(a);
                         if (source == "discord") {
                             setTimeout(() => {
-                                alert("Download was started! Click to close.");
+                                //alert("Download was started! Click to close.");
                                 window.close();
                             }, 3000); // Delay to allow the browser's download prompt to appear
                         }
@@ -1618,7 +1619,7 @@ class TaskBrowser {
         document.body.removeChild(link);
         if (source == "discord") {
             setTimeout(() => {
-                alert("Download was started! Click to close.");
+                //alert("Download was started! Click to close.");
                 window.close();
             }, 3000); // Delay to allow the browser's download prompt to appear
         }
@@ -2015,44 +2016,47 @@ class TaskBrowser {
         // Merge default settings with saved settings
         const mergedSettings = { ...defaultSettings, ...settings };
 
-        // Set the radio buttons based on the settings
-        tb.ApplyingSettings = true;
-        document.querySelector(`input[name="uiTheme"][value="${mergedSettings.uiTheme}"]`).checked = true;
-        document.querySelector(`input[name="timeFormat"][value="${mergedSettings.timeFormat}"]`).checked = true;
-        document.querySelector(`input[name="altitude"][value="${mergedSettings.altitude}"]`).checked = true;
-        document.querySelector(`input[name="distance"][value="${mergedSettings.distance}"]`).checked = true;
-        document.querySelector(`input[name="gateMeasurement"][value="${mergedSettings.gateMeasurement}"]`).checked = true;
-        document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
-        document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
-        document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
-        const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
-        if (DPHXlocalPortInput) {
-            DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
-        }
-        const TrackerlocalPortInput = document.getElementById('TrackerlocalPort');
-        if (TrackerlocalPortInput) {
-            TrackerlocalPortInput.value = mergedSettings.TrackerlocalPort;
-        }
-        tb.ApplyingSettings = false;
+        if (!tb.isDownloadPage) {
+            // Set the radio buttons based on the settings
+            tb.ApplyingSettings = true;
+            document.querySelector(`input[name="uiTheme"][value="${mergedSettings.uiTheme}"]`).checked = true;
+            document.querySelector(`input[name="timeFormat"][value="${mergedSettings.timeFormat}"]`).checked = true;
+            document.querySelector(`input[name="altitude"][value="${mergedSettings.altitude}"]`).checked = true;
+            document.querySelector(`input[name="distance"][value="${mergedSettings.distance}"]`).checked = true;
+            document.querySelector(`input[name="gateMeasurement"][value="${mergedSettings.gateMeasurement}"]`).checked = true;
+            document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
+            document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
+            document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
+            const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
+            if (DPHXlocalPortInput) {
+                DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
+            }
+            const TrackerlocalPortInput = document.getElementById('TrackerlocalPort');
+            if (TrackerlocalPortInput) {
+                TrackerlocalPortInput.value = mergedSettings.TrackerlocalPort;
+            }
+            tb.ApplyingSettings = false;
 
-        // Add event listener so that changes trigger a save
-        if (DPHXlocalPortInput) {
-            DPHXlocalPortInput.addEventListener('change', () => {
-                tb.saveUserSettings();  // We’ll validate & then save
-            });
-        }
-        if (TrackerlocalPortInput) {
-            TrackerlocalPortInput.addEventListener('change', () => {
-                tb.saveUserSettings();  // We’ll validate & then save
-            });
-        }
+            // Add event listener so that changes trigger a save
+            if (DPHXlocalPortInput) {
+                DPHXlocalPortInput.addEventListener('change', () => {
+                    tb.saveUserSettings();  // We’ll validate & then save
+                });
+            }
+            if (TrackerlocalPortInput) {
+                TrackerlocalPortInput.addEventListener('change', () => {
+                    tb.saveUserSettings();  // We’ll validate & then save
+                });
+            }
 
-        // Attach change event listeners to save settings when any radio button is changed
-        document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
-            input.addEventListener('change', () => {
-                tb.saveUserSettings();
+            // Attach change event listeners to save settings when any radio button is changed
+            document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
+                input.addEventListener('change', () => {
+                    tb.saveUserSettings();
+                });
             });
-        });
+
+        }
 
         return mergedSettings;
     }

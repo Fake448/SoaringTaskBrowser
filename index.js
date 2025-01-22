@@ -10,11 +10,13 @@ const resizer = document.getElementById('resizer');
 const mapContainer = document.getElementById('map');
 const taskDetailContainer = document.getElementById('taskDetailContainer');
 
-resizer.addEventListener('mousedown', (e) => {
-    isResizing = true;
-    document.addEventListener('mousemove', resize);
-    document.addEventListener('mouseup', stopResize);
-});
+if (!TB.isDownloadPage) {
+    resizer.addEventListener('mousedown', (e) => {
+        isResizing = true;
+        document.addEventListener('mousemove', resize);
+        document.addEventListener('mouseup', stopResize);
+    });
+}
 
 function resize(e) {
     if (isResizing) {
@@ -680,7 +682,7 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
         } else if (fileType === "wpr") {
             TB.downloadWPRFile(task, "discord"); // Pass task object to downloadWPRFile
         } else if (fileType === "zip") {
-            TB.downloadZIPFile(task.TaskID, entrySeqID, task.Title, "discord"); 
+            TB.downloadZIPFile(task.TaskID, entrySeqID, task.Title, "discord");
         } else {
             console.error(`Invalid file type requested: ${fileType}`);
             alert(`Invalid file type requested: ${fileType}.`);
