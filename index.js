@@ -367,12 +367,6 @@ function displayEvents(events) {
         if (event.MSFSServer) {
             rows.push(createEventRow("🖧", `<strong>MSFS Server:</strong> ${event.MSFSServer}<p>`));
         }
-        if (event.VoiceChannel) {
-            rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
-        }
-        if (event.Credits) {
-            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.png"));
-        }
         if (taskPublished && event.SimDateTime) {
             // Use the raw SimDateTime without timezone transformation
             const simDateTime = new Date(event.SimDateTime);
@@ -410,6 +404,9 @@ function displayEvents(events) {
             "💼",
             `<strong>Meet/briefing time:</strong> ${localEventDate}<br>At this time we meet in the voice chat and get ready.<p>`)
         );
+        if (event.VoiceChannel) {
+            rows.push(createEventRow("🗣", `<strong>Voice:</strong> ${TB.convertToMarkdown(event.VoiceChannel, true)}<p>`));
+        }
 
         if (event.UseEventSyncFly == 1) {
             const syncFlyDate = event.SyncFlyDateTime ? new Date(event.SyncFlyDateTime.replace(' ', 'T') + 'Z') : null;
@@ -439,6 +436,10 @@ function displayEvents(events) {
                 "🟢",
                 `<strong>Task Start:</strong> ${eventStartTaskDateTime.toLocaleString(navigator.language, { hour: 'numeric', minute: 'numeric', hour12: TB.userSettings.timeFormat === 'usa' })} <br>At this time we cross the starting line and start the task.<p>`)
             );
+        }
+
+        if (event.Credits) {
+            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.png"));
         }
 
         if (event.EligibleAward && event.EligibleAward != 'None') {
