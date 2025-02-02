@@ -26,8 +26,11 @@ try {
     // Logging
     //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNoDuration: $includeNoDuration, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
 
-    // Base WHERE clause for date range
-    $whereClauses = ["LastUpdate BETWEEN :startDate AND :endDate"];
+    // Base WHERE clause for date range AND status = 99
+    $whereClauses = [
+        "LastUpdate BETWEEN :startDate AND :endDate",
+        "Status = 99"
+    ];
     $params = [
         ':startDate' => $startDate,
         ':endDate' => $endDate,
