@@ -7,6 +7,7 @@ $databasePath = $config['databasePath'];
 $newsDBPath = $config['newsDBPath'];
 $logFile = $config['logFile'];
 $userPermissionsPath = $config['userPermissionsPath'];
+$taskRepositoryPath = $config['repositoryPath'];
 
 // Function to log messages
 function logMessage($message) {

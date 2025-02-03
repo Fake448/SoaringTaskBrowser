@@ -9,7 +9,7 @@ if (!$taskID || !$filename) {
     die("Missing parameters.");
 }
 
-$repositoryUrl = "https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/$taskID.dphx";
+$repositoryUrl = "$taskRepositoryPath/$taskID.dphx";
 $tempDir = __DIR__ . '/DPHXTemp';
 $taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";

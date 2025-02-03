@@ -34,7 +34,7 @@ try {
         $dphxFilename = $taskID . '.dphx';
 
         // Define the URL to the DPHX file
-        $fileUrl = "https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/$dphxFilename";
+        $fileUrl = "$taskRepositoryPath/$dphxFilename";
 
         // Open the file URL
         $fileStream = @fopen($fileUrl, 'rb');
