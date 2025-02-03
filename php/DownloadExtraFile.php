@@ -13,7 +13,7 @@ $repositoryUrl = "$taskRepositoryPath/$taskID.dphx";
 $tempDir = __DIR__ . '/DPHXTemp';
 $taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";
-$repositoryUrlHTTPS = "$taskRepositoryPathHTTPS/$taskID.dphx"
+$repositoryUrlHTTPS = "$taskRepositoryPathHTTPS/$taskID.dphx";
 
 // Ensure the temp directory exists
 if (!file_exists($tempDir)) {
