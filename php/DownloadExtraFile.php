@@ -25,16 +25,12 @@ register_shutdown_function('cleanupOldTempFolders', $tempDir);
 
 // **Get last modified time of the remote file**
 $remoteLastModified = getRemoteFileLastModified($repositoryUrlHTTPS);
-logMessage("Remote Last-Modified for TaskID $taskID: " . ($remoteLastModified ? date("Y-m-d H:i:s", $remoteLastModified) : "Unavailable"));
 
 // **Get the creation/modification time of the local folder (if it exists)**
 $localLastModified = file_exists($taskFolder) ? filemtime($taskFolder) : 0;
-logMessage("Local Task Folder Last Modified: " . ($localLastModified ? date("Y-m-d H:i:s", $localLastModified) : "Folder does not exist"));
 
 // **If the folder does not exist OR the DPHX file was updated, delete the folder and refresh**
 if (!file_exists($taskFolder) || ($remoteLastModified > $localLastModified && $remoteLastModified > 0)) {
-    logMessage("Updating Task Folder for TaskID $taskID.");
-
     if (file_exists($taskFolder)) {
         deleteFolder($taskFolder);
     }
@@ -45,26 +41,22 @@ if (!file_exists($taskFolder) || ($remoteLastModified > $localLastModified && $r
     $dphxContent = @file_get_contents($repositoryUrl);
     if ($dphxContent === false) {
         http_response_code(404);
-        logMessage("Error: DPHX file not found in repository for TaskID $taskID. $repositoryUrl");
+        logMessage("Error: DPHX file not found in repository for TaskID $taskID.");
         die("DPHX file not found in repository.");
     }
 
     file_put_contents($dphxFile, $dphxContent);
-    logMessage("DPHX file downloaded successfully for TaskID $taskID.");
 
     // Extract the DPHX file
     $zip = new ZipArchive();
     if ($zip->open($dphxFile) === TRUE) {
         $zip->extractTo($taskFolder);
         $zip->close();
-        logMessage("DPHX file extracted successfully for TaskID $taskID.");
     } else {
         http_response_code(500);
         logMessage("Error: Failed to extract DPHX file for TaskID $taskID.");
         die("Failed to extract DPHX file.");
     }
-} else {
-    logMessage("No update required for TaskID $taskID.");
 }
 
 // Serve the requested file
@@ -90,7 +82,6 @@ if (file_exists($requestedFile)) {
     header('Pragma: public');
     header('Content-Length: ' . filesize($requestedFile));
     readfile($requestedFile);
-    logMessage("Served file: $requestedFile");
     exit;
 } else {
     http_response_code(404);
@@ -131,17 +122,13 @@ function getRemoteFileLastModified($url) {
     $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
     $curl_error = curl_error($ch);
-
     curl_close($ch);
 
-    // **Log what's happening**
-    logMessage("cURL Request to: $url");
-    logMessage("HTTP Response Code: $http_code");
-    logMessage("cURL Retrieved Headers: \n" . print_r($headers, true));
-    logMessage("Extracted Last-Modified: " . ($filetime !== -1 ? date("Y-m-d H:i:s", $filetime) : "Unavailable"));
-    logMessage("cURL Error (if any): $curl_error");
+    if ($http_code !== 200 || $filetime === -1) {
+        logMessage("Error: Unable to retrieve Last-Modified for $url. HTTP Code: $http_code. cURL Error: $curl_error.");
+        return 0;
+    }
 
-    return ($filetime !== -1) ? $filetime : 0;
+    return $filetime;
 }
-
 ?>
