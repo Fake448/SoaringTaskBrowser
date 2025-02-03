@@ -117,42 +117,27 @@ function deleteFolder($folder) {
 
 // Function to fetch the last modified timestamp of a remote file
 function getRemoteFileLastModified($url) {
-    $headers = [];
-    
     $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_NOBODY, true); // No body, only headers
+    curl_setopt($ch, CURLOPT_NOBODY, true); // Fetch headers only
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_FILETIME, true);
-    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (if needed)
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification if needed
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
 
-    // Capture headers
-    curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$headers) {
-        $len = strlen($header);
-        $header = explode(':', $header, 2);
-        if (count($header) == 2) {
-            $headers[strtolower(trim($header[0]))] = trim($header[1]);
-        }
-        return $len;
-    });
-
-    curl_exec($ch);
+    // Execute cURL request
+    $headers = curl_exec($ch);
     $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
     curl_close($ch);
 
-    logMessage("cURL Retrieved Headers for $url: " . print_r($headers, true));
+    // Log the headers and extracted timestamp
+    logMessage("HTTP Response Code: $http_code");
+    logMessage("cURL Retrieved Headers for $url:\n" . print_r($headers, true));
+    logMessage("Extracted Last-Modified for $url: " . ($filetime !== -1 ? date("Y-m-d H:i:s", $filetime) : "Unavailable"));
 
-    if ($filetime !== -1) {
-        logMessage("Extracted Last-Modified for $url: " . date("Y-m-d H:i:s", $filetime));
-        return $filetime;
-    } elseif (isset($headers['last-modified'])) {
-        $timestamp = strtotime($headers['last-modified']);
-        logMessage("Extracted Last-Modified from Headers for $url: " . date("Y-m-d H:i:s", $timestamp));
-        return $timestamp;
-    }
-
-    logMessage("No Last-Modified header found for $url.");
-    return 0;
+    return ($filetime !== -1) ? $filetime : 0;
 }
 
 ?>
