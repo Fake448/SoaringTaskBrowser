@@ -13,6 +13,13 @@ $repositoryUrl = "https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/$taskID.
 $tempDir = __DIR__ . '/DPHXTemp';
 $taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";
+$logFile = __DIR__ . '/dphx_log.txt';
+
+// **Log function**
+function logMessage($message) {
+    global $logFile;
+    file_put_contents($logFile, date("[Y-m-d H:i:s]") . " $message\n", FILE_APPEND);
+}
 
 // Ensure the temp directory exists
 if (!file_exists($tempDir)) {
@@ -24,36 +31,46 @@ register_shutdown_function('cleanupOldTempFolders', $tempDir);
 
 // **Get last modified time of the remote file**
 $remoteLastModified = getRemoteFileLastModified($repositoryUrl);
+logMessage("Remote Last-Modified for TaskID $taskID: " . ($remoteLastModified ? date("Y-m-d H:i:s", $remoteLastModified) : "Unavailable"));
 
 // **Get the creation/modification time of the local folder (if it exists)**
 $localLastModified = file_exists($taskFolder) ? filemtime($taskFolder) : 0;
+logMessage("Local Task Folder Last Modified: " . ($localLastModified ? date("Y-m-d H:i:s", $localLastModified) : "Folder does not exist"));
 
 // **If the folder does not exist OR the DPHX file was updated, delete the folder and refresh**
-if (!file_exists($taskFolder) || $remoteLastModified > $localLastModified) {
+if (!file_exists($taskFolder) || ($remoteLastModified > $localLastModified && $remoteLastModified > 0)) {
+    logMessage("Updating Task Folder for TaskID $taskID.");
+
     if (file_exists($taskFolder)) {
         deleteFolder($taskFolder);
     }
-    
+
     mkdir($taskFolder, 0755, true);
 
     // Download the DPHX file
     $dphxContent = @file_get_contents($repositoryUrl);
     if ($dphxContent === false) {
         http_response_code(404);
+        logMessage("Error: DPHX file not found in repository for TaskID $taskID.");
         die("DPHX file not found in repository.");
     }
 
     file_put_contents($dphxFile, $dphxContent);
+    logMessage("DPHX file downloaded successfully for TaskID $taskID.");
 
     // Extract the DPHX file
     $zip = new ZipArchive();
     if ($zip->open($dphxFile) === TRUE) {
         $zip->extractTo($taskFolder);
         $zip->close();
+        logMessage("DPHX file extracted successfully for TaskID $taskID.");
     } else {
         http_response_code(500);
+        logMessage("Error: Failed to extract DPHX file for TaskID $taskID.");
         die("Failed to extract DPHX file.");
     }
+} else {
+    logMessage("No update required for TaskID $taskID.");
 }
 
 // Serve the requested file
@@ -79,9 +96,11 @@ if (file_exists($requestedFile)) {
     header('Pragma: public');
     header('Content-Length: ' . filesize($requestedFile));
     readfile($requestedFile);
+    logMessage("Served file: $requestedFile");
     exit;
 } else {
     http_response_code(404);
+    logMessage("Error: Requested file not found - $requestedFile.");
     die("Requested file not found.");
 }
 
