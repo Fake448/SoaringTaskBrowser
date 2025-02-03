@@ -44,7 +44,7 @@ if (!file_exists($taskFolder) || ($remoteLastModified > $localLastModified && $r
     $dphxContent = @file_get_contents($repositoryUrl);
     if ($dphxContent === false) {
         http_response_code(404);
-        logMessage("Error: DPHX file not found in repository for TaskID $taskID.");
+        logMessage("Error: DPHX file not found in repository for TaskID $taskID. $$repositoryUrl");
         die("DPHX file not found in repository.");
     }
 
