@@ -13,13 +13,6 @@ $repositoryUrl = "https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/$taskID.
 $tempDir = __DIR__ . '/DPHXTemp';
 $taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";
-$logFile = __DIR__ . '/dphx_log.txt';
-
-// **Log function**
-function logMessage($message) {
-    global $logFile;
-    file_put_contents($logFile, date("[Y-m-d H:i:s]") . " $message\n", FILE_APPEND);
-}
 
 // Ensure the temp directory exists
 if (!file_exists($tempDir)) {
@@ -104,7 +97,7 @@ if (file_exists($requestedFile)) {
     die("Requested file not found.");
 }
 
-// Function to clean up old folders
+// **Function to clean up old folders**
 function cleanupOldTempFolders($tempDir) {
     foreach (glob("$tempDir/*") as $folder) {
         if (is_dir($folder) && time() - filemtime($folder) > 48 * 3600) {
@@ -122,15 +115,4 @@ function deleteFolder($folder) {
     rmdir($folder);
 }
 
-// **Function to fetch the last modified timestamp of a remote file**
-function getRemoteFileLastModified($url) {
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_NOBODY, true);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_FILETIME, true);
-    curl_exec($ch);
-    $timestamp = curl_getinfo($ch, CURLINFO_FILETIME);
-    curl_close($ch);
-    return ($timestamp !== -1) ? $timestamp : 0;
-}
 ?>
