@@ -117,20 +117,26 @@ function deleteFolder($folder) {
 
 // Function to fetch the last modified timestamp of a remote file
 function getRemoteFileLastModified($url) {
-    $headers = get_headers($url, 1); // Fetch headers
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true); // No body, only headers
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_FILETIME, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (if needed)
 
-    // Log all headers received
-    logMessage("Headers for $url: " . print_r($headers, true));
+    $headers = curl_exec($ch);
+    $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
+    curl_close($ch);
 
-    // Check if the Last-Modified header exists and return timestamp
-    if ($headers && isset($headers['Last-Modified'])) {
-        $timestamp = strtotime($headers['Last-Modified']);
-        logMessage("Extracted Last-Modified for $url: " . date("Y-m-d H:i:s", $timestamp));
-        return $timestamp;
+    logMessage("cURL Headers for $url: " . $headers);
+    
+    if ($filetime !== -1) {
+        logMessage("Extracted Last-Modified for $url: " . date("Y-m-d H:i:s", $filetime));
+        return $filetime;
     }
 
     logMessage("No Last-Modified header found for $url.");
-    return 0; // Return 0 if header is missing
+    return 0;
 }
 
 ?>
