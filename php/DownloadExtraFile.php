@@ -117,15 +117,20 @@ function deleteFolder($folder) {
 
 // Function to fetch the last modified timestamp of a remote file
 function getRemoteFileLastModified($url) {
-    $headers = get_headers($url, 1); // Fetch all headers
-    logMessage("Headers for $url: " . print_r(get_headers($url, 1), true));
-    
-    if ($headers !== false && isset($headers['Last-Modified'])) {
-        $lastModified = is_array($headers['Last-Modified']) ? end($headers['Last-Modified']) : $headers['Last-Modified'];
-        return strtotime($lastModified); // Convert to timestamp
+    $headers = get_headers($url, 1); // Fetch headers
+
+    // Log all headers received
+    logMessage("Headers for $url: " . print_r($headers, true));
+
+    // Check if the Last-Modified header exists and return timestamp
+    if ($headers && isset($headers['Last-Modified'])) {
+        $timestamp = strtotime($headers['Last-Modified']);
+        logMessage("Extracted Last-Modified for $url: " . date("Y-m-d H:i:s", $timestamp));
+        return $timestamp;
     }
-    
-    return 0; // Return 0 if Last-Modified header is not available
+
+    logMessage("No Last-Modified header found for $url.");
+    return 0; // Return 0 if header is missing
 }
 
 ?>
