@@ -13,6 +13,7 @@ $repositoryUrl = "$taskRepositoryPath/$taskID.dphx";
 $tempDir = __DIR__ . '/DPHXTemp';
 $taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";
+$repositoryUrlHTTPS = "$taskRepositoryPathHTTPS/$taskID.dphx"
 
 // Ensure the temp directory exists
 if (!file_exists($tempDir)) {
@@ -23,7 +24,7 @@ if (!file_exists($tempDir)) {
 register_shutdown_function('cleanupOldTempFolders', $tempDir);
 
 // **Get last modified time of the remote file**
-$remoteLastModified = getRemoteFileLastModified($repositoryUrl);
+$remoteLastModified = getRemoteFileLastModified($repositoryUrlHTTPS);
 logMessage("Remote Last-Modified for TaskID $taskID: " . ($remoteLastModified ? date("Y-m-d H:i:s", $remoteLastModified) : "Unavailable"));
 
 // **Get the creation/modification time of the local folder (if it exists)**
