@@ -117,6 +117,8 @@ function deleteFolder($folder) {
 
 // Function to fetch the last modified timestamp of a remote file
 function getRemoteFileLastModified($url) {
+    $headers = [];
+    
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_NOBODY, true); // No body, only headers
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -124,15 +126,29 @@ function getRemoteFileLastModified($url) {
     curl_setopt($ch, CURLOPT_FILETIME, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification (if needed)
 
-    $headers = curl_exec($ch);
+    // Capture headers
+    curl_setopt($ch, CURLOPT_HEADERFUNCTION, function($curl, $header) use (&$headers) {
+        $len = strlen($header);
+        $header = explode(':', $header, 2);
+        if (count($header) == 2) {
+            $headers[strtolower(trim($header[0]))] = trim($header[1]);
+        }
+        return $len;
+    });
+
+    curl_exec($ch);
     $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
     curl_close($ch);
 
-    logMessage("cURL Headers for $url: " . $headers);
-    
+    logMessage("cURL Retrieved Headers for $url: " . print_r($headers, true));
+
     if ($filetime !== -1) {
         logMessage("Extracted Last-Modified for $url: " . date("Y-m-d H:i:s", $filetime));
         return $filetime;
+    } elseif (isset($headers['last-modified'])) {
+        $timestamp = strtotime($headers['last-modified']);
+        logMessage("Extracted Last-Modified from Headers for $url: " . date("Y-m-d H:i:s", $timestamp));
+        return $timestamp;
     }
 
     logMessage("No Last-Modified header found for $url.");
