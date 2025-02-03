@@ -115,4 +115,16 @@ function deleteFolder($folder) {
     rmdir($folder);
 }
 
+// Function to fetch the last modified timestamp of a remote file
+function getRemoteFileLastModified($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FILETIME, true);
+    curl_exec($ch);
+    $timestamp = curl_getinfo($ch, CURLINFO_FILETIME);
+    curl_close($ch);
+    return ($timestamp !== -1) ? $timestamp : 0;
+}
+
 ?>
