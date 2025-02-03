@@ -11,7 +11,7 @@ if (!$taskID || !$filename) {
 
 $repositoryUrl = "https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/$taskID.dphx";
 $tempDir = __DIR__ . '/DPHXTemp';
-$taskFolder = $tempDir . "/$taskID";
+$taskFolder = "$tempDir/$taskID";
 $dphxFile = "$taskFolder/$taskID.dphx";
 
 // Ensure the temp directory exists
@@ -19,10 +19,23 @@ if (!file_exists($tempDir)) {
     mkdir($tempDir, 0755, true);
 }
 
-// Check if the task folder exists
-if (!file_exists($taskFolder)) {
-    mkdir($taskFolder, 0755, true);
+// **Register cleanup function to run at the end**
+register_shutdown_function('cleanupOldTempFolders', $tempDir);
+
+// **Get last modified time of the remote file**
+$remoteLastModified = getRemoteFileLastModified($repositoryUrl);
+
+// **Get the creation/modification time of the local folder (if it exists)**
+$localLastModified = file_exists($taskFolder) ? filemtime($taskFolder) : 0;
+
+// **If the folder does not exist OR the DPHX file was updated, delete the folder and refresh**
+if (!file_exists($taskFolder) || $remoteLastModified > $localLastModified) {
+    if (file_exists($taskFolder)) {
+        deleteFolder($taskFolder);
+    }
     
+    mkdir($taskFolder, 0755, true);
+
     // Download the DPHX file
     $dphxContent = @file_get_contents($repositoryUrl);
     if ($dphxContent === false) {
@@ -76,9 +89,29 @@ if (file_exists($requestedFile)) {
 function cleanupOldTempFolders($tempDir) {
     foreach (glob("$tempDir/*") as $folder) {
         if (is_dir($folder) && time() - filemtime($folder) > 48 * 3600) {
-            array_map('unlink', glob("$folder/*"));
-            rmdir($folder);
+            deleteFolder($folder);
         }
     }
+}
+
+// **Function to delete a folder and its contents**
+function deleteFolder($folder) {
+    if (!is_dir($folder)) return;
+    foreach (glob("$folder/*") as $file) {
+        is_dir($file) ? deleteFolder($file) : unlink($file);
+    }
+    rmdir($folder);
+}
+
+// **Function to fetch the last modified timestamp of a remote file**
+function getRemoteFileLastModified($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_FILETIME, true);
+    curl_exec($ch);
+    $timestamp = curl_getinfo($ch, CURLINFO_FILETIME);
+    curl_close($ch);
+    return ($timestamp !== -1) ? $timestamp : 0;
 }
 ?>
