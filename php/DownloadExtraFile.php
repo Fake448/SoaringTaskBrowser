@@ -124,18 +124,21 @@ function getRemoteFileLastModified($url) {
     curl_setopt($ch, CURLOPT_FILETIME, true);
     curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification if needed
     curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Prevent infinite waiting
 
-    // Execute cURL request
     $headers = curl_exec($ch);
     $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
     $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
 
     curl_close($ch);
 
-    // Log the headers and extracted timestamp
+    // **Log what's happening**
+    logMessage("cURL Request to: $url");
     logMessage("HTTP Response Code: $http_code");
-    logMessage("cURL Retrieved Headers for $url:\n" . print_r($headers, true));
-    logMessage("Extracted Last-Modified for $url: " . ($filetime !== -1 ? date("Y-m-d H:i:s", $filetime) : "Unavailable"));
+    logMessage("cURL Retrieved Headers: \n" . print_r($headers, true));
+    logMessage("Extracted Last-Modified: " . ($filetime !== -1 ? date("Y-m-d H:i:s", $filetime) : "Unavailable"));
+    logMessage("cURL Error (if any): $curl_error");
 
     return ($filetime !== -1) ? $filetime : 0;
 }
