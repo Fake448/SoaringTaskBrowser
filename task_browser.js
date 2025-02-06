@@ -1753,8 +1753,8 @@ class TaskBrowser {
                             minute: 'numeric',
                             hour12: TB.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
                         });
-                        alert(`Task is not available yet. Available on: ${localAvailabilityDate}`);
-                        resolve(null); // Resolve with null to indicate unavailability
+                        alert(`Task availability currently set to ${localAvailabilityDate}`);
+                        resolve(false); // Resolve with null to indicate unavailability
                         return;
                     }
 

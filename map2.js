@@ -473,7 +473,6 @@ class TaskBrowserMap {
 
     // Selecting a task from the "task" parameter in the URL string
     selectTaskFromURL(entrySeqID) {
-
         let tbm = this;
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
@@ -481,19 +480,18 @@ class TaskBrowserMap {
         // 1. Remove the task parameter from the URL
         tbm.tb.clearUrlParameter('task');
 
-        // 2. Make sure the corresponding task entrySeqID is loaded in api_tasks, if not, we need to fetch it and change map bounds
-        //Doesn't seem to be required at the moment, the task ends up being selected
-
-        // 3. Wait for the fetch and bounds change to be completed
-        //Doesn't seem to be required at the moment, the task ends up being selected
-
-        // 4. Get the task details to show on the right panel.
-        tbm.tb.getTaskDetails(entrySeqIDNbr, true); // Display task details on the right panel
-
-        // 5. Call the selectTaskCommon to perform the common actions
-        tbm.tb.fromURL = true;
-        tbm.selectTaskCommon(entrySeqIDNbr, true);
-
+        // 2. Fetch task details and proceed only if the task is available
+        tbm.tb.getTaskDetails(entrySeqIDNbr, true).then(isAvailable => {
+            if (isAvailable) {
+                // 3. Call the selectTaskCommon to perform the common actions
+                tbm.tb.fromURL = true;
+                tbm.selectTaskCommon(entrySeqIDNbr, true);
+            } else {
+                console.log(`Task ${entrySeqIDNbr} is unavailable or could not be retrieved.`);
+            }
+        }).catch(error => {
+            console.error(`Error selecting task from URL: ${error}`);
+        });
     }
 
     // Selecting a task from a true user click on the map
