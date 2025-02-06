@@ -58,7 +58,9 @@ try {
             TotDownloads,
             SuppressBaroPressureWarningSymbol,
             BaroPressureExtraInfo,
-            ExtraFilesList
+            ExtraFilesList,
+            Status,
+            Availability
         FROM Tasks
         WHERE EntrySeqID = :entrySeqID
     ";

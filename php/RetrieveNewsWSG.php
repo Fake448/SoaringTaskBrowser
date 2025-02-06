@@ -27,7 +27,7 @@ try {
             Events.EventMeetDateTime, Events.UseEventSyncFly, Events.SyncFlyDateTime, Events.UseEventLaunch, Events.EventLaunchDateTime,
             Events.UseEventStartTask, Events.EventStartTaskDateTime, Events.EventDescription, Events.GroupEventTeaserEnabled,
             Events.GroupEventTeaserMessage, Events.GroupEventTeaserImage, Events.VoiceChannel, Events.MSFSServer, Events.TrackerGroup,
-            Events.EligibleAward, Events.BeginnersGuide, Events.Notam
+            Events.EligibleAward, Events.BeginnersGuide, Events.Notam, Events.Availablity, Events.Refly
         FROM News
         LEFT JOIN Events ON News.Key = Events.EventKey
         WHERE NewsType = :newsType AND Expiration > datetime('now') 
