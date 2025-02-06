@@ -1757,6 +1757,12 @@ class TaskBrowser {
                         resolve(false); // Resolve with null to indicate unavailability
                         return;
                     }
+                    // Check if the task is not found
+                    if (task_details.status === "not_found") {
+                        alert(`Task not found!`);
+                        resolve(false); // Resolve with null to indicate unavailability
+                        return;
+                    }
 
                     // Process the task details
                     tb.handleTaskDetails(task_details, forceZoomToTask);
