@@ -31,6 +31,10 @@ try {
         "LastUpdate BETWEEN :startDate AND :endDate",
         "Status = 99"
     ];
+
+    // Add condition for Availability
+    $whereClauses[] = "(Availability IS NULL OR Availability >= datetime('now', 'utc'))";
+
     $params = [
         ':startDate' => $startDate,
         ':endDate' => $endDate,
