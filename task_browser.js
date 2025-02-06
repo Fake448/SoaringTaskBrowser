@@ -1765,7 +1765,7 @@ class TaskBrowser {
                 .catch(error => {
                     console.error('Error fetching task details:', error);
                     alert(`Error: ${error.message || 'An unexpected error occurred while fetching task details.'}`);
-                    reject(error);
+                    resolve(false);
                 });
         });
     }
