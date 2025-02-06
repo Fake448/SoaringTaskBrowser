@@ -1745,11 +1745,15 @@ class TaskBrowser {
 
                     // Check if the task is unavailable
                     if (task_details.status === "unavailable") {
-                        // Convert UTC to local time
-                        let utcDate = new Date(task_details.availability + " UTC"); // Ensure UTC interpretation
-                        let localDateString = utcDate.toLocaleString(); // Convert to user's local time
-
-                        alert(`Task is not available yet. Available on: ${localDateString}`);
+                        const utcDate = new Date(task_details.availability + " UTC"); // Ensure UTC interpretation
+                        const localAvailabilityDate = utcDate.toLocaleString(navigator.language, {
+                            month: 'long',
+                            day: 'numeric',
+                            hour: 'numeric',
+                            minute: 'numeric',
+                            hour12: TB.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
+                        });
+                        alert(`Task is not available yet. Available on: ${localAvailabilityDate}`);
                         resolve(null); // Resolve with null to indicate unavailability
                         return;
                     }
