@@ -1720,7 +1720,7 @@ class TaskBrowser {
     }
 
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
-        let tb = this;
+        let tb = this; 
 
         return new Promise((resolve, reject) => {
             let fetch_promise;
