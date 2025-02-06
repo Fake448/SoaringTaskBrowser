@@ -121,7 +121,7 @@ try {
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Additional query for total task count
-    $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks";
+    $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks WHERE (Availability IS NULL OR Availability <= datetime('now', 'utc'))";
     $countStmt = $pdo->prepare($countQuery);
     $countStmt->execute();
     $totalTasks = $countStmt->fetch(PDO::FETCH_ASSOC)['totalTasks'];
