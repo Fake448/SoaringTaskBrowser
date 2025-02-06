@@ -62,7 +62,7 @@ try {
             Status,
             Availability
         FROM Tasks
-        WHERE EntrySeqID = :entrySeqID AND (Availability IS NULL OR Availability <= datetime('now', 'utc'))
+        WHERE EntrySeqID = :entrySeqID
     ";
 
     // Prepare and execute the query
@@ -74,11 +74,24 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($task) {
+        // Check if the task is unavailable due to the Availability date
+        if (!empty($task['Availability']) && strtotime($task['Availability']) > time()) {
+            header('Content-Type: application/json');
+            echo json_encode([
+                'status' => 'unavailable',
+                'message' => 'Task is not available yet.',
+                'availability' => $task['Availability']
+            ]);
+            exit;
+        }
+
         // Output the task details as JSON
         header('Content-Type: application/json');
         echo json_encode($task);
     } else {
-        throw new Exception('Task not found');
+        // If no task was found, return a clean message
+        header('Content-Type: application/json');
+        echo json_encode(['status' => 'not_found', 'message' => 'Task not found']);
     }
 } catch (Exception $e) {
     header('Content-Type: application/json');

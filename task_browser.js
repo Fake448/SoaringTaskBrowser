@@ -1738,17 +1738,30 @@ class TaskBrowser {
                     return response.json();
                 })
                 .then(task_details => {
-                    // Check if there's an error in the response
+                    // Check for errors
                     if (task_details.error) {
                         throw new Error(task_details.error);
                     }
+
+                    // Check if the task is unavailable
+                    if (task_details.status === "unavailable") {
+                        // Convert UTC to local time
+                        let utcDate = new Date(task_details.availability + " UTC"); // Ensure UTC interpretation
+                        let localDateString = utcDate.toLocaleString(); // Convert to user's local time
+
+                        alert(`Task is not available yet. Available on: ${localDateString}`);
+                        resolve(null); // Resolve with null to indicate unavailability
+                        return;
+                    }
+
+                    // Process the task details
                     tb.handleTaskDetails(task_details, forceZoomToTask);
-                    resolve(task_details); // Resolve with task details
+                    resolve(task_details);
                 })
                 .catch(error => {
                     console.error('Error fetching task details:', error);
                     alert(`Error: ${error.message || 'An unexpected error occurred while fetching task details.'}`);
-                    reject(error); // Reject on error
+                    reject(error);
                 });
         });
     }
