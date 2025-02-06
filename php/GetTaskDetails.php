@@ -62,7 +62,7 @@ try {
             Status,
             Availability
         FROM Tasks
-        WHERE EntrySeqID = :entrySeqID
+        WHERE EntrySeqID = :entrySeqID AND (Availability IS NULL OR Availability <= datetime('now', 'utc'))
     ";
 
     // Prepare and execute the query
