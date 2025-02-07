@@ -479,8 +479,8 @@ function displayEvents(events) {
             reviewTaskDetails = 'Review task details and map before briefing!';
         }
 
-        shareButton = `<button class="button-style" onclick="TB.copyTextToClipboard('https://wesimglide.org/index.html?event=${event.Key}')" title="Share event (copy link to clipboard)">
-            <img src="images/ShareLink.png" alt="Share event (copy link to clipboard)" style="height: 20px; vertical-align: middle;">
+        shareButton = `<button class="button-style" onclick="TB.copyTextToClipboard('${window.location.origin}/index.html?event=${event.Key}')" title="Share event (copy link to clipboard)">
+                <img src="images/ShareLink.png" alt="Share event (copy link to clipboard)" style="height: 20px; vertical-align: middle;">
         </button>`;
 
         trackerButton = `<button class="button-style" onclick="TB.setSSCTracker('${event.TrackerGroup}',${event.EntrySeqID},'${event.URLToGo}')" title="Set SSC-Tracker app">

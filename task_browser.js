@@ -6,6 +6,7 @@ class TaskBrowser {
         let shouldHandlePopState = true;
         let fromURL = false;
         tb.isDownloadPage = false;
+        tb.discordPostHelperTaskBrowserPath = "";
     }
 
     init() {
@@ -14,7 +15,14 @@ class TaskBrowser {
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
         tb.isDownloadPage = currentPath.includes("download.html");
-
+        if (window.location.origin.includes("wesimglide.org")) {
+            tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
+        }
+        else
+        {
+            tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
+        }
+        
         if (tb.isDownloadPage) {
             // Light initialization for download purposes
             console.log("Initializing TaskBrowser in light mode for download page.");
@@ -1011,7 +1019,7 @@ class TaskBrowser {
                 ${snowCover ? `<li>Snow Cover: ${snowCover}</li>` : ''}
                 ${thunderstormIntensity ? `<li>Lightning: ${thunderstormIntensity}</li>` : ''}
             </ul>
-            <img src="https://siglr.com/DiscordPostHelper/TaskBrowser/WeatherCharts/${task.EntrySeqID}.jpg" class="weather-image" onclick="TB.showImageModal(this.src)" />
+            <img src="${tb.discordPostHelperTaskBrowserPath}WeatherCharts/${task.EntrySeqID}.jpg" class="weather-image" onclick="TB.showImageModal(this.src)" />
         `;
 
         tb.generateCollapsibleSection("🌥 Weather & Chart", weatherContent, taskDetailContainer);
@@ -1306,7 +1314,7 @@ class TaskBrowser {
         // Add event listener to the copy to clipboard button
         const copyButton = document.getElementById('copyTaskLinkToClipboard');
         copyButton.onclick = function () {
-            tb.copyTextToClipboard(`https://wesimglide.org/index.html?task=${task.EntrySeqID}`);
+            tb.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}`);
         };
 
         // Add event listener to the Discord task thread button
@@ -1524,7 +1532,7 @@ class TaskBrowser {
         tb.incrementDownloadCount(EntrySeqID);
 
         // Construct the file download URL
-        const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${theTaskID}.dphx`;
+        const url = `${tb.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
 
         // Fetch the file and handle the download
         fetch(url)
@@ -1585,7 +1593,7 @@ class TaskBrowser {
                 console.warn("Could not contact local app (check same port on both sides?): ", err);
 
                 // Now do the normal file download
-                const url = `https://siglr.com/DiscordPostHelper/TaskBrowser/Tasks/${theTaskID}.dphx`;
+                const url = `${tb.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
                 fetch(url)
                     .then(response => response.blob())
                     .then(blob => {
