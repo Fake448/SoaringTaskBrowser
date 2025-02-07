@@ -674,6 +674,26 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
             window.close();
             return;
         }
+        // Check if the task is unavailable
+        if (task.status === "unavailable") {
+            const utcDate = new Date(task.availability + " UTC"); // Ensure UTC interpretation
+            const localAvailabilityDate = utcDate.toLocaleString(navigator.language, {
+                month: 'long',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: 'numeric',
+                hour12: TB.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
+            });
+            alert(`Task availability currently set to ${localAvailabilityDate}`);
+            window.close();
+            return;
+        }
+        // Check if the task is not found
+        if (task.status === "not_found") {
+            alert(`Task not found!`);
+            window.close();
+            return;
+        }
 
         // Determine which file to download
         if (fileType === "dphx") {

@@ -26,14 +26,12 @@ try {
     // Logging
     //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNoDuration: $includeNoDuration, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
 
-    // Base WHERE clause for date range AND status = 99
+    // Base WHERE clause for date range AND status = 99 AND Availability
     $whereClauses = [
         "LastUpdate BETWEEN :startDate AND :endDate",
-        "Status = 99"
+        "Status = 99",
+        "(Availability IS NULL OR Availability <= datetime('now', 'utc'))"
     ];
-
-    // Add condition for Availability
-    $whereClauses[] = "(Availability IS NULL OR Availability <= datetime('now', 'utc'))";
 
     $params = [
         ':startDate' => $startDate,

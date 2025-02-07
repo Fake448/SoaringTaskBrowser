@@ -62,7 +62,7 @@ try {
             Status,
             Availability
         FROM Tasks
-        WHERE EntrySeqID = :entrySeqID
+        WHERE EntrySeqID = :entrySeqID AND Status = 99
     ";
 
     // Prepare and execute the query
