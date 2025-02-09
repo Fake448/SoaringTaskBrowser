@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 require __DIR__ . '/CommonFunctions.php';
 
 try {
@@ -45,11 +45,32 @@ try {
             $entry['GroupEventTeaserImage'] = null;
         }
 
+        // Convert server's current time to UTC timestamp
+        $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
+
+        // Convert Availability to UTC timestamp
+        $availabilityTimestamp = !empty($entry['Availability']) 
+            ? DateTime::createFromFormat('Y-m-d H:i:s', $entry['Availability'], new DateTimeZone('UTC'))->getTimestamp()
+            : null;
+    
+        $isFutureAvailability = $availabilityTimestamp !== null && $availabilityTimestamp > $nowUTC;
+
+        // If Availability is in the future, handle the sub-scenarios based on Refly value
+        if ($isFutureAvailability) {
+            if (!empty($entry['Refly']) && $entry['Refly'] == 1) {
+                // Refly = 1 → Do not fetch task details
+                unset($entry['TaskID'], $entry['EntrySeqID']);
+                continue; // Skip fetching task details
+            }
+        }
+
         // Fetch task details only if EntrySeqID exists
-        if ($entry['EntrySeqID']) {
+        if (!empty($entry['EntrySeqID'])) {
             $stmtTask = $pdoTasks->prepare("
                 SELECT 
-                    TaskID, Title as TaskTitle, SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, SimDateTimeExtraInfo, RecommendedGliders
+                    TaskID, Title as TaskTitle, SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, 
+                    SoaringExtraInfo, DurationMin, DurationMax, DurationExtraInfo, SimDateTime, IncludeYear, 
+                    SimDateTimeExtraInfo, RecommendedGliders
                 FROM Tasks 
                 WHERE EntrySeqID = :entrySeqID
             ");
@@ -62,6 +83,11 @@ try {
             } else {
                 logMessage("No task details found for EntrySeqID: " . $entry['EntrySeqID']);
             }
+        }
+
+        // If Availability is in the future and Refly = 0, remove TaskID & EntrySeqID after fetching
+        if ($isFutureAvailability) {
+            unset($entry['TaskID'], $entry['EntrySeqID']);
         }
     }
 
