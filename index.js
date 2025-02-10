@@ -339,9 +339,9 @@ function displayEvents(events) {
         let taskRefly = false;
         if (event.EntrySeqID == 0) {
             taskPublished = false;
-            if (event.Refly == 1) {
-                taskRefly = true;
-            }
+        }
+        if (event.EntrySeqID == undefined && event.Refly == 1) {
+            taskRefly = true;
         }
 
         const now = new Date(); // Define the current time
