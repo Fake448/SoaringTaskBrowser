@@ -336,8 +336,12 @@ function displayEvents(events) {
     events.forEach(event => {
         // Check if the task has been published for that event
         let taskPublished = true;
+        let taskRefly = false;
         if (event.EntrySeqID == 0) {
             taskPublished = false;
+            if (event.Refly == 1) {
+                taskRefly = true;
+            }
         }
 
         const now = new Date(); // Define the current time
@@ -374,6 +378,9 @@ function displayEvents(events) {
         const rows = [];
         if (event.MSFSServer) {
             rows.push(createEventRow("🖧", `<strong>MSFS Server:</strong> ${event.MSFSServer}<p>`));
+        }
+        if (taskRefly && !taskAvailable) {
+            rows.push(createEventRow("🔁", `<strong>Task note:</strong> This is a refly, so no task info will be provided until the availability time.<p>`));
         }
         if (taskPublished && event.SimDateTime) {
             // Use the raw SimDateTime without timezone transformation
