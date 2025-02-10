@@ -340,6 +340,12 @@ function displayEvents(events) {
             taskPublished = false;
         }
 
+        let taskAvailable = true;
+        const availabilityDate = event.Availability ? new Date(event.Availability.replace(' ', 'T') + 'Z') : null;
+        if (availabilityDate && availabilityDate > now) {
+            taskAvailable = false;
+        }
+
         // Ensure the date is parsed correctly as UTC
         const eventDate = new Date(event.EventDate.replace(' ', 'T') + 'Z');
 
@@ -468,7 +474,7 @@ function displayEvents(events) {
         taskButton = "";
         dphxButton = "";
         reviewTaskDetails = "";
-        if (taskPublished) {
+        if (taskPublished && taskAvailable) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
                 <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
@@ -529,8 +535,7 @@ function displayEvents(events) {
         // Add countdowns
         const countdowns = [];
         // Availability Countdown
-        const availabilityDate = event.Availability ? new Date(event.Availability.replace(' ', 'T') + 'Z') : null;
-        if (availabilityDate && availabilityDate > now) {
+        if (!taskAvailable) {
             countdowns.unshift({
                 name: 'Available In',
                 targetDateTime: event.Availability,
