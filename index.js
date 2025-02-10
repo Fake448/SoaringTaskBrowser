@@ -536,6 +536,7 @@ function displayEvents(events) {
                 targetDateTime: event.Availability,
                 onComplete: () => {
                     console.log(`Event ${event.Key} is now available. Refreshing events...`);
+                    document.getElementById('eventsList').innerHTML = ''; // Clear events list
                     fetchAndDisplayEvents(); // **Refresh when countdown hits 0**
                 }
             });
