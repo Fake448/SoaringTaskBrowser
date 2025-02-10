@@ -528,6 +528,18 @@ function displayEvents(events) {
 
         // Add countdowns
         const countdowns = [];
+        // Availability Countdown
+        const availabilityDate = event.Availability ? new Date(event.Availability.replace(' ', 'T') + 'Z') : null;
+        if (availabilityDate && availabilityDate > now) {
+            countdowns.unshift({
+                name: 'Available In',
+                targetDateTime: event.Availability,
+                onComplete: () => {
+                    console.log(`Event ${event.Key} is now available. Refreshing events...`);
+                    fetchAndDisplayEvents(); // **Refresh when countdown hits 0**
+                }
+            });
+        }
         if (event.EventMeetDateTime) {
             countdowns.push({ name: 'Meeting', targetDateTime: event.EventMeetDateTime });
         }
@@ -761,6 +773,12 @@ function createCountdownSection(countdowns) {
             if (diff <= 0) {
                 timeElement.innerText = '000:00:00:00';
                 clearInterval(interval); // Stop the countdown when it reaches zero
+
+                // **Trigger onComplete callback when the countdown hits zero**
+                if (typeof countdown.onComplete === 'function') {
+                    console.log(`Executing onComplete for ${countdown.name}`);
+                    countdown.onComplete();
+                }
                 return;
             }
 
