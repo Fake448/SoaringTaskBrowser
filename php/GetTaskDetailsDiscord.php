@@ -21,7 +21,8 @@ try {
             PLNFilename,
             PLNXML,
             WPRFilename,
-            WPRXML
+            WPRXML,
+            Availability
         FROM Tasks
         WHERE EntrySeqID = :entrySeqID AND Status = 99
     ";
@@ -33,8 +34,20 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($task) {
-        // Check if the task is unavailable due to the Availability date
-        if (!empty($task['Availability']) && strtotime($task['Availability']) > time()) {
+        // Convert server's current time to UTC timestamp
+        $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
+
+        // Convert Availability to UTC timestamp (only if it's not null or empty)
+        $availabilityTimestamp = null;
+        if (!empty($task['Availability'])) {
+            $availabilityDate = DateTime::createFromFormat('Y-m-d H:i:s', $task['Availability'], new DateTimeZone('UTC'));
+            if ($availabilityDate !== false) {
+                $availabilityTimestamp = $availabilityDate->getTimestamp();
+            }
+        }
+
+        // Check if task is not yet available
+        if ($availabilityTimestamp !== null && $availabilityTimestamp > $nowUTC) {
             header('Content-Type: application/json');
             echo json_encode([
                 'status' => 'unavailable',
