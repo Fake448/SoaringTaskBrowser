@@ -340,6 +340,8 @@ function displayEvents(events) {
             taskPublished = false;
         }
 
+        const now = new Date(); // Define the current time
+
         let taskAvailable = true;
         const availabilityDate = event.Availability ? new Date(event.Availability.replace(' ', 'T') + 'Z') : null;
         if (availabilityDate && availabilityDate > now) {
@@ -494,7 +496,6 @@ function displayEvents(events) {
         </button>`;
 
         // Determine highlight class
-        const now = new Date(); // Define the current time
         const minutesToEvent = (eventDate - now) / 60000;
         let highlightClass = null;
         let titleSuffix = '';
