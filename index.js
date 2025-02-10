@@ -380,39 +380,41 @@ function displayEvents(events) {
             rows.push(createEventRow("🖧", `<strong>MSFS Server:</strong> ${event.MSFSServer}<p>`));
         }
         if (taskRefly && !taskAvailable) {
-            rows.push(createEventRow("🔁", `<strong>Task note:</strong> This is a refly, so no task info will be provided until the availability time.<p>`));
+            rows.push(createEventRow("🔁", `<strong>Refly:</strong> Since this is a refly, no task info will be revealed until the availability time.<p>`));
         }
-        if (taskPublished && event.SimDateTime) {
-            // Use the raw SimDateTime without timezone transformation
-            const simDateTime = new Date(event.SimDateTime);
+        else {
+            if (taskPublished && event.SimDateTime) {
+                // Use the raw SimDateTime without timezone transformation
+                const simDateTime = new Date(event.SimDateTime);
 
-            // Format the date
-            const simDateFormatted = simDateTime.toLocaleString(navigator.language, {
-                month: 'long',
-                day: 'numeric',
-                ...(event.IncludeYear === 1 ? { year: 'numeric' } : {}), // Include year if IncludeYear = 1
-                hour: 'numeric',
-                minute: 'numeric',
-                hour12: TB.userSettings.timeFormat === 'usa' // Use 'usa' for 12-hour format
-            });
+                // Format the date
+                const simDateFormatted = simDateTime.toLocaleString(navigator.language, {
+                    month: 'long',
+                    day: 'numeric',
+                    ...(event.IncludeYear === 1 ? { year: 'numeric' } : {}), // Include year if IncludeYear = 1
+                    hour: 'numeric',
+                    minute: 'numeric',
+                    hour12: TB.userSettings.timeFormat === 'usa' // Use 'usa' for 12-hour format
+                });
 
-            // Add extra information if available
-            const extraInfo = event.SimDateTimeExtraInfo ? ` ${TB.addDetailWithinBrackets(event.SimDateTimeExtraInfo)}` : '';
+                // Add extra information if available
+                const extraInfo = event.SimDateTimeExtraInfo ? ` ${TB.addDetailWithinBrackets(event.SimDateTimeExtraInfo)}` : '';
 
-            // Push the row with the formatted date and extra info
-            rows.push(createEventRow("⌚", `<strong>Sim date/time:</strong> ${simDateFormatted}${extraInfo}<p>`));
-        }
-        if (event.RecommendedGliders) {
-            rows.push(createEventRow("✈️", `<strong>Glider type:</strong> ${event.RecommendedGliders}<p>`));
-        }
-        if (event.SoaringRidge || event.SoaringThermals || event.SoaringWaves || event.SoaringDynamic) {
-            rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)} ${TB.addDetailWithinBrackets(event.SoaringExtraInfo)}<p>`));
-        }
-        if (event.DurationMin || event.DurationMax) {
-            rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)} ${TB.addDetailWithinBrackets(event.DurationExtraInfo)}<p>`));
-        }
-        if (taskPublished && event.Notam) {
-            rows.push(createEventRow("⚠️", `${event.Notam}<p>`));
+                // Push the row with the formatted date and extra info
+                rows.push(createEventRow("⌚", `<strong>Sim date/time:</strong> ${simDateFormatted}${extraInfo}<p>`));
+            }
+            if (event.RecommendedGliders) {
+                rows.push(createEventRow("✈️", `<strong>Glider type:</strong> ${event.RecommendedGliders}<p>`));
+            }
+            if (event.SoaringRidge || event.SoaringThermals || event.SoaringWaves || event.SoaringDynamic) {
+                rows.push(createEventRow("🪁", `<strong>Lift type:</strong> ${buildLiftType(event)} ${TB.addDetailWithinBrackets(event.SoaringExtraInfo)}<p>`));
+            }
+            if (event.DurationMin || event.DurationMax) {
+                rows.push(createEventRow("⏳", `<strong>Duration:</strong> ${TB.formatDuration(event.DurationMin, event.DurationMax)} ${TB.addDetailWithinBrackets(event.DurationExtraInfo)}<p>`));
+            }
+            if (taskPublished && event.Notam) {
+                rows.push(createEventRow("⚠️", `${event.Notam}<p>`));
+            }
         }
 
         rows.push(createEventRow(
