@@ -74,8 +74,16 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($task) {
+        // Get the current UTC timestamp
+        $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
+
+        // Convert Availability to UTC timestamp
+        $availabilityTimestamp = !empty($task['Availability']) 
+            ? DateTime::createFromFormat('Y-m-d H:i:s', $task['Availability'], new DateTimeZone('UTC'))->getTimestamp()
+            : null;
+
         // Check if the task is unavailable due to the Availability date
-        if (!empty($task['Availability']) && strtotime($task['Availability']) > time()) {
+        if ($availabilityTimestamp !== null && $availabilityTimestamp > $nowUTC) {
             header('Content-Type: application/json');
             echo json_encode([
                 'status' => 'unavailable',
