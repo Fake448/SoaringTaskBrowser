@@ -81,7 +81,12 @@
                             </button>
                         </div>
                         <div id="taskGridOverlay" style="position: absolute; top: 75px; right: 0; width: 100%; height: 40%; background-color: rgba(100, 100, 100, 0.9); display: none; z-index: 9000; padding: 10px; box-sizing: border-box;">
-                            <div id="taskGridContainer">
+                            <div id="taskGridHeader">
+                                <div class="grid-controls">
+                                    <button id="refreshGridButton">🔄Sync with map</button>
+                                </div>
+                                <div id="taskGridSearch"></div>
+                            </div>                            <div id="taskGridContainer">
                                 <table id="taskGridTable" class="display" style="width:100%">
                                     <thead>
                                         <tr>

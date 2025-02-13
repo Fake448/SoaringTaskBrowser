@@ -2222,7 +2222,12 @@ class TaskBrowser {
             taskGridOverlay.style.display = "flex";
 
             // Populate the DataTable with current tasks
-            tb.populateDataTable(tb.tbm.allTasks);
+            tb.populateDataTable(tb.tbm.visibleTasks);
+
+            // Ensure the refresh button updates the grid
+            refreshGridButton.addEventListener("click", () => {
+                tb.populateDataTable(tb.tbm.visibleTasks); // Refresh grid with latest visible tasks
+            });
 
             // Reselect the current task if one is selected
             if (tb.tbm.currentEntrySeqID) {
@@ -2394,6 +2399,9 @@ class TaskBrowser {
                 scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
                 scroller: true           // Smooth scrolling
             });
+
+            // Move the search box to align with the button
+            $("#taskGridHeader").append($("#taskGridTable_filter"));
 
             // Observe resizing of the overlay element
             const taskGridOverlay = document.getElementById('taskGridOverlay');
