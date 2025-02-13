@@ -474,7 +474,6 @@ class TaskBrowserMap {
     // Selecting a task from the "task" parameter in the URL string
     selectTaskFromURL(entrySeqID) {
         let tbm = this;
-        tbm.tb.fromURL = true;
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
 
@@ -485,6 +484,7 @@ class TaskBrowserMap {
         tbm.tb.getTaskDetails(entrySeqIDNbr, true).then(isAvailable => {
             if (isAvailable) {
                 // 3. Call the selectTaskCommon to perform the common actions
+                tbm.tb.fromURL = true;
                 tbm.selectTaskCommon(entrySeqIDNbr, true);
             } else {
                 console.log(`Task ${entrySeqIDNbr} is unavailable or could not be retrieved.`);
