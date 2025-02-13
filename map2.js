@@ -268,7 +268,7 @@ class TaskBrowserMap {
         const lngMax = bounds.getNorthEast().lng + bufferLng;
 
         // Filter tasks based on bounds
-        const visibleTasks = tbm.allTasks.filter(task => (
+        tbm.visibleTasks = tbm.allTasks.filter(task => (
             task.LatMax >= latMin &&
             task.LatMin <= latMax &&
             task.LongMax >= lngMin &&
@@ -289,7 +289,7 @@ class TaskBrowserMap {
             }
         } else {
             // Otherwise, show all visible tasks within bounds
-            visibleTasks.forEach(task => {
+            tbm.visibleTasks.forEach(task => {
                 tbm.api_tasks[task.EntrySeqID].polyline.addTo(tbm.map);
             });
         }
