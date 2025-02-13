@@ -2394,6 +2394,9 @@ class TaskBrowser {
                 scrollCollapse: true,    // Enable scroll collapsing for tidy appearance
                 scroller: true           // Smooth scrolling
             });
+
+            // Move the DataTables search box inside #taskGridHeader
+            $("#taskGridHeader").append($("#taskGridTable_filter"));
     
             // Observe resizing of the overlay element
             const taskGridOverlay = document.getElementById('taskGridOverlay');
