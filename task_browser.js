@@ -2222,7 +2222,7 @@ class TaskBrowser {
             taskGridOverlay.style.display = "flex";
 
             // Populate the DataTable with current tasks
-            tb.populateDataTable(tb.tbm.visibleTasks);
+            tb.populateDataTable(tb.tbm.allTasks);
 
             // Reselect the current task if one is selected
             if (tb.tbm.currentEntrySeqID) {
@@ -2352,7 +2352,7 @@ class TaskBrowser {
     populateDataTable(tasks) {
         let tb = this;
         const processedTasks = tb.processTasks(tasks); // Process tasks as needed
-    
+
         // Check if the DataTable is already initialized
         if ($.fn.DataTable.isDataTable('#taskGridTable')) {
             // Clear and reload with new data if DataTable exists
@@ -2367,7 +2367,7 @@ class TaskBrowser {
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
                     { data: 'Difficulty', title: 'Difficulty', name: 'Difficulty' },
-                    { 
+                    {
                         data: 'LastUpdate',
                         title: 'Updated',
                         name: 'Updated',
@@ -2378,8 +2378,8 @@ class TaskBrowser {
                                     // Format date as yyyy-MM-dd HH:mm
                                     const formattedDate = date.toISOString().slice(0, 16).replace('T', ' ');
                                     return type === 'display' || type === 'filter' ? formattedDate : date.getTime();
-                        }
-                    }
+                                }
+                            }
                             return type === 'display' ? 'N/A' : 0; // Fallback if data is missing or invalid
                         },
                         // Set ordering to use the original date for accurate sorting
@@ -2395,9 +2395,6 @@ class TaskBrowser {
                 scroller: true           // Smooth scrolling
             });
 
-            // Move the DataTables search box inside #taskGridHeader
-            $("#taskGridHeader").append($("#taskGridTable_filter"));
-    
             // Observe resizing of the overlay element
             const taskGridOverlay = document.getElementById('taskGridOverlay');
             const resizeObserver = new ResizeObserver(() => {

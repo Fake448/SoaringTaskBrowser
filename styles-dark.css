@@ -888,31 +888,3 @@ table.dataTable thead .sorting {
     background: #3a3d42;
     font-size: 18px;
 }
-
-#taskGridHeader {
-    display: flex;
-    justify-content: space-between; /* Space between button & search box */
-    align-items: center;
-    padding: 5px 10px; /* Match padding with table header */
-    background-color: #1e1e1e; /* Match table style */
-    border-bottom: 1px solid #444; /* Add subtle separation */
-}
-
-.grid-controls {
-    display: flex;
-    align-items: center;
-}
-
-#refreshGridButton {
-    background-color: #7289da;
-    color: white;
-    border: none;
-    padding: 2px 5px;
-    font-size: 12px;
-    cursor: pointer;
-    border-radius: 4px;
-}
-
-    #refreshGridButton:hover {
-        background-color: #0056b3;
-    }
