@@ -2354,6 +2354,16 @@ class TaskBrowser {
         }
     }
 
+    adjustGridHeight(rowCount) {
+    const taskGridOverlay = document.getElementById("taskGridOverlay");
+
+    // Determine dynamic height (each row approx 35px + some padding)
+    let calculatedHeight = Math.min(40, (rowCount * 2) + 12) + "vh";
+
+    // Apply height dynamically
+    taskGridOverlay.style.height = calculatedHeight;
+    }
+
     populateDataTable(tasks) {
         let tb = this;
         const processedTasks = tb.processTasks(tasks); // Process tasks as needed
@@ -2443,5 +2453,8 @@ class TaskBrowser {
                 }
             });
         }
+        // Get row count and adjust height
+        const rowCount = $('#taskGridTable tbody tr').length;
+        tb.adjustGridHeight(rowCount);
     }
 }
