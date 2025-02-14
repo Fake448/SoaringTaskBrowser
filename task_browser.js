@@ -2358,7 +2358,7 @@ class TaskBrowser {
     const taskGridOverlay = document.getElementById("taskGridOverlay");
 
     // Determine dynamic height (each row approx 35px + some padding)
-    let calculatedHeight = Math.min(40, (rowCount * 1.8) + 10) + "vh";
+    let calculatedHeight = Math.min(40, (rowCount * 1.84) + 9.5) + "vh";
 
     // Apply height dynamically
     taskGridOverlay.style.height = calculatedHeight;
@@ -2416,7 +2416,7 @@ class TaskBrowser {
             // Move the DataTables info text inside #taskGridInfo
             $("#taskGridInfo").html($("#taskGridTable_info").html());
             $("#taskGridTable_info").hide();
-    
+
             // Update info dynamically when table changes
             table.on('draw', function () {
                 $("#taskGridInfo").html($("#taskGridTable_info").html());
@@ -2460,6 +2460,14 @@ class TaskBrowser {
                 if (rowData && rowData.EntrySeqID) {
                     tb.tbm.unhighlightTask(tb.tbm, rowData.EntrySeqID);
                 }
+            });
+            // 🔹 Adjust grid height dynamically when searching or updating the table
+            table.on('search.dt draw.dt', function () {
+                let filteredRowCount = table.rows({ filter: 'applied' }).count(); // Get only visible rows
+                tb.adjustGridHeight(filteredRowCount);
+    
+                // Update info dynamically
+                $("#taskGridInfo").html($("#taskGridTable_info").html());
             });
         }
         // Get row count and adjust height
