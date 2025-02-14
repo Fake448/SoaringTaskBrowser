@@ -903,6 +903,12 @@ table.dataTable thead .sorting {
     align-items: center;
 }
 
+#taskGridInfo {
+    font-size: 12px;
+    color: #dcdcdc;
+    margin-right: 5px; /* Ensures proper spacing from the button */
+}
+
 #refreshGridButton {
     background-color: #7289da;
     color: white;

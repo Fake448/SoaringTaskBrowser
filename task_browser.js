@@ -2358,7 +2358,7 @@ class TaskBrowser {
     const taskGridOverlay = document.getElementById("taskGridOverlay");
 
     // Determine dynamic height (each row approx 35px + some padding)
-    let calculatedHeight = Math.min(40, (rowCount * 2) + 12) + "vh";
+    let calculatedHeight = Math.min(40, (rowCount * 1.8) + 10) + "vh";
 
     // Apply height dynamically
     taskGridOverlay.style.height = calculatedHeight;
@@ -2412,6 +2412,15 @@ class TaskBrowser {
 
             // Move the search box to align with the button
             $("#taskGridHeader").append($("#taskGridTable_filter"));
+
+            // Move the DataTables info text inside #taskGridInfo
+            $("#taskGridInfo").html($("#taskGridTable_info").html());
+            $("#taskGridTable_info").hide();
+    
+            // Update info dynamically when table changes
+            table.on('draw', function () {
+                $("#taskGridInfo").html($("#taskGridTable_info").html());
+            });
 
             // Observe resizing of the overlay element
             const taskGridOverlay = document.getElementById('taskGridOverlay');
