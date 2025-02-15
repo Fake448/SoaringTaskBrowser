@@ -1,6 +1,6 @@
 <?php
 // Include the configuration file
-$config = include 'config.php';
+$config = include 'config.php'; 
 
 // Assign paths from the configuration array
 $databasePath = $config['databasePath'];
