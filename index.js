@@ -273,7 +273,7 @@ function displayEventsStaticPortion() {
             <div id="invites"></div>
             <h2>General Weekly Schedule</h2>
             <h3>Sunday</h3>
-            <p>-</p>
+            🕖 19:15 UTC: UKVGA Sunday <em>(Normal time)</em> - <a href="discord://discord.com/channels/325227457445625856/1332655847029080097">Event Channel</a></br>
             <h3>Monday</h3>
             <p>-</p>
             <h3>Tuesday</h3>
