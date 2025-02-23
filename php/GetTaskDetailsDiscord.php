@@ -34,6 +34,10 @@ try {
     $task = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($task) {
+        // Pretty print the XML content
+        $task['PLNXML'] = prettyPrintXml($task['PLNXML']);
+        $task['WPRXML'] = prettyPrintXml($task['WPRXML']);
+
         // Convert server's current time to UTC timestamp
         $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
 
@@ -68,5 +72,28 @@ try {
 } catch (Exception $e) {
     header('Content-Type: application/json');
     echo json_encode(['error' => $e->getMessage()]);
+}
+
+/**
+ * Function to pretty print XML string
+ */
+function prettyPrintXml($xmlString) {
+    if (empty($xmlString)) {
+        return '';
+    }
+
+    try {
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+
+        if ($dom->loadXML($xmlString)) {
+            return $dom->saveXML();
+        } else {
+            return $xmlString; // Return the original if parsing fails
+        }
+    } catch (Exception $e) {
+        return $xmlString; // Fallback in case of errors
+    }
 }
 ?>
