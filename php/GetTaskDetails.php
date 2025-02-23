@@ -93,6 +93,9 @@ try {
             exit;
         }
 
+        $task['PLNXML'] = prettyPrintXml($task['PLNXML']);
+        $task['WPRXML'] = prettyPrintXml($task['WPRXML']);
+
         // Output the task details as JSON
         header('Content-Type: application/json');
         echo json_encode($task);

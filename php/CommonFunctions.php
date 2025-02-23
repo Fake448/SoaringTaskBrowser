@@ -24,6 +24,27 @@ function formatDatetime($datetime) {
     return $dt->format('Y-m-d H:i:s');
 }
 
+// Function to pretty print XML string
+function prettyPrintXml($xmlString) {
+    if (empty($xmlString)) {
+        return '';
+    }
+
+    try {
+        $dom = new DOMDocument('1.0', 'UTF-8');
+        $dom->preserveWhiteSpace = false;
+        $dom->formatOutput = true;
+
+        if ($dom->loadXML($xmlString)) {
+            return $dom->saveXML();
+        } else {
+            return $xmlString; // Return the original if parsing fails
+        }
+    } catch (Exception $e) {
+        return $xmlString; // Fallback in case of errors
+    }
+}
+
 // Function to get user permissions
 function getUserPermissions($userID) {
     global $userPermissionsPath;

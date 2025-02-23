@@ -73,27 +73,4 @@ try {
     header('Content-Type: application/json');
     echo json_encode(['error' => $e->getMessage()]);
 }
-
-/**
- * Function to pretty print XML string
- */
-function prettyPrintXml($xmlString) {
-    if (empty($xmlString)) {
-        return '';
-    }
-
-    try {
-        $dom = new DOMDocument('1.0', 'UTF-8');
-        $dom->preserveWhiteSpace = false;
-        $dom->formatOutput = true;
-
-        if ($dom->loadXML($xmlString)) {
-            return $dom->saveXML();
-        } else {
-            return $xmlString; // Return the original if parsing fails
-        }
-    } catch (Exception $e) {
-        return $xmlString; // Fallback in case of errors
-    }
-}
 ?>
