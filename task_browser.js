@@ -1584,7 +1584,7 @@ class TaskBrowser {
                 console.log("Local server call successful");
                 // If successful, we do NOT download the file from the server 
                 alert("Download successful! The DPHX file should now be opened in your local application.");
-                if (source == "discord") {
+                if (source === "discord") {
                     window.close();
                 }
             })
@@ -1606,7 +1606,7 @@ class TaskBrowser {
                         a.click();
                         window.URL.revokeObjectURL(fileUrl);
                         document.body.removeChild(a);
-                        if (source == "discord") {
+                        if (source === "discord") {
                             setTimeout(() => {
                                 //alert("Download was started! Click to close.");
                                 window.close();
@@ -1618,14 +1618,14 @@ class TaskBrowser {
     }
 
     downloadTextFile(content, filename, source = "map") {
-        const blob = new Blob([content], { type: 'text/xml' });
+        const blob = new Blob([content], { type: 'application/xml;charset=utf-8' });
         const link = document.createElement('a');
         link.href = window.URL.createObjectURL(blob);
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        if (source == "discord") {
+        if (source === "discord") {
             setTimeout(() => {
                 //alert("Download was started! Click to close.");
                 window.close();
