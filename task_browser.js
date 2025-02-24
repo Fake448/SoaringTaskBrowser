@@ -843,6 +843,11 @@ class TaskBrowser {
                 </a>
             </p>
             <p>
+                <a href="javascript:void(0);" onclick="openTaskInPlanner(tb.currentTask.TaskID, tb.getFileNameFromPath(tb.currentTask.PLNFilename), tb.getFileNameFromPath(tb.currentTask.WPRFilename));">
+                    Open in B21 Online Task Planner
+                </a>
+            </p>
+            <p>
                 <a href="#" onclick="TB.downloadWPRFile()">
                     <img src="images/WPRFile.png" alt="WPR File" class="file-icon">
                     Weather file (WPR): ${tb.getFileNameFromPath(tb.currentTask.WPRFilename)}
@@ -856,6 +861,7 @@ class TaskBrowser {
                 </a>
             </p>
             <p>Current downloads (PLN or DPHX): ${task.TotDownloads}</p>`;
+
         tb.generateCollapsibleSection("📁 Files", filesContent, taskDetailContainer);
     }
 
@@ -2146,6 +2152,25 @@ class TaskBrowser {
         }
 
         return portValue;
+    }
+
+    openTaskInPlanner(taskID, plnFilename, wprFilename) {
+        // Step 1: Call PHP to prepare the DPHX task
+        fetch(`php/PrepareDPHXTask.php?taskID=${taskID}&plnFilename=${encodeURIComponent(plnFilename)}&wprFilename=${encodeURIComponent(wprFilename)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Step 2: Open the task in the B21 Task Planner
+                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${data.plnUrl}&wpr=${data.wprUrl}`;
+                    window.open(plannerUrl, '_blank');
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Failed to prepare the task.');
+            });
     }
 
     hideTaskDetailsPanel() {
