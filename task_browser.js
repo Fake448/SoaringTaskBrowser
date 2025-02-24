@@ -842,14 +842,14 @@ class TaskBrowser {
                 </a>
             </p>
             <p>
-                <a href="javascript:void(0);" onclick="TB.openTaskInPlanner();">
-                    Open in B21 Online Task Planner
-                </a>
-            </p>
-            <p>
                 <a href="#" onclick="TB.downloadWPRFile()">
                     <img src="images/WPRFile.png" alt="WPR File" class="file-icon">
                     Weather file (WPR): ${tb.getFileNameFromPath(tb.currentTask.WPRFilename)}
+                </a>
+            </p>
+            <p>
+                <a href="javascript:void(0);" onclick="TB.openTaskInPlanner();">
+                    Open these files on B21 Task Planner Online
                 </a>
             </p>
             <p><strong>Option 3:</strong> Download all files (including extras) as ZIP file</strong></p>
