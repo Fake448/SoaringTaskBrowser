@@ -14,6 +14,13 @@ try {
     // Retrieve and unpack the DPHX file
     $taskFolder = retrieveAndUnpackDPHX($taskID);
 
+    // Path transformation based on root folder
+    if (strpos($taskFolder, '/home3/siglr3/soaring.siglr.com/') === 0) {
+        $taskFolder = str_replace('/home3/siglr3/soaring.siglr.com/', 'https://soaring.siglr.com/', $taskFolder);
+    } elseif (strpos($taskFolder, '/home3/siglr3/wesimglide/') === 0) {
+        $taskFolder = str_replace('/home3/siglr3/wesimglide/', 'https://wesimglide.org/', $taskFolder);
+    }
+
     echo json_encode([
         'status' => 'success',
         'taskFolder' => $taskFolder
@@ -21,3 +28,4 @@ try {
 } catch (Exception $e) {
     echo json_encode(['status' => 'error', 'message' => $e->getMessage()]);
 }
+?>
