@@ -16,9 +16,9 @@ try {
 
     // Path transformation based on root folder
     if (strpos($taskFolder, '/home3/siglr3/soaring.siglr.com/') === 0) {
-        $taskFolder = str_replace('/home3/siglr3/soaring.siglr.com/', 'https://soaring.siglr.com/', $taskFolder);
+        $taskFolder = str_replace('/home3/siglr3/soaring.siglr.com/', 'soaring.siglr.com/', $taskFolder);
     } elseif (strpos($taskFolder, '/home3/siglr3/wesimglide/') === 0) {
-        $taskFolder = str_replace('/home3/siglr3/wesimglide/', 'https://wesimglide.org/', $taskFolder);
+        $taskFolder = str_replace('/home3/siglr3/wesimglide/', 'wesimglide.org/', $taskFolder);
     }
 
     echo json_encode([
