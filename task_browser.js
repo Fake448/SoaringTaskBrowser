@@ -848,7 +848,7 @@ class TaskBrowser {
                 </a>
             </p>
             <p>
-                <a href="javascript:void(0);" onclick="TB.openTaskInPlanner();">
+                <a href="#" onclick="TB.openTaskInPlanner();">
                     Open these files on B21 Task Planner Online
                 </a>
             </p>
