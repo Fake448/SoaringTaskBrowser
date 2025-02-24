@@ -2157,7 +2157,7 @@ class TaskBrowser {
         let tb = this;
 
         // Step 1: Call PHP to prepare the DPHX task
-        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${(tb.currentTask.TaskID}`)
+        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${(tb.currentTask.TaskID)}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
