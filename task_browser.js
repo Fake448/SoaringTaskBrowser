@@ -2155,9 +2155,9 @@ class TaskBrowser {
 
     openTaskInPlanner() {
         let tb = this;
+        const newWindow = window.open('', '_blank');  // Open immediately on user click
 
-        // Step 1: Call PHP to prepare the DPHX task
-        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${(tb.currentTask.TaskID)}`)
+        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${tb.currentTask.TaskID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -2165,21 +2165,16 @@ class TaskBrowser {
                     const plnFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.PLNFilename));
                     const wprFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.WPRFilename));
 
-                    // Step 2: Build the full paths for PLN and WPR files
-                    const plnPath = `${taskFolder}/${plnFilename}`;
-                    const wprPath = `${taskFolder}/${wprFilename}`;
-
-                    // Step 3: Build the planner URL
-                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${plnPath}&wpr=${wprPath}`;
-
-                    // Step 4: Open the planner with the constructed URL
-                    window.open(plannerUrl, '_blank');
+                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${taskFolder}/${plnFilename}&wpr=${taskFolder}/${wprFilename}`;
+                    newWindow.location.href = plannerUrl;  // Navigate the pre-opened window
                 } else {
+                    newWindow.close();  // Close if task fails
                     alert('Error: ' + data.message);
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
+                newWindow.close();
                 alert('Failed to prepare the task.');
             });
     }
