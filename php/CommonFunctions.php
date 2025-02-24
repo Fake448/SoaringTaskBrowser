@@ -210,4 +210,105 @@ function deleteTaskNewsEntries($taskID) {
         throw new Exception('Failed to delete task news entries.');
     }
 }
+
+/**
+ * Retrieve and unpack a DPHX file into a task-specific folder in the temporary directory.
+ *
+ * @param string $taskID The unique identifier for the task.
+ * @return string The path to the task-specific folder.
+ * @throws Exception If the DPHX file cannot be retrieved or extracted.
+ */
+function retrieveAndUnpackDPHX($taskID)
+{
+    global $taskRepositoryPath, $taskRepositoryPathHTTPS;
+
+    $tempDir = __DIR__ . '/DPHXTemp';
+    $taskFolder = "$tempDir/$taskID";
+    $dphxFile = "$taskFolder/$taskID.dphx";
+    $repositoryUrl = "$taskRepositoryPath/$taskID.dphx";
+    $repositoryUrlHTTPS = "$taskRepositoryPathHTTPS/$taskID.dphx";
+
+    // Ensure the temp directory exists
+    if (!file_exists($tempDir)) {
+        mkdir($tempDir, 0755, true);
+    }
+
+    // **Register cleanup function to run at the end**
+    register_shutdown_function('cleanupOldTempFolders', $tempDir);
+
+    // Get last modified time of the remote file
+    $remoteLastModified = getRemoteFileLastModified($repositoryUrlHTTPS);
+    $localLastModified = file_exists($taskFolder) ? filemtime($taskFolder) : 0;
+
+    // If the folder doesn't exist OR the DPHX file was updated, delete the folder and refresh
+    if (!file_exists($taskFolder) || ($remoteLastModified > $localLastModified && $remoteLastModified > 0)) {
+        if (file_exists($taskFolder)) {
+            deleteFolder($taskFolder);
+        }
+
+        mkdir($taskFolder, 0755, true);
+
+        // Download the DPHX file
+        $dphxContent = @file_get_contents($repositoryUrl);
+        if ($dphxContent === false) {
+            throw new Exception("DPHX file not found in repository for TaskID $taskID.");
+        }
+
+        file_put_contents($dphxFile, $dphxContent);
+
+        // Extract the DPHX file
+        $zip = new ZipArchive();
+        if ($zip->open($dphxFile) === TRUE) {
+            $zip->extractTo($taskFolder);
+            $zip->close();
+        } else {
+            throw new Exception("Failed to extract DPHX file for TaskID $taskID.");
+        }
+    }
+
+    return $taskFolder;
+}
+// **Function to clean up old folders**
+function cleanupOldTempFolders($tempDir) {
+    foreach (glob("$tempDir/*") as $folder) {
+        if (is_dir($folder) && time() - filemtime($folder) > 48 * 3600) {
+            deleteFolder($folder);
+        }
+    }
+}
+
+// **Function to delete a folder and its contents**
+function deleteFolder($folder) {
+    if (!is_dir($folder)) return;
+    foreach (glob("$folder/*") as $file) {
+        is_dir($file) ? deleteFolder($file) : unlink($file);
+    }
+    rmdir($folder);
+}
+
+// Function to fetch the last modified timestamp of a remote file
+function getRemoteFileLastModified($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true); // Fetch headers only
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_HEADER, true);
+    curl_setopt($ch, CURLOPT_FILETIME, true);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false); // Disable SSL verification if needed
+    curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true); // Follow redirects
+    curl_setopt($ch, CURLOPT_TIMEOUT, 10); // Prevent infinite waiting
+
+    $headers = curl_exec($ch);
+    $filetime = curl_getinfo($ch, CURLINFO_FILETIME);
+    $http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    $curl_error = curl_error($ch);
+    curl_close($ch);
+
+    if ($http_code !== 200 || $filetime === -1) {
+        logMessage("Error: Unable to retrieve Last-Modified for $url. HTTP Code: $http_code. cURL Error: $curl_error.");
+        return 0;
+    }
+
+    return $filetime;
+}
+
 ?>
