@@ -2162,15 +2162,15 @@ class TaskBrowser {
             .then(data => {
                 if (data.status === 'success') {
                     const taskFolder = data.taskFolder;
-                    const plnFilename = tb.getFileNameFromPath(tb.currentTask.PLNFilename);
-                    const wprFilename = tb.getFileNameFromPath(tb.currentTask.WPRFilename);
+                    const plnFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.PLNFilename));
+                    const wprFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.WPRFilename));
 
                     // Step 2: Build the full paths for PLN and WPR files
                     const plnPath = `${taskFolder}/${plnFilename}`;
                     const wprPath = `${taskFolder}/${wprFilename}`;
 
                     // Step 3: Build the planner URL
-                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${encodeURIComponent(plnPath)}&wpr=${encodeURIComponent(wprPath)}`;
+                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${plnPath}&wpr=${wprPath}`;
 
                     // Step 4: Open the planner with the constructed URL
                     window.open(plannerUrl, '_blank');
