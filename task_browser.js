@@ -842,7 +842,7 @@ class TaskBrowser {
                 </a>
             </p>
             <p>
-                <a href="#" onclick="TB.downloadWPRFile(TB.currentTask)">
+                <a href="#" onclick="TB.downloadWPRFile()">
                     <img src="images/WPRFile.png" alt="WPR File" class="file-icon">
                     Weather file (WPR): ${tb.getFileNameFromPath(tb.currentTask.WPRFilename)}
                 </a>
