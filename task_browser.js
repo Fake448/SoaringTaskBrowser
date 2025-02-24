@@ -1623,12 +1623,26 @@ class TaskBrowser {
     }
 
     downloadTextFile(content, filename, source = "map") {
+        // Create a Blob object from the content
+        const blob = new Blob([content], { type: 'text/plain' }); // Change type if needed
+
+        // Create an object URL
+        const url = window.URL.createObjectURL(blob);
+
+        // Create a temporary <a> tag
         const link = document.createElement('a');
-        link.href = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content);
+        link.href = url;
         link.download = filename;
+
+        // Append, trigger click, and remove element
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // Revoke the Object URL after a short delay to avoid memory leaks
+        setTimeout(() => {
+            window.URL.revokeObjectURL(url);
+        }, 1000);
 
         if (source === "discord") {
             setTimeout(() => window.close(), 3000);
