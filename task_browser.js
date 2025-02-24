@@ -18,11 +18,10 @@ class TaskBrowser {
         if (window.location.origin.includes("wesimglide.org")) {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
         }
-        else
-        {
+        else {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
         }
-        
+
         if (tb.isDownloadPage) {
             // Light initialization for download purposes
             console.log("Initializing TaskBrowser in light mode for download page.");
@@ -843,7 +842,7 @@ class TaskBrowser {
                 </a>
             </p>
             <p>
-                <a href="javascript:void(0);" onclick="openTaskInPlanner(tb.currentTask.TaskID, tb.getFileNameFromPath(tb.currentTask.PLNFilename), tb.getFileNameFromPath(tb.currentTask.WPRFilename));">
+                <a href="javascript:void(0);" onclick="TB.openTaskInPlanner();">
                     Open in B21 Online Task Planner
                 </a>
             </p>
@@ -1734,7 +1733,7 @@ class TaskBrowser {
     }
 
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
-        let tb = this; 
+        let tb = this;
 
         return new Promise((resolve, reject) => {
             let fetch_promise;
@@ -2154,14 +2153,26 @@ class TaskBrowser {
         return portValue;
     }
 
-    openTaskInPlanner(taskID, plnFilename, wprFilename) {
+    openTaskInPlanner(taskID) {
+        let tb = this;
+
         // Step 1: Call PHP to prepare the DPHX task
-        fetch(`php/PrepareDPHXTask.php?taskID=${taskID}&plnFilename=${encodeURIComponent(plnFilename)}&wprFilename=${encodeURIComponent(wprFilename)}`)
+        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${taskID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Step 2: Open the task in the B21 Task Planner
-                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${data.plnUrl}&wpr=${data.wprUrl}`;
+                    const taskFolder = data.taskFolder;
+                    const plnFilename = tb.getFileNameFromPath(tb.currentTask.PLNFilename);
+                    const wprFilename = tb.getFileNameFromPath(tb.currentTask.WPRFilename);
+
+                    // Step 2: Build the full paths for PLN and WPR files
+                    const plnPath = `${taskFolder}/${plnFilename}`;
+                    const wprPath = `${taskFolder}/${wprFilename}`;
+
+                    // Step 3: Build the planner URL
+                    const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${encodeURIComponent(plnPath)}&wpr=${encodeURIComponent(wprPath)}`;
+
+                    // Step 4: Open the planner with the constructed URL
                     window.open(plannerUrl, '_blank');
                 } else {
                     alert('Error: ' + data.message);
@@ -2380,13 +2391,13 @@ class TaskBrowser {
     }
 
     adjustGridHeight(rowCount) {
-    const taskGridOverlay = document.getElementById("taskGridOverlay");
+        const taskGridOverlay = document.getElementById("taskGridOverlay");
 
-    // Determine dynamic height (each row approx 35px + some padding)
-    let calculatedHeight = Math.min(40, (rowCount * 1.84) + 9.5) + "vh";
+        // Determine dynamic height (each row approx 35px + some padding)
+        let calculatedHeight = Math.min(40, (rowCount * 1.84) + 9.5) + "vh";
 
-    // Apply height dynamically
-    taskGridOverlay.style.height = calculatedHeight;
+        // Apply height dynamically
+        taskGridOverlay.style.height = calculatedHeight;
     }
 
     populateDataTable(tasks) {
@@ -2490,7 +2501,7 @@ class TaskBrowser {
             table.on('search.dt draw.dt', function () {
                 let filteredRowCount = table.rows({ filter: 'applied' }).count(); // Get only visible rows
                 tb.adjustGridHeight(filteredRowCount);
-    
+
                 // Update info dynamically
                 $("#taskGridInfo").html($("#taskGridTable_info").html());
             });
