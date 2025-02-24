@@ -1623,18 +1623,15 @@ class TaskBrowser {
     }
 
     downloadTextFile(content, filename, source = "map") {
-        const blob = new Blob([content], { type: 'application/xml;charset=utf-8' });
         const link = document.createElement('a');
-        link.href = window.URL.createObjectURL(blob);
+        link.href = 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(content);
         link.download = filename;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
         if (source === "discord") {
-            setTimeout(() => {
-                //alert("Download was started! Click to close.");
-                window.close();
-            }, 3000); // Delay to allow the browser's download prompt to appear
+            setTimeout(() => window.close(), 3000);
         }
     }
 
