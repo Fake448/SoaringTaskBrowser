@@ -1,14 +1,26 @@
 <?php
 // Include the configuration file
-$config = include 'config.php'; 
+$config = include 'config.php';
 
 // Assign paths from the configuration array
 $databasePath = $config['databasePath'];
 $newsDBPath = $config['newsDBPath'];
-$logFile = $config['logFile'];
+
+// Dynamically insert the date into the log file name (VB.net convention)
+$logFile = preg_replace(
+    '/(error_log)(\.txt)$/i',
+    '${1}_' . date('Ymd') . '${2}',
+    $config['logFile']
+);
+
 $userPermissionsPath = $config['userPermissionsPath'];
-$taskRepositoryPath = $config['repositoryPath'];
-$taskRepositoryPathHTTPS = $config['repositoryPathHTTPS'];
+$soaringClubsPath = $config['soaringClubsPath'];
+$fileRootPath = $config['fileRootPath'];
+
+// Repository paths (used by WeSimGlide.org)
+$taskRepositoryPath = isset($config['repositoryPath']) ? $config['repositoryPath'] : '';
+$taskRepositoryPathHTTPS = isset($config['repositoryPathHTTPS']) ? $config['repositoryPathHTTPS'] : '';
+
 $disWHPrefix = 'https://discord.com/api/webhooks/';
 $disWHFlights = $disWHPrefix . $config['disWHFlights'];
 $disWHAnnouncements = $disWHPrefix . $config['disWHAnnouncements'];
@@ -92,7 +104,6 @@ function checkUserRight($userPermissions, $right) {
 
 // Function to check user permissions directly
 function checkUserPermission($userID, $permission) {
-    logMessage("Checking permission for UserID: $userID, Permission: $permission");
 
     // Get user permissions
     $userPermissions = getUserPermissions($userID);
@@ -108,19 +119,19 @@ function checkUserPermission($userID, $permission) {
     return $hasRight;
 }
 
+// Function to clean up expired News and Event entries (including Discord posts)
 function cleanUpNewsEntries($pdo) {
     global $disWHAnnouncements;
-
+    
     // Get the current UTC datetime
     $currentDatetime = $pdo->query("SELECT datetime('now')")->fetchColumn();
 
     // Get the datetime for 7 days ago
     $datetimeMinus7Days = $pdo->query("SELECT datetime('now', '-7 days')")->fetchColumn();
-
+    
     // Cleanup expired News and Event entries
     // Step 1: Fetch Keys for expired News entries of NewsType 1 and 2
     $expiredKeys = $pdo->query("SELECT DISTINCT Key FROM News WHERE NewsType IN (1, 2) AND Expiration < datetime('now')")->fetchAll(PDO::FETCH_COLUMN);
-
     if (!empty($expiredKeys)) {
         // Before deleting from the Events table, try to delete the corresponding Discord posts.
         foreach ($expiredKeys as $key) {
@@ -145,12 +156,32 @@ function cleanUpNewsEntries($pdo) {
         $deleteEventsStmt = $pdo->prepare("DELETE FROM Events WHERE EventKey IN ($placeholders)");
         $deleteEventsStmt->execute($expiredKeys);
     }
-
+    
     // Step 3: Delete the expired News entries from the News table
     $pdo->exec("DELETE FROM News WHERE NewsType IN (1, 2) AND Expiration < datetime('now')");
 
     // Cleanup old Task entries (NewsType 0) older than 7 days
     $pdo->exec("DELETE FROM News WHERE NewsType = 0 AND Published < datetime('now', '-7 days')");
+}
+
+// Function to clean up old pending tasks
+function cleanUpPendingTasks($pdo) {
+    try {
+        logMessage("Cleaning up old pending tasks of more than 5 days");
+        $datetimeMinus5Days = $pdo->query("SELECT datetime('now', '-5 days')")->fetchColumn();
+        $deleteStmt = $pdo->prepare("
+            DELETE FROM Tasks
+            WHERE Status = 10
+            AND LastUpdate < :datetimeMinus5Days
+        ");
+        $deleteStmt->execute([':datetimeMinus5Days' => $datetimeMinus5Days]);
+        $rowsDeleted = $deleteStmt->rowCount();
+        if ($rowsDeleted > 0) {
+            logMessage("Deleted $rowsDeleted pending tasks with Status = 10 and LastUpdate < 5 days ago.");
+        }
+    } catch (Exception $e) {
+        logMessage("Error during clean-up of pending tasks: " . $e->getMessage());
+    }
 }
 
 // Function to create or update a task news entry
@@ -161,8 +192,7 @@ function createOrUpdateTaskNewsEntry($taskData, $isUpdate) {
         // Open the news database connection
         $newsPdo = new PDO("sqlite:$newsDBPath");
         $newsPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        logMessage("News database connection established.");
-
+        
         cleanUpNewsEntries($newsPdo);
         
         $action = $isUpdate ? 'UpdateTask' : 'CreateTask';
@@ -174,7 +204,7 @@ function createOrUpdateTaskNewsEntry($taskData, $isUpdate) {
         } else {
             $comments = !empty($taskData['MainAreaPOI']) ? $taskData['MainAreaPOI'] : $taskData['ShortDescription'];
         }
-        
+
         // Process credits
         $credits = str_replace("All credits to ", "By ", preg_replace("/ for this task.*/", "", $taskData['Credits']));
 
@@ -187,7 +217,6 @@ function createOrUpdateTaskNewsEntry($taskData, $isUpdate) {
             INSERT INTO News (Key, Published, Title, Subtitle, Comments, Credits, EventDate, News, NewsType, TaskID, EntrySeqID, URLToGo, Expiration)
             VALUES (:Key, :Published, :Title, :Subtitle, :Comments, :Credits, :EventDate, :News, 0, :TaskID, :EntrySeqID, :URLToGo, :Expiration)
         ");
-        logMessage("Insert statement for news prepared.");
 
         // Execute the insert statement
         $stmt->execute([
@@ -220,7 +249,6 @@ function deleteTaskNewsEntries($taskID) {
         // Open the news database connection
         $newsPdo = new PDO("sqlite:$newsDBPath");
         $newsPdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-        logMessage("News database connection established for deleting task news.");
 
         // Prepare the delete statement
         $stmt = $newsPdo->prepare("DELETE FROM News WHERE TaskID = :TaskID");
@@ -234,15 +262,8 @@ function deleteTaskNewsEntries($taskID) {
     }
 }
 
-/**
- * Retrieve and unpack a DPHX file into a task-specific folder in the temporary directory.
- *
- * @param string $taskID The unique identifier for the task.
- * @return string The path to the task-specific folder.
- * @throws Exception If the DPHX file cannot be retrieved or extracted.
- */
-function retrieveAndUnpackDPHX($taskID)
-{
+// Function to retrieve and unpack a DPHX file into a task-specific folder
+function retrieveAndUnpackDPHX($taskID) {
     global $taskRepositoryPath, $taskRepositoryPathHTTPS;
 
     $tempDir = __DIR__ . '/DPHXTemp';
@@ -291,7 +312,8 @@ function retrieveAndUnpackDPHX($taskID)
 
     return $taskFolder;
 }
-// **Function to clean up old folders**
+
+// Function to clean up old temporary folders
 function cleanupOldTempFolders($tempDir) {
     foreach (glob("$tempDir/*") as $folder) {
         if (is_dir($folder) && time() - filemtime($folder) > 48 * 3600) {
@@ -300,7 +322,7 @@ function cleanupOldTempFolders($tempDir) {
     }
 }
 
-// **Function to delete a folder and its contents**
+// Function to delete a folder and its contents
 function deleteFolder($folder) {
     if (!is_dir($folder)) return;
     foreach (glob("$folder/*") as $file) {
@@ -334,6 +356,7 @@ function getRemoteFileLastModified($url) {
     return $filetime;
 }
 
+// Function to manage Discord posts (create, update, delete)
 function manageDiscordPost($webhookUrl, $messageContent = '', $postID = null, $deletePost = false) {
     // Prepare the base response structure.
     $response = [
@@ -377,7 +400,7 @@ function manageDiscordPost($webhookUrl, $messageContent = '', $postID = null, $d
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         // Optional: set a timeout, e.g., 10 seconds.
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
+
         $resultData = executeCurl($ch);
         if ($resultData["result"] === false) {
             $response['error'] = "cURL Error: " . $resultData["error"];
@@ -393,14 +416,14 @@ function manageDiscordPost($webhookUrl, $messageContent = '', $postID = null, $d
     if (!empty($postID)) {
         $url = rtrim($webhookUrl, '/') . "/messages/" . $postID;
         $data = ["content" => $messageContent];
-        
+
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_CUSTOMREQUEST, "PATCH");
         curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-        
+
         $resultData = executeCurl($ch);
         if ($resultData["result"] === false) {
             $response['error'] = "cURL Error: " . $resultData["error"];
@@ -417,14 +440,14 @@ function manageDiscordPost($webhookUrl, $messageContent = '', $postID = null, $d
     // Use ?wait=true to have Discord return the full message object including the post ID.
     $url = rtrim($webhookUrl, '/') . "?wait=true";
     $data = ["content" => $messageContent];
-    
+
     $ch = curl_init($url);
     curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-    
+
     $resultData = executeCurl($ch);
     if ($resultData["result"] === false) {
         $response['error'] = "cURL Error: " . $resultData["error"];
@@ -444,5 +467,4 @@ function manageDiscordPost($webhookUrl, $messageContent = '', $postID = null, $d
     
     return json_encode($response);
 }
-
 ?>
