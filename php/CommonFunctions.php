@@ -9,6 +9,8 @@ $logFile = $config['logFile'];
 $userPermissionsPath = $config['userPermissionsPath'];
 $taskRepositoryPath = $config['repositoryPath'];
 $taskRepositoryPathHTTPS = $config['repositoryPathHTTPS'];
+$disWHFlights = $config['disWHFlights'];
+$disWHAnnouncements = $config['disWHAnnouncements'];
 
 // Function to log messages
 function logMessage($message) {
