@@ -7,6 +7,7 @@ class TaskBrowser {
         let fromURL = false;
         tb.isDownloadPage = false;
         tb.discordPostHelperTaskBrowserPath = "";
+        tb.discordTasksChannel = "";
     }
 
     init() {
@@ -17,9 +18,11 @@ class TaskBrowser {
         tb.isDownloadPage = currentPath.includes("download.html");
         if (window.location.origin.includes("wesimglide.org")) {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
+            tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1155511739799060552/";
         }
         else {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
+            tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1067288937527246868/";
         }
 
         if (tb.isDownloadPage) {
@@ -1326,7 +1329,7 @@ class TaskBrowser {
         const gotoDiscordThreadButton = document.getElementById('gotoDiscordThread');
         gotoDiscordThreadButton.onclick = function () {
             tb.incrementThreadAccess(task.EntrySeqID);
-            window.open(`discord://discord.com/channels/1022705603489042472/${task.DiscordPostID}`, '_blank');
+            window.open(`${tb.discordTasksChannel}${task.DiscordPostID}`, '_blank');
         };
 
         // Add event listener to the download DPHX file button
@@ -1338,7 +1341,7 @@ class TaskBrowser {
         // Add event listener to the send task to tracker button
         const sendTaskToTrackerButton = document.getElementById('sendTaskToTracker');
         sendTaskToTrackerButton.onclick = function () {
-            tb.setSSCTracker("", task.EntrySeqID, `discord://discord.com/channels/1022705603489042472/${task.TaskID}`);
+            tb.setSSCTracker("", task.EntrySeqID, `${tb.discordTasksChannel}${task.DiscordPostID}`);
         };
 
         // Add event listener to the toggle task details button
