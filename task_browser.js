@@ -1326,7 +1326,7 @@ class TaskBrowser {
         const gotoDiscordThreadButton = document.getElementById('gotoDiscordThread');
         gotoDiscordThreadButton.onclick = function () {
             tb.incrementThreadAccess(task.EntrySeqID);
-            window.open(`discord://discord.com/channels/1022705603489042472/${task.TaskID}`, '_blank');
+            window.open(`discord://discord.com/channels/1022705603489042472/${task.DiscordPostID}`, '_blank');
         };
 
         // Add event listener to the download DPHX file button

@@ -96,7 +96,7 @@ try {
             MainAreaPOI, DepartureName, DepartureICAO, ArrivalName, ArrivalICAO,
             SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo,
             DurationMin, DurationMax, TaskDistance, TotalDistance, RecommendedGliders,
-            DifficultyRating, DifficultyExtraInfo, Credits, Countries, LastUpdate
+            DifficultyRating, DifficultyExtraInfo, Credits, Countries, LastUpdate, DiscordPostID
         FROM Tasks
         WHERE " . implode(' AND ', $whereClauses) . "
         ORDER BY LastUpdate DESC
