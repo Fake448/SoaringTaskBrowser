@@ -60,6 +60,7 @@ try {
             BaroPressureExtraInfo,
             ExtraFilesList,
             Status,
+            DiscordPostID,
             Availability
         FROM Tasks
         WHERE EntrySeqID = :entrySeqID AND Status = 99
