@@ -16,29 +16,30 @@ try {
 
     // Get soaring type filters from query parameters
     $soaringTypes = [
-        'soaringRidge' => isset($_GET['soaringRidge']) ? (int)$_GET['soaringRidge'] : 1,
+        'soaringRidge'    => isset($_GET['soaringRidge']) ? (int)$_GET['soaringRidge'] : 1,
         'soaringThermals' => isset($_GET['soaringThermals']) ? (int)$_GET['soaringThermals'] : 1,
-        'soaringWaves' => isset($_GET['soaringWaves']) ? (int)$_GET['soaringWaves'] : 1,
-        'soaringDynamic' => isset($_GET['soaringDynamic']) ? (int)$_GET['soaringDynamic'] : 1
+        'soaringWaves'    => isset($_GET['soaringWaves']) ? (int)$_GET['soaringWaves'] : 1,
+        'soaringDynamic'  => isset($_GET['soaringDynamic']) ? (int)$_GET['soaringDynamic'] : 1
     ];
     $soaringTypeFilter = $_GET['soaringTypeFilter'] ?? 'any';
 
-    // Logging
-    //logMessage("Received Parameters - Task Count: $taskCount, Start Date: $startDate, End Date: $endDate, DurationMin: $durationMin, DurationMax: $durationMax, IncludeNoDuration: $includeNoDuration, Soaring Types: " . json_encode($soaringTypes) . ", Filter Type: $soaringTypeFilter");
+    // Compute current UTC time in PHP
+    $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->format('Y-m-d H:i:s');
 
-    // Base WHERE clause for date range AND status = 99 AND Availability
+    // Base WHERE clause for date range, status, and availability
     $whereClauses = [
         "LastUpdate BETWEEN :startDate AND :endDate",
         "Status = 99",
-        "(Availability IS NULL OR Availability <= datetime('now', 'utc'))"
+        "(Availability IS NULL OR Availability <= :nowUTC)"
     ];
 
     $params = [
-        ':startDate' => $startDate,
-        ':endDate' => $endDate,
-        ':taskCount' => $taskCount,
+        ':startDate'   => $startDate,
+        ':endDate'     => $endDate,
+        ':taskCount'   => $taskCount,
         ':durationMin' => $durationMin,
-        ':durationMax' => $durationMax
+        ':durationMax' => $durationMax,
+        ':nowUTC'      => $nowUTC
     ];
 
     // Add soaring type conditions if required
@@ -69,7 +70,7 @@ try {
 
     // Add soaring type conditions to WHERE clause
     if (!empty($soaringConditions)) {
-        $whereClauses[] = $soaringTypeFilter === 'any' 
+        $whereClauses[] = $soaringTypeFilter === 'any'
             ? '(' . implode(' OR ', $soaringConditions) . ')'
             : '(' . implode(' AND ', $soaringConditions) . ')';
     }
@@ -103,13 +104,6 @@ try {
         LIMIT :taskCount
     ";
 
-    // Debug the final query with parameter substitution
-    //$debugQuery = $query;
-    //foreach ($params as $key => $value) {
-    //    $debugQuery = str_replace($key, is_int($value) ? $value : "'$value'", $debugQuery);
-    //}
-    //logMessage("Debug Query: $debugQuery");
-
     // Execute query with parameters
     $stmt = $pdo->prepare($query);
     foreach ($params as $key => $value) {
@@ -119,9 +113,9 @@ try {
     $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     // Additional query for total task count
-    $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks WHERE (Availability IS NULL OR Availability <= datetime('now', 'utc'))";
+    $countQuery = "SELECT COUNT(*) as totalTasks FROM Tasks WHERE (Availability IS NULL OR Availability <= :nowUTC)";
     $countStmt = $pdo->prepare($countQuery);
-    $countStmt->execute();
+    $countStmt->execute([':nowUTC' => $nowUTC]);
     $totalTasks = $countStmt->fetch(PDO::FETCH_ASSOC)['totalTasks'];
 
     // Additional query for oldest and newest dates
@@ -132,7 +126,7 @@ try {
 
     // Response
     $response = [
-        'tasks' => $tasks,
+        'tasks'      => $tasks,
         'totalTasks' => $totalTasks,
         'oldestDate' => $dates['oldestDate'],
         'newestDate' => $dates['newestDate']
