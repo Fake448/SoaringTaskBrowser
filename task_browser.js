@@ -1301,13 +1301,17 @@ class TaskBrowser {
 
         taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
 
-        // Set the background image
-        document.documentElement.style.setProperty(
-            "--task-cover-url",
-            `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
-        );
+        // If opacity is 0, remove the background image entirely
+        if (tb.userSettings.coverImageOpacity > 0) {
+            document.documentElement.style.setProperty(
+                "--task-cover-url",
+                `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
+            );
+        } else {
+            document.documentElement.style.setProperty("--task-cover-url", "none");
+        }
 
-        // Set the opacity dynamically
+        // Set the opacity dynamically (0 to 1)
         document.documentElement.style.setProperty(
             "--task-cover-opacity",
             tb.userSettings.coverImageOpacity / 100 // Convert to decimal (e.g., 25 -> 0.25)
