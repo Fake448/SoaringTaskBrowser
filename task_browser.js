@@ -1300,6 +1300,16 @@ class TaskBrowser {
         tb.currentTask = task; // Save the current task for download use
 
         taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
+
+        if (tb.userSettings.coverImageBackground === "on") {
+            document.documentElement.style.setProperty(
+                "--task-cover-url",
+                `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
+            );
+        } else {
+            document.documentElement.style.setProperty("--task-cover-url", "none");
+        }
+
         tb.generateTaskDetailsFullDescription(task);
         tb.generateTaskDetailsFiles(task);
         tb.generateTaskDetailsExtraFiles(task);
@@ -2055,6 +2065,7 @@ class TaskBrowser {
             temperature: 'fahrenheit',
             DPHXlocalPort: 54513,
             TrackerlocalPort: 55055,
+            coverImageBackground: 'on',
         };
 
         // Merge default settings with saved settings
@@ -2071,6 +2082,7 @@ class TaskBrowser {
             document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
             document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
             document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
+            document.querySelector(`input[name="coverImageBackground"][value="${mergedSettings.coverImageBackground}"]`).checked = true;
             const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
             if (DPHXlocalPortInput) {
                 DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
@@ -2117,7 +2129,8 @@ class TaskBrowser {
                 gateMeasurement: document.querySelector('input[name="gateMeasurement"]:checked').value,
                 windSpeed: document.querySelector('input[name="windSpeed"]:checked').value,
                 pressure: document.querySelector('input[name="pressure"]:checked').value,
-                temperature: document.querySelector('input[name="temperature"]:checked').value
+                temperature: document.querySelector('input[name="temperature"]:checked').value,
+                coverImageBackground: document.querySelector('input[name="coverImageBackground"]:checked').value,
             };
 
             // Validate and assign ports
