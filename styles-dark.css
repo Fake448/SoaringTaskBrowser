@@ -937,5 +937,5 @@ table.dataTable thead .sorting {
         background: var(--task-cover-url) no-repeat center/cover;
         background-size: cover;
         background-position: center;
-        opacity: 0.25; /* Alternative to filter: brightness */
+        opacity: var(--task-cover-opacity, 0.25);
     }

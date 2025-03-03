@@ -1301,14 +1301,17 @@ class TaskBrowser {
 
         taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
 
-        if (tb.userSettings.coverImageBackground === "on") {
-            document.documentElement.style.setProperty(
-                "--task-cover-url",
-                `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
-            );
-        } else {
-            document.documentElement.style.setProperty("--task-cover-url", "none");
-        }
+        // Set the background image
+        document.documentElement.style.setProperty(
+            "--task-cover-url",
+            `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
+        );
+
+        // Set the opacity dynamically
+        document.documentElement.style.setProperty(
+            "--task-cover-opacity",
+            tb.userSettings.coverImageOpacity / 100 // Convert to decimal (e.g., 25 -> 0.25)
+        );
 
         tb.generateTaskDetailsFullDescription(task);
         tb.generateTaskDetailsFiles(task);
@@ -2065,7 +2068,7 @@ class TaskBrowser {
             temperature: 'fahrenheit',
             DPHXlocalPort: 54513,
             TrackerlocalPort: 55055,
-            coverImageBackground: 'on',
+            coverImageOpacity: 25,
         };
 
         // Merge default settings with saved settings
@@ -2082,7 +2085,13 @@ class TaskBrowser {
             document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
             document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
             document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
-            document.querySelector(`input[name="coverImageBackground"][value="${mergedSettings.coverImageBackground}"]`).checked = true;
+
+            const opacitySlider = document.getElementById("coverImageOpacity");
+            const opacityValue = document.getElementById("coverImageOpacityValue");
+
+            opacitySlider.value = mergedSettings.coverImageOpacity;
+            opacityValue.innerText = `${mergedSettings.coverImageOpacity}%`;
+
             const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
             if (DPHXlocalPortInput) {
                 DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
@@ -2104,6 +2113,11 @@ class TaskBrowser {
                     tb.saveUserSettings();  // We’ll validate & then save
                 });
             }
+
+            opacitySlider.addEventListener("input", function () {
+                opacityValue.innerText = `${this.value}%`; // Update the displayed percentage
+                tb.saveUserSettings(); // Save the new setting
+            });
 
             // Attach change event listeners to save settings when any radio button is changed
             document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
@@ -2130,7 +2144,7 @@ class TaskBrowser {
                 windSpeed: document.querySelector('input[name="windSpeed"]:checked').value,
                 pressure: document.querySelector('input[name="pressure"]:checked').value,
                 temperature: document.querySelector('input[name="temperature"]:checked').value,
-                coverImageBackground: document.querySelector('input[name="coverImageBackground"]:checked').value,
+                coverImageOpacity: document.getElementById("coverImageOpacity").value,
             };
 
             // Validate and assign ports

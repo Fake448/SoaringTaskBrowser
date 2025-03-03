@@ -165,9 +165,9 @@
                     </fieldset>
                     <br>
                     <fieldset>
-                        <legend>Display task cover image as background</legend>
-                        <label><input type="radio" name="coverImageBackground" value="on"> On</label>
-                        <label><input type="radio" name="coverImageBackground" value="off"> Off</label>
+                        <legend>Cover Image Opacity</legend>
+                        <input type="range" id="coverImageOpacity" name="coverImageOpacity" min="0" max="100" step="5" value="25">
+                        <span id="coverImageOpacityValue">25%</span>
                     </fieldset>
                     <br>
                     <fieldset>
@@ -223,7 +223,7 @@
         var VERSION = "0.0.5_MD";</script>
 
     <!-- Standalone-specific JavaScript -->
-    <script src="task_browser.js?v=2503.03.1"></script>
+    <script src="task_browser.js?v=2503.03.2"></script>
     <!-- Include the new index.js -->
     <script src="index.js?v=2502.24.1"></script>
 </body>
