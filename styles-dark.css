@@ -925,6 +925,9 @@ table.dataTable thead .sorting {
 
 .task-details.markdown-content {
     position: relative;
+    background: #23272a;
+    color: white;
+    z-index: 1;
 }
 
     .task-details.markdown-content::before {
@@ -938,4 +941,5 @@ table.dataTable thead .sorting {
         background-size: cover;
         background-position: center;
         opacity: var(--task-cover-opacity, 0.25);
+        z-index: -2;
     }
