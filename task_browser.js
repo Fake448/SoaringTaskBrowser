@@ -2333,6 +2333,9 @@ class TaskBrowser {
 
     processTasks(tasks) {
         return tasks.map(task => {
+            // Helper function to truncate strings
+            const truncate = (str, maxLength) => (str && str.length > maxLength ? str.substring(0, maxLength) + '...' : str);
+
             // Combine soaring types
             const soaringTypes = [];
             if (task.SoaringRidge) soaringTypes.push('Ridge');
@@ -2340,8 +2343,10 @@ class TaskBrowser {
             if (task.SoaringWaves) soaringTypes.push('Waves');
             if (task.SoaringDynamic) soaringTypes.push('Dynamic');
             task.SoaringType = soaringTypes.join(', ');
+
+            // Truncate SoaringExtraInfo and append it
             if (task.SoaringExtraInfo) {
-                task.SoaringType += ` (${task.SoaringExtraInfo})`;
+                task.SoaringType += ` (${truncate(task.SoaringExtraInfo, 30)})`;
             }
 
             // Format duration
@@ -2355,11 +2360,11 @@ class TaskBrowser {
 
             // Format difficulty rating
             if (task.DifficultyRating === "0. None / Custom") {
-                task.Difficulty = task.DifficultyExtraInfo || 'Custom';
+                task.Difficulty = truncate(task.DifficultyExtraInfo, 30) || 'Custom';
             } else {
                 task.Difficulty = task.DifficultyRating;
                 if (task.DifficultyExtraInfo) {
-                    task.Difficulty += ` (${task.DifficultyExtraInfo})`;
+                    task.Difficulty += ` (${truncate(task.DifficultyExtraInfo, 30)})`;
                 }
             }
 
