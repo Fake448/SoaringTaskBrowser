@@ -47,8 +47,7 @@ try {
 
         // If EntrySeqID is available, set CoverImageURL using the file root path
         if (!empty($entry['EntrySeqID'])) {
-            // Make sure $fileRootPath is defined earlier in your code.
-            $entry['CoverImageURL'] = $fileRootPath . "TaskBrowser/Covers/" . $entry['EntrySeqID'] . ".jpg";
+            $entry['CoverImageURL'] = $taskBrowserPathHTTPS . "/Covers/" . $entry['EntrySeqID'] . ".jpg";
         } else {
             $entry['CoverImageURL'] = null;
         }
