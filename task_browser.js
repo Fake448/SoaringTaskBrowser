@@ -1420,6 +1420,7 @@ class TaskBrowser {
         countdownSection = null,
         backgroundImageUrl = null
     ) {
+        let tb = this;
         const section = document.createElement('div');
         section.className = 'tool-entry collapsible collapsed';
         if (id) {
