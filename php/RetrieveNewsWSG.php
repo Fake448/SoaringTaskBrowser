@@ -45,6 +45,14 @@ try {
             $entry['GroupEventTeaserImage'] = null;
         }
 
+        // If EntrySeqID is available, set CoverImageURL using the file root path
+        if (!empty($entry['EntrySeqID'])) {
+            // Make sure $fileRootPath is defined earlier in your code.
+            $entry['CoverImageURL'] = $fileRootPath . "TaskBrowser/Covers/" . $entry['EntrySeqID'] . ".jpg";
+        } else {
+            $entry['CoverImageURL'] = null;
+        }
+
         // Convert server's current time to UTC timestamp
         $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
 
@@ -59,7 +67,7 @@ try {
         if ($isFutureAvailability) {
             if (!empty($entry['Refly']) && $entry['Refly'] == 1) {
                 // Refly = 1 → Do not fetch task details
-                unset($entry['TaskID'], $entry['EntrySeqID']);
+                unset($entry['TaskID'], $entry['EntrySeqID'], $entry['CoverImageURL']);
                 continue; // Skip fetching task details
             }
         }

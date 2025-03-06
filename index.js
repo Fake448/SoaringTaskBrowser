@@ -573,7 +573,7 @@ function displayEvents(events) {
             countdownSection = createCountdownSection(countdowns);
         }
 
-        TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass, null, countdownSection);
+        TB.generateCollapsibleSection(`📆 ${dayOfWeek}, ${localEventDate} : ${event.Title}${titleSuffix}`, eventContent, eventsList, event.Key, highlightClass, null, countdownSection, event.CoverImageURL);
         // Add click listener to save the opened sections
         const eventElement = document.getElementById(event.Key);
         eventElement.addEventListener('click', () => {

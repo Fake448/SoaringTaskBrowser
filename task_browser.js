@@ -1410,10 +1410,18 @@ class TaskBrowser {
         }
     }
 
-    generateCollapsibleSection(title, content, container, id = null, highlightClass = null, resetCallback = null, countdownSection = null) {
+    generateCollapsibleSection(
+        title,
+        content,
+        container,
+        id = null,
+        highlightClass = null,
+        resetCallback = null,
+        countdownSection = null,
+        backgroundImageUrl = null
+    ) {
         const section = document.createElement('div');
         section.className = 'tool-entry collapsible collapsed';
-
         if (id) {
             section.id = id;
         }
@@ -1427,47 +1435,51 @@ class TaskBrowser {
             titleElement.classList.add(highlightClass);
         }
 
-        // Add the "Reset" button if a resetCallback function is provided
+        // Add reset button if callback is provided
         if (resetCallback) {
             const resetButton = document.createElement('button');
             resetButton.className = 'collapsible-reset-button';
             resetButton.innerText = 'Reset';
             resetButton.addEventListener('click', (event) => {
-                event.stopPropagation(); // Prevent the section from toggling when clicked
-                resetCallback(); // Call the reset function
+                event.stopPropagation();
+                resetCallback();
             });
-            titleElement.appendChild(resetButton); // Add button to the title
+            titleElement.appendChild(resetButton);
         }
 
-        // Content wrapper with the countdown included
+        // The content wrapper
         const contentWrapper = document.createElement('div');
         contentWrapper.className = 'content-wrapper';
 
-        // Content element
+        // The content element
         const contentElement = document.createElement('div');
         contentElement.className = 'content';
         contentElement.innerHTML = content;
 
-        // Countdown section (if any)
+        // If there's a countdown, append it
         if (countdownSection) {
             countdownSection.className = 'countdown-section';
-            countdownSection.style.marginTop = '10px'; // Optional styling adjustment
+            countdownSection.style.marginTop = '10px';
             contentElement.appendChild(countdownSection);
         }
 
-        // Append content to the wrapper
-        contentWrapper.appendChild(contentElement);
+        // Set the background image and opacity via CSS variables, if provided
+        if (backgroundImageUrl) {
+            contentElement.style.setProperty('--cover-url', `url('${backgroundImageUrl}')`);
+        }
+        contentElement.style.setProperty('--cover-opacity', tb.userSettings.coverImageOpacity);
 
-        // Append title and content wrapper to section
+        // Append content to wrapper, then to section
+        contentWrapper.appendChild(contentElement);
         section.appendChild(titleElement);
         section.appendChild(contentWrapper);
 
-        // Toggle visibility on title click
+        // Toggle on title click
         titleElement.addEventListener('click', () => {
             section.classList.toggle('collapsed');
         });
 
-        // Append section to the container
+        // Finally, append the section to container
         container.appendChild(section);
     }
 
