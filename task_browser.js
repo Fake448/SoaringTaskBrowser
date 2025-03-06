@@ -1468,7 +1468,7 @@ class TaskBrowser {
         if (backgroundImageUrl) {
             contentElement.style.setProperty('--cover-url', `url('${backgroundImageUrl}')`);
         }
-        contentElement.style.setProperty('--cover-opacity', tb.userSettings.coverImageOpacity);
+        contentElement.style.setProperty('--cover-opacity', tb.userSettings.coverImageOpacity / 100);
 
         // Append content to wrapper, then to section
         contentWrapper.appendChild(contentElement);
