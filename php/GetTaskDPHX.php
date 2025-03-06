@@ -34,7 +34,7 @@ try {
         $dphxFilename = $taskID . '.dphx';
 
         // Define the URL to the DPHX file
-        $fileUrl = "$taskRepositoryPath/$dphxFilename";
+        $fileUrl = "$taskBrowserPath/Tasks/$dphxFilename";
 
         // Open the file URL
         $fileStream = @fopen($fileUrl, 'rb');
