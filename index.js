@@ -551,7 +551,7 @@ function displayEvents(events) {
             ${shareButton}
             ${dphxButton}
             ${trackerButton}
-            <p>Published on ${localPublishedDate}</p>
+            <br><span style="font-size:0.8em;">Published on ${localPublishedDate}</span>
         `;
 
         // Add countdowns
