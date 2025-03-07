@@ -353,6 +353,17 @@ function displayEvents(events) {
         }
 
         // Ensure the date is parsed correctly as UTC
+        const publishedDate = new Date(event.Published.replace(' ', 'T') + 'Z');
+
+        const localPublishedDate = publishedDate.toLocaleString(navigator.language, {
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hour12: TB.userSettings.timeFormat === 'usa' // Use 'usa' for 12-hour format
+        });
+
+        // Ensure the date is parsed correctly as UTC
         const eventDate = new Date(event.EventDate.replace(' ', 'T') + 'Z');
 
         const localEventDate = eventDate.toLocaleString(navigator.language, {
@@ -540,6 +551,7 @@ function displayEvents(events) {
             ${shareButton}
             ${dphxButton}
             ${trackerButton}
+            <p>Published on "${localPublishedDate}"</p>
         `;
 
         // Add countdowns
