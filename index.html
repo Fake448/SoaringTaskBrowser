@@ -205,8 +205,10 @@
         <img class="modal-content" id="modalImage">
         <div id="caption"></div>
     </div>
-    <!-- Leaflet JavaScript -->
-    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+    <!-- Leaflet, the OpenStreetMap API -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+    <!-- Make sure you put this AFTER Leaflet's CSS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Main map JavaScript -->
     <script src="map2.js?v=2502.24.1"></script>
     <script src="semicircle.js"></script>
@@ -219,7 +221,8 @@
     <script src="b21_airports.js"></script>
     <script src="wsg_weather.js"></script>
     <script src="b21_server_shim/test_api.js"></script>
-    <script>var DEBUG_LOCAL = false;
+    <script>
+    var DEBUG_LOCAL = false;
         var VERSION = "0.0.5_MD";</script>
 
     <!-- Standalone-specific JavaScript -->
