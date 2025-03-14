@@ -1274,7 +1274,7 @@ class TaskBrowser {
             let content = "";
             for (let addOn of addOns) {
                 // Ensure each add-on has the required fields
-                if (addOn.Name && addOn.URL && addOn.Type) {
+                if (addOn.Name && addOn.URL) {
                     // Determine the emoji based on the add-on type
                     const typeEmoji = addOn.Type === "Freeware" ? "🆓" : "💵";
 
