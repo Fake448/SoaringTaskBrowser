@@ -210,7 +210,7 @@ class TaskBrowserMap {
         });
 
         // Log constructed URL to verify query parameters
-        console.log("Constructed URL:", url.toString());
+        // console.log("Constructed URL:", url.toString());
 
         fetch(url)
             .then(response => response.json())
