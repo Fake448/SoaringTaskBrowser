@@ -716,7 +716,8 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
         }
         // Check if the task is unavailable
         if (task.status === "unavailable") {
-            const utcDate = new Date(task.availability + " UTC"); // Ensure UTC interpretation
+            const isoDateString = task.availability.replace(' ', 'T') + 'Z';
+            const utcDate = new Date(isoDateString);
             const localAvailabilityDate = utcDate.toLocaleString(navigator.language, {
                 month: 'long',
                 day: 'numeric',

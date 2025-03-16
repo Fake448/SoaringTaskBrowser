@@ -1792,7 +1792,9 @@ class TaskBrowser {
 
                     // Check if the task is unavailable
                     if (task_details.status === "unavailable") {
-                        const utcDate = new Date(task_details.availability + " UTC"); // Ensure UTC interpretation
+                        // Convert "YYYY-MM-DD HH:mm:ss" to "YYYY-MM-DDTHH:mm:ssZ"
+                        const isoDateString = task_details.availability.replace(' ', 'T') + 'Z';
+                        const utcDate = new Date(isoDateString);
                         const localAvailabilityDate = utcDate.toLocaleString(navigator.language, {
                             month: 'long',
                             day: 'numeric',
