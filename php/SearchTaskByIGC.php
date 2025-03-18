@@ -4,8 +4,12 @@ require __DIR__ . '/CommonFunctions.php';
 header('Content-Type: application/json');
 
 try {
+    error_log("SearchTaskByIGC.php: Script started.");
+    
     // Read JSON input from POST
     $input = file_get_contents('php://input');
+    error_log("Input JSON: " . $input);
+    
     if (!$input) {
         throw new Exception("No input received.");
     }
@@ -16,6 +20,9 @@ try {
     
     $igcTitle = trim($data['igcTitle']);
     $igcWaypoints = $data['igcWaypoints']; // associative array: waypointID => coordinate string
+    
+    error_log("IGC Title: " . $igcTitle);
+    error_log("IGC Waypoints: " . print_r($igcWaypoints, true));
 
     // Open the database connection
     $pdo = new PDO("sqlite:$databasePath");
@@ -30,13 +37,21 @@ try {
     $stmt->bindParam(':titleClause', $titleClause, PDO::PARAM_STR);
     $stmt->execute();
     $titleResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
+    
+    error_log("Title Query: " . $titleQuery);
+    error_log("Title Query Clause: " . $titleClause);
+    error_log("Title Results Count: " . count($titleResults));
+    
     if (!empty($titleResults)) {
-        // If one record found, validate its waypoints.
+        // Loop through each candidate and validate its waypoints.
         foreach ($titleResults as $candidate) {
+            error_log("Validating candidate with EntrySeqID: " . $candidate['EntrySeqID']);
             if (validateCandidate($candidate, $igcWaypoints)) {
                 $foundTask = $candidate;
+                error_log("Candidate validated successfully.");
                 break;
+            } else {
+                error_log("Candidate with EntrySeqID " . $candidate['EntrySeqID'] . " failed waypoint validation.");
             }
         }
     }
@@ -47,30 +62,38 @@ try {
         $params = [];
         foreach (array_keys($igcWaypoints) as $wpID) {
             $likeClauses[] = "PLNXML LIKE ?";
-            // Note: we assume the XML contains <ATCWaypoint id="[ID]">
             $params[] = '%<ATCWaypoint id="' . $wpID . '">%';
         }
         $whereClause = implode(" AND ", $likeClauses);
         $wpQuery = "SELECT * FROM Tasks WHERE " . $whereClause;
+        error_log("Waypoint Query: " . $wpQuery);
+        error_log("Waypoint Query Params: " . print_r($params, true));
         $stmt = $pdo->prepare($wpQuery);
         $stmt->execute($params);
         $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        error_log("Waypoint Results Count: " . count($wpResults));
+        
         foreach ($wpResults as $candidate) {
+            error_log("Validating candidate (waypoint search) with EntrySeqID: " . $candidate['EntrySeqID']);
             if (validateCandidate($candidate, $igcWaypoints)) {
                 $foundTask = $candidate;
+                error_log("Candidate validated successfully in waypoint search.");
                 break;
+            } else {
+                error_log("Candidate with EntrySeqID " . $candidate['EntrySeqID'] . " failed waypoint validation (waypoint search).");
             }
         }
     }
 
     if ($foundTask) {
-        // Return EntrySeqID and Title of the task
+        error_log("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
         echo json_encode([
             'status' => 'found',
             'EntrySeqID' => $foundTask['EntrySeqID'],
             'Title' => $foundTask['Title']
         ]);
     } else {
+        error_log("No matching task found.");
         echo json_encode([
             'status' => 'not_found',
             'message' => 'No matching task was found.'
@@ -78,6 +101,7 @@ try {
     }
 
 } catch (Exception $e) {
+    error_log("Error: " . $e->getMessage());
     echo json_encode(['error' => $e->getMessage()]);
     exit;
 }
@@ -91,38 +115,43 @@ try {
  *   - Check that an <ATCWaypoint> with an id attribute equal to the waypoint key exists,
  *   - And compare the WorldPosition value with the coordinate string from the IGC.
  *
- * (Coordinate comparison here is a simple string equality check.
- *  In production you might want to allow for small rounding differences.)
- *
  * @param array $candidate
  * @param array $igcWaypoints  Associative array (waypointID => coordinate string)
  * @return bool True if the candidate’s waypoints match the igcWaypoints.
  */
 function validateCandidate($candidate, $igcWaypoints) {
     if (!isset($candidate['PLNXML'])) {
+        error_log("Candidate missing PLNXML.");
         return false;
     }
     $xmlString = $candidate['PLNXML'];
     libxml_use_internal_errors(true);
     $xml = simplexml_load_string($xmlString);
     if (!$xml) {
+        error_log("Failed to parse PLNXML for candidate.");
         return false;
     }
     $xmlWaypoints = [];
     // Extract waypoints from the XML.
     foreach ($xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint') as $wp) {
         $id = (string)$wp['id'];
-        // Normalize the world position string by trimming whitespace.
         $position = trim((string)$wp->WorldPosition);
         $xmlWaypoints[$id] = $position;
     }
-    // For each required waypoint, check if it exists and if its position matches.
+    error_log("Extracted XML Waypoints: " . print_r($xmlWaypoints, true));
+    
+    // Compare each required waypoint.
     foreach ($igcWaypoints as $wpID => $igcCoord) {
+        error_log("Comparing waypoint ID: " . $wpID);
+        error_log("IGC coordinate: " . $igcCoord);
         if (!isset($xmlWaypoints[$wpID])) {
+            error_log("Waypoint " . $wpID . " not found in XML.");
             return false;
         }
-        // Basic string comparison; replace with tolerance-based comparison if needed.
+        error_log("XML coordinate: " . $xmlWaypoints[$wpID]);
+        // Basic string comparison; adjust tolerance logic as needed.
         if ($xmlWaypoints[$wpID] !== $igcCoord) {
+            error_log("Coordinate mismatch for waypoint " . $wpID . ": IGC (" . $igcCoord . ") vs XML (" . $xmlWaypoints[$wpID] . ")");
             return false;
         }
     }
