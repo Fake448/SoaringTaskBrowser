@@ -65,41 +65,57 @@ function parseHeader(headerLine) {
 }
 
 // Parse a waypoint line using IGC format
-// Example: 
-// C7056649N00839140WENJA;5;Jan Mayensfield
-// C7056370N00843548W*Start+1286x2000
+// Example lines:
+//   C7056649N00839140WENJA;5;Jan Mayensfield
+//   C7056370N00843548W*Start+1286x2000
 function parseWaypoint(line) {
     // Regex breakdown:
     // ^C
-    // (\d{2})   : Latitude degrees
-    // (\d{2})   : Latitude minutes
-    // (\d{3})   : Latitude thousandths of minutes
-    // ([NS])    : Latitude hemisphere
-    // (\d{3})   : Longitude degrees
-    // (\d{2})   : Longitude minutes
-    // (\d{3})   : Longitude thousandths of minutes
-    // ([EW])    : Longitude hemisphere
-    // (.*)$     : Remainder as the waypoint raw text
+    // (\d{2}) : Latitude degrees
+    // (\d{2}) : Latitude minutes
+    // (\d{3}) : Latitude thousandths of minutes
+    // ([NS])  : Latitude hemisphere
+    // (\d{3}) : Longitude degrees
+    // (\d{2}) : Longitude minutes
+    // (\d{3}) : Longitude thousandths of minutes
+    // ([EW])  : Longitude hemisphere
+    // (.*)$   : Remainder as the waypoint raw text
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
     if (!match) return null;
-    const latDeg = match[1];
-    const latMin = match[2];
-    const latThousandths = match[3];
-    const latHem = match[4];
-    const lonDeg = match[5];
-    const lonMin = match[6];
-    const lonThousandths = match[7];
-    const lonHem = match[8];
+    const latDeg = match[1],
+        latMin = match[2],
+        latThousandths = match[3],
+        latHem = match[4];
+    const lonDeg = match[5],
+        lonMin = match[6],
+        lonThousandths = match[7],
+        lonHem = match[8];
     const rawText = match[9].trim(); // waypoint id and extra text
+
+    // Build display name using our formatting helper
+    const displayName = formatWaypointName(rawText);
+
+    // Determine originalId for use in SQL comparison:
+    let originalId = rawText;
+    const parts = rawText.split(';');
+    if (parts.length === 3) {
+        // e.g., "ENJA;5;Jan Mayensfield" should become "Jan Mayensfield"
+        originalId = parts[2].trim();
+    } else if (parts.length === 2) {
+        // e.g., "ENJA;Jan Mayensfield" becomes "Jan Mayensfield"
+        originalId = parts[1].trim();
+    }
     return {
+        originalId, // for SQL WHERE clause
         latitude: formatCoordinate(latDeg, latMin, latThousandths, latHem),
         longitude: formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem),
-        rawText: formatWaypointName(rawText)
+        displayName // for showing on screen
     };
 }
 
-// Format coordinate from IGC parts to a human-readable string, using Unicode degree symbol (\u00B0)
+// Format coordinate from IGC parts to a human-readable string,
+// using Unicode degree symbol (\u00B0)
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
@@ -110,19 +126,16 @@ function formatCoordinate(deg, min, thousandths, hemisphere) {
     return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
 }
 
-// Format the raw waypoint name based on specific patterns
-// If the raw text contains semicolons, split it and reformat:
+// Format the raw waypoint name based on specific patterns:
 // "ENJA;5;Jan Mayensfield" => "Jan Mayensfield ENJA Rwy 5"
-// "ENJA;Jan Mayensfield" => "Jan Mayensfield ENJA"
+// "ENJA;Jan Mayensfield"   => "Jan Mayensfield ENJA"
 // Otherwise, return the raw text unchanged.
 function formatWaypointName(rawText) {
     const parts = rawText.split(';');
     if (parts.length === 3) {
-        // parts[0]: ICAO, parts[1]: runway, parts[2]: airport name
-        return `${parts[2]} ${parts[0]} Rwy ${parts[1]}`;
+        return `${parts[2].trim()} ${parts[0].trim()} Rwy ${parts[1].trim()}`;
     } else if (parts.length === 2) {
-        // parts[0]: ICAO, parts[1]: airport name
-        return `${parts[1]} ${parts[0]}`;
+        return `${parts[1].trim()} ${parts[0].trim()}`;
     }
     return rawText;
 }
@@ -158,12 +171,10 @@ function processIGCFile(file) {
         // Process lines beginning with "C"
         for (const line of lines) {
             if (line.startsWith("C")) {
-                // If headerData is not yet set, try to parse the header
                 if (!headerData) {
                     headerData = parseHeader(line);
-                    if (headerData) continue; // header parsed; move on
+                    if (headerData) continue; // Header parsed; move to next line
                 }
-                // Otherwise, try to parse as a waypoint
                 const wp = parseWaypoint(line);
                 if (wp) {
                     waypoints.push(wp);
@@ -176,19 +187,43 @@ function processIGCFile(file) {
             const formattedUTCTime = formatTime(headerData.utcTime);
             const formattedLocalTime = formatTime(headerData.localTime);
 
+            // Build the data object to send to PHP:
+            const igcData = {
+                igcTitle: headerData.taskTitle,
+                igcWaypoints: {}  // This will be an object with keys = originalId, value = coordinates
+            };
+            waypoints.forEach(wp => {
+                // For matching purposes, use the originalId.
+                // The value is a combined coordinate string.
+                igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
+            });
+
+            // For demonstration, display the parsed information on the page.
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
             outputHTML += `<p><strong>UTC Date of IGC record:</strong> ${formattedDate}</p>`;
             outputHTML += `<p><strong>UTC Time of IGC record:</strong> ${formattedUTCTime}</p>`;
-            outputHTML += `<p><strong>Local Time of Recording Start (Takeoff):</strong> ${formattedLocalTime}</p>`;
+            outputHTML += `<p><strong>Local Time of Recording:</strong> ${formattedLocalTime}</p>`;
             outputHTML += `<p><strong>Flight ID:</strong> ${headerData.flightId}</p>`;
             outputHTML += `<p><strong>Number of Waypoints:</strong> ${headerData.numWaypoints}</p>`;
             outputHTML += `<h3>Waypoints:</h3>`;
             outputHTML += `<ul>`;
             waypoints.forEach(wp => {
-                outputHTML += `<li><strong>${wp.rawText}:</strong> ${wp.latitude}, ${wp.longitude}</li>`;
+                outputHTML += `<li><strong>${wp.displayName}:</strong> ${wp.latitude}, ${wp.longitude} (ID: ${wp.originalId})</li>`;
             });
             outputHTML += `</ul>`;
+            outputHTML += `<pre>${JSON.stringify(igcData, null, 2)}</pre>`;  // For debugging: show JSON data to send.
             outputDiv.innerHTML = outputHTML;
+
+            // Here you could send igcData to your PHP script via AJAX.
+            // e.g., using fetch:
+            // fetch('processIgc.php', {
+            //   method: 'POST',
+            //   headers: { 'Content-Type': 'application/json' },
+            //   body: JSON.stringify(igcData)
+            // })
+            // .then(response => response.json())
+            // .then(data => { console.log(data); })
+            // .catch(err => { console.error(err); });
         } else {
             outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
         }
