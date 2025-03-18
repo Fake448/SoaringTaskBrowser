@@ -79,7 +79,7 @@ function parseWaypoint(line) {
     // (\d{2})   : Longitude minutes
     // (\d{3})   : Longitude thousandths of minutes
     // ([EW])    : Longitude hemisphere
-    // (.*)$     : Remainder as the waypoint name and extra text
+    // (.*)$     : Remainder as the waypoint raw text
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
     if (!match) return null;
@@ -91,15 +91,15 @@ function parseWaypoint(line) {
     const lonMin = match[6];
     const lonThousandths = match[7];
     const lonHem = match[8];
-    const remainder = match[9].trim(); // waypoint id and any extra info
+    const rawText = match[9].trim(); // waypoint id and extra text
     return {
         latitude: formatCoordinate(latDeg, latMin, latThousandths, latHem),
         longitude: formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem),
-        rawText: remainder
+        rawText: formatWaypointName(rawText)
     };
 }
 
-// Format coordinate from IGC parts to a human-readable string (e.g., N70° 56' 38.92")
+// Format coordinate from IGC parts to a human-readable string, using Unicode degree symbol (\u00B0)
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
@@ -107,7 +107,24 @@ function formatCoordinate(deg, min, thousandths, hemisphere) {
     // Convert thousandths of a minute to seconds
     const seconds = (thousandthsNum / 1000) * 60;
     const secondsFormatted = seconds.toFixed(2);
-    return `${hemisphere}${degrees}° ${minutes}' ${secondsFormatted}"`;
+    return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
+}
+
+// Format the raw waypoint name based on specific patterns
+// If the raw text contains semicolons, split it and reformat:
+// "ENJA;5;Jan Mayensfield" => "Jan Mayensfield ENJA Rwy 5"
+// "ENJA;Jan Mayensfield" => "Jan Mayensfield ENJA"
+// Otherwise, return the raw text unchanged.
+function formatWaypointName(rawText) {
+    const parts = rawText.split(';');
+    if (parts.length === 3) {
+        // parts[0]: ICAO, parts[1]: runway, parts[2]: airport name
+        return `${parts[2]} ${parts[0]} Rwy ${parts[1]}`;
+    } else if (parts.length === 2) {
+        // parts[0]: ICAO, parts[1]: airport name
+        return `${parts[1]} ${parts[0]}`;
+    }
+    return rawText;
 }
 
 // Format a DDMMYY string as a readable date (using UTC to avoid timezone shifts)
@@ -141,10 +158,12 @@ function processIGCFile(file) {
         // Process lines beginning with "C"
         for (const line of lines) {
             if (line.startsWith("C")) {
+                // If headerData is not yet set, try to parse the header
                 if (!headerData) {
                     headerData = parseHeader(line);
-                    if (headerData) continue; // header parsed; move to next line
+                    if (headerData) continue; // header parsed; move on
                 }
+                // Otherwise, try to parse as a waypoint
                 const wp = parseWaypoint(line);
                 if (wp) {
                     waypoints.push(wp);
