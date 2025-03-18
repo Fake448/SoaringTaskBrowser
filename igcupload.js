@@ -215,7 +215,7 @@ function processIGCFile(file) {
             outputDiv.innerHTML = outputHTML;
 
             // Send igcData to the PHP script via AJAX
-            fetch('SearchTaskByIGC.php', {
+            fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(igcData)
