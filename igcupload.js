@@ -214,16 +214,27 @@ function processIGCFile(file) {
             outputHTML += `<pre>${JSON.stringify(igcData, null, 2)}</pre>`;  // For debugging: show JSON data to send.
             outputDiv.innerHTML = outputHTML;
 
-            // Here you could send igcData to your PHP script via AJAX.
-            // e.g., using fetch:
-            // fetch('processIgc.php', {
-            //   method: 'POST',
-            //   headers: { 'Content-Type': 'application/json' },
-            //   body: JSON.stringify(igcData)
-            // })
-            // .then(response => response.json())
-            // .then(data => { console.log(data); })
-            // .catch(err => { console.error(err); });
+            // Send igcData to the PHP script via AJAX
+            fetch('SearchTaskByIGC.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(igcData)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Process the returned JSON
+                    if (data.status === 'found') {
+                        outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
+                        outputDiv.innerHTML += `<p>EntrySeqID: ${data.EntrySeqID}</p>`;
+                        outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
+                    } else {
+                        outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
+                });
         } else {
             outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
         }
