@@ -955,7 +955,13 @@ table.dataTable thead .sorting {
         z-index: -2;
     }
 
+/* IGC Upload Page Styles */
+
+/* Position the upload container at the top-left corner */
 .upload-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
     width: 90%;
     max-width: 500px;
     border: 2px dashed #7289da;
@@ -963,9 +969,9 @@ table.dataTable thead .sorting {
     padding: 30px;
     text-align: center;
     background-color: #23272a;
-    margin: auto;
 }
 
+    /* Change background and border on dragover */
     .upload-container.dragover {
         background-color: #3a3d42;
         border-color: #99aab5;
@@ -989,3 +995,15 @@ table.dataTable thead .sorting {
     .upload-button:hover {
         background-color: #5b6eae;
     }
+
+/* Style for the output container */
+#output {
+    position: absolute;
+    top: 200px; /* Adjust spacing below the upload container as needed */
+    left: 20px;
+    color: #ffffff;
+    background-color: #23272a;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 500px;
+}

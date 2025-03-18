@@ -7,11 +7,14 @@
     <link rel="stylesheet" href="styles-dark.css">
 </head>
 <body>
+    <!-- Upload container positioned in the top-left -->
     <div class="upload-container" id="dropZone">
         <button class="upload-button" id="selectFileButton">Select IGC File</button>
         <p>or drag and drop your IGC file here</p>
         <input type="file" id="igcFileInput" accept=".igc">
     </div>
+    <!-- Output container to display file info -->
+    <div id="output"></div>
 
     <script src="igcupload.js"></script>
 </body>
