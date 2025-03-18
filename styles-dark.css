@@ -954,3 +954,38 @@ table.dataTable thead .sorting {
         opacity: var(--task-cover-opacity, 0.25);
         z-index: -2;
     }
+
+.upload-container {
+    width: 90%;
+    max-width: 500px;
+    border: 2px dashed #7289da;
+    border-radius: 10px;
+    padding: 30px;
+    text-align: center;
+    background-color: #23272a;
+    margin: auto;
+}
+
+    .upload-container.dragover {
+        background-color: #3a3d42;
+        border-color: #99aab5;
+    }
+
+    .upload-container input[type="file"] {
+        display: none;
+    }
+
+.upload-button {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+    .upload-button:hover {
+        background-color: #5b6eae;
+    }
