@@ -1,7 +1,11 @@
+// igcupload.js
+
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('igcFileInput');
 const selectFileButton = document.getElementById('selectFileButton');
 const outputDiv = document.getElementById('output');
+
+// -------------- EVENT LISTENERS --------------
 
 // Trigger file input when the button is clicked
 selectFileButton.addEventListener('click', () => {
@@ -47,42 +51,31 @@ dropZone.addEventListener('drop', (e) => {
     }
 });
 
+// -------------- PARSING FUNCTIONS --------------
+
 // Parse the header (first C record) from the IGC file
-// Expected format:
-// C[UTC Date (6)] [UTC Time (6)] [Local Time (6)] [Flight ID (4)] [# Waypoints (2)] [Task Title]
+// Format: C[UTC Date (6)] [UTC Time (6)] [Local Time (6)] [Flight ID (4)] [# Waypoints (2)] [Task Title]
 function parseHeader(headerLine) {
     const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
     const match = headerLine.match(headerRegex);
     if (!match) return null;
     return {
-        utcDate: match[1],
-        utcTime: match[2],
-        localTime: match[3],
-        flightId: match[4],
-        numWaypoints: match[5],
+        utcDate: match[1],    // DDMMYY
+        utcTime: match[2],    // HHMMSS
+        localTime: match[3],  // HHMMSS
+        flightId: match[4],   // 4 digits
+        numWaypoints: match[5],   // 2 digits
         taskTitle: match[6].trim()
     };
 }
 
 // Parse a waypoint line using IGC format
-// Example lines:
-//   C7056649N00839140WENJA;5;Jan Mayensfield
-//   C7056370N00843548W*Start+1286x2000
 function parseWaypoint(line) {
-    // Regex breakdown:
-    // ^C
-    // (\d{2}) : Latitude degrees
-    // (\d{2}) : Latitude minutes
-    // (\d{3}) : Latitude thousandths of minutes
-    // ([NS])  : Latitude hemisphere
-    // (\d{3}) : Longitude degrees
-    // (\d{2}) : Longitude minutes
-    // (\d{3}) : Longitude thousandths of minutes
-    // ([EW])  : Longitude hemisphere
-    // (.*)$   : Remainder as the waypoint raw text
+    // Example: C7056370N00843548W*Start+1286x2000
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
     if (!match) return null;
+
     const latDeg = match[1],
         latMin = match[2],
         latThousandths = match[3],
@@ -91,56 +84,42 @@ function parseWaypoint(line) {
         lonMin = match[6],
         lonThousandths = match[7],
         lonHem = match[8];
-    const rawText = match[9].trim(); // waypoint id and extra text
+    const rawText = match[9].trim(); // waypoint ID / extra text
 
-    // Build display name using our formatting helper
-    const displayName = formatWaypointName(rawText);
-
-    // Determine originalId for use in SQL comparison:
-    let originalId = rawText;
-    const parts = rawText.split(';');
-    if (parts.length === 3) {
-        // e.g., "ENJA;5;Jan Mayensfield" should become "Jan Mayensfield"
-        originalId = parts[2].trim();
-    } else if (parts.length === 2) {
-        // e.g., "ENJA;Jan Mayensfield" becomes "Jan Mayensfield"
-        originalId = parts[1].trim();
+    // For the DB search, we store an "originalId"
+    let originalId = "";
+    if (rawText.slice(-1) === ';') {
+        originalId = rawText;
+    } else {
+        // e.g. "ENJA;5;Jan Mayensfield" => 3 parts
+        const parts = rawText.split(';').filter(x => x.trim() !== '');
+        if (parts.length === 3) {
+            originalId = parts[2].trim();
+        } else if (parts.length === 2) {
+            originalId = parts[1].trim();
+        } else {
+            originalId = rawText;
+        }
     }
+
     return {
-        originalId, // for SQL WHERE clause
+        originalId,
         latitude: formatCoordinate(latDeg, latMin, latThousandths, latHem),
-        longitude: formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem),
-        displayName // for showing on screen
+        longitude: formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem)
     };
 }
 
-// Format coordinate from IGC parts to a human-readable string,
-// using Unicode degree symbol (\u00B0)
+// Convert coordinate parts to a human-readable string
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
     const thousandthsNum = parseInt(thousandths, 10);
-    // Convert thousandths of a minute to seconds
     const seconds = (thousandthsNum / 1000) * 60;
     const secondsFormatted = seconds.toFixed(2);
     return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
 }
 
-// Format the raw waypoint name based on specific patterns:
-// "ENJA;5;Jan Mayensfield" => "Jan Mayensfield ENJA Rwy 5"
-// "ENJA;Jan Mayensfield"   => "Jan Mayensfield ENJA"
-// Otherwise, return the raw text unchanged.
-function formatWaypointName(rawText) {
-    const parts = rawText.split(';');
-    if (parts.length === 3) {
-        return `${parts[2].trim()} ${parts[0].trim()} Rwy ${parts[1].trim()}`;
-    } else if (parts.length === 2) {
-        return `${parts[1].trim()} ${parts[0].trim()}`;
-    }
-    return rawText;
-}
-
-// Format a DDMMYY string as a readable date (using UTC to avoid timezone shifts)
+// Convert DDMMYY to a readable date
 function formatUTCDate(ddmmyy) {
     const day = parseInt(ddmmyy.substring(0, 2), 10);
     const month = parseInt(ddmmyy.substring(2, 4), 10);
@@ -150,7 +129,7 @@ function formatUTCDate(ddmmyy) {
     return utcDate.toLocaleDateString('en-US', options);
 }
 
-// Format a time string HHMMSS as HH:MM:SS
+// Convert HHMMSS to HH:MM:SS
 function formatTime(hhmmss) {
     const hh = hhmmss.substring(0, 2);
     const mm = hhmmss.substring(2, 4);
@@ -158,7 +137,56 @@ function formatTime(hhmmss) {
     return `${hh}:${mm}:${ss}`;
 }
 
-// Process the IGC file once uploaded
+// We'll parse the AXXX line to get NB21 version and sim
+function parseALine(line) {
+    // Split the line by whitespace.
+    const parts = line.split(/\s+/);
+    let nb21Version = "";
+    let sim = "";
+    // Check if we have at least three parts.
+    if (parts.length >= 3) {
+        // If the third word is "Logger" (case-insensitive),
+        // then the NB21 version should be in parts[3] (if available)
+        // and there is no Sim info, so we default to "MSFS 2020".
+        if (parts[2].toLowerCase() === "logger") {
+            if (parts.length >= 4) {
+                nb21Version = parts[3];
+            }
+            sim = "MSFS 2020";
+        } else {
+            // Otherwise, the third word is the NB21 version,
+            // and the sim info is everything from the fourth part onward.
+            nb21Version = parts[2];
+            if (parts.length >= 4) {
+                sim = parts.slice(3).join(" ");
+            } else {
+                sim = "MSFS 2020";
+            }
+        }
+    }
+    return { nb21Version, sim };
+}
+
+// For HF lines like "HFPLTPILOTINCHARGE: SmartCat"
+function parseHFLine(line) {
+    // We'll split on the first colon
+    const idx = line.indexOf(':');
+    if (idx < 0) return null;
+    const key = line.substring(0, idx).trim();
+    const value = line.substring(idx + 1).trim();
+    return { key, value };
+}
+
+// We'll track these fields
+let pilot = "";
+let gliderID = "";
+let competitionID = "";
+let competitionClass = "";
+let gliderType = "";
+let nb21Version = "";
+let sim = "";
+
+// -------------- MAIN PROCESSING --------------
 function processIGCFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -168,12 +196,43 @@ function processIGCFile(file) {
         let headerData = null;
         const waypoints = [];
 
-        // Process lines beginning with "C"
+        // Parse top lines (AXXX, HF...) before we see the first "C"
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (line.startsWith("C")) {
+                // Once we hit a C line, break from this loop
+                break;
+            }
+            if (line.startsWith("AXXX")) {
+                // parse NB21 version, sim
+                const aObj = parseALine(line);
+                nb21Version = aObj.nb21Version;
+                sim = aObj.sim;
+            } else if (line.startsWith("HF")) {
+                // parse HF lines
+                const hfObj = parseHFLine(line);
+                if (hfObj) {
+                    if (hfObj.key === "HFPLTPILOTINCHARGE") {
+                        pilot = hfObj.value;
+                    } else if (hfObj.key === "HFGIDGLIDERID") {
+                        gliderID = hfObj.value;
+                    } else if (hfObj.key === "HFCIDCOMPETITIONID") {
+                        competitionID = hfObj.value;
+                    } else if (hfObj.key === "HFCCLCOMPETITIONCLASS") {
+                        competitionClass = hfObj.value;
+                    } else if (hfObj.key === "HFGTYGLIDERTYPE") {
+                        gliderType = hfObj.value;
+                    }
+                }
+            }
+        }
+
+        // Now parse lines that begin with "C"
         for (const line of lines) {
             if (line.startsWith("C")) {
                 if (!headerData) {
                     headerData = parseHeader(line);
-                    if (headerData) continue; // Header parsed; move to next line
+                    if (headerData) continue;
                 }
                 const wp = parseWaypoint(line);
                 if (wp) {
@@ -183,38 +242,42 @@ function processIGCFile(file) {
         }
 
         if (headerData) {
+            // Combine UTC date/time
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
-            const formattedLocalTime = formatTime(headerData.localTime);
+            const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
-            // Build the data object to send to PHP:
+            // Prepare the data to send to PHP (including flight ID, waypoints, etc. for matching)
             const igcData = {
                 igcTitle: headerData.taskTitle,
-                igcWaypoints: {}  // This will be an object with keys = originalId, value = coordinates
+                igcWaypoints: {}
             };
             waypoints.forEach(wp => {
-                // For matching purposes, use the originalId.
-                // The value is a combined coordinate string.
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
             });
 
-            // For demonstration, display the parsed information on the page.
+            // Build the output HTML
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
-            outputHTML += `<p><strong>UTC Date of IGC record:</strong> ${formattedDate}</p>`;
-            outputHTML += `<p><strong>UTC Time of IGC record:</strong> ${formattedUTCTime}</p>`;
-            outputHTML += `<p><strong>Local Time of Recording:</strong> ${formattedLocalTime}</p>`;
-            outputHTML += `<p><strong>Flight ID:</strong> ${headerData.flightId}</p>`;
-            outputHTML += `<p><strong>Number of Waypoints:</strong> ${headerData.numWaypoints}</p>`;
-            outputHTML += `<h3>Waypoints:</h3>`;
-            outputHTML += `<ul>`;
-            waypoints.forEach(wp => {
-                outputHTML += `<li><strong>${wp.displayName}:</strong> ${wp.latitude}, ${wp.longitude} (ID: ${wp.originalId})</li>`;
-            });
-            outputHTML += `</ul>`;
-            outputHTML += `<pre>${JSON.stringify(igcData, null, 2)}</pre>`;  // For debugging: show JSON data to send.
+            outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTC}</p>`;
+            outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
+
+            // NB21 version & sim
+            outputHTML += `<p><strong>NB21 Version:</strong> ${nb21Version}</p>`;
+            outputHTML += `<p><strong>Sim:</strong> ${sim}</p>`;
+
+            // Pilot, glider, competition info
+            outputHTML += `<p><strong>Pilot:</strong> ${pilot}</p>`;
+            outputHTML += `<p><strong>Glider ID:</strong> ${gliderID}</p>`;
+            outputHTML += `<p><strong>Competition ID:</strong> ${competitionID}</p>`;
+            outputHTML += `<p><strong>Competition Class:</strong> ${competitionClass}</p>`;
+            outputHTML += `<p><strong>Glider Type:</strong> ${gliderType}</p>`;
+
+            // If you want to debug what's being sent:
+            // outputHTML += `<pre>${JSON.stringify(igcData, null, 2)}</pre>`;
+
             outputDiv.innerHTML = outputHTML;
 
-            // Send igcData to the PHP script via AJAX
+            // Send igcData to your PHP script for matching
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -222,7 +285,6 @@ function processIGCFile(file) {
             })
                 .then(response => response.json())
                 .then(data => {
-                    // Process the returned JSON
                     if (data.status === 'found') {
                         outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
                         outputDiv.innerHTML += `<p>EntrySeqID: ${data.EntrySeqID}</p>`;
@@ -235,6 +297,7 @@ function processIGCFile(file) {
                     console.error('Error:', error);
                     outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
                 });
+
         } else {
             outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
         }
