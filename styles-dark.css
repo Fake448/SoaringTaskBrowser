@@ -981,21 +981,6 @@ table.dataTable thead .sorting {
         display: none;
     }
 
-.upload-button {
-    background-color: #7289da;
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    cursor: pointer;
-    border-radius: 5px;
-    font-size: 16px;
-    margin-bottom: 20px;
-}
-
-    .upload-button:hover {
-        background-color: #5b6eae;
-    }
-
 /* Style for the output container */
 #output {
     position: absolute;

@@ -1,5 +1,3 @@
-// igcupload.js
-
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('igcFileInput');
 const selectFileButton = document.getElementById('selectFileButton');
@@ -84,14 +82,13 @@ function parseWaypoint(line) {
         lonMin = match[6],
         lonThousandths = match[7],
         lonHem = match[8];
-    const rawText = match[9].trim(); // waypoint ID / extra text
+    const rawText = match[9].trim(); // waypoint id / extra text
 
-    // For the DB search, we store an "originalId"
+    // Determine originalId for use in SQL comparison.
     let originalId = "";
     if (rawText.slice(-1) === ';') {
         originalId = rawText;
     } else {
-        // e.g. "ENJA;5;Jan Mayensfield" => 3 parts
         const parts = rawText.split(';').filter(x => x.trim() !== '');
         if (parts.length === 3) {
             originalId = parts[2].trim();
@@ -137,25 +134,19 @@ function formatTime(hhmmss) {
     return `${hh}:${mm}:${ss}`;
 }
 
-// We'll parse the AXXX line to get NB21 version and sim
+// Parse the AXXX line to extract NB21 version and Sim info
 function parseALine(line) {
-    // Split the line by whitespace.
     const parts = line.split(/\s+/);
     let nb21Version = "";
     let sim = "";
-    // Check if we have at least three parts.
     if (parts.length >= 3) {
-        // If the third word is "Logger" (case-insensitive),
-        // then the NB21 version should be in parts[3] (if available)
-        // and there is no Sim info, so we default to "MSFS 2020".
+        // If the third word is "Logger" (case-insensitive), use parts[3] as NB21 version and default Sim.
         if (parts[2].toLowerCase() === "logger") {
             if (parts.length >= 4) {
                 nb21Version = parts[3];
             }
             sim = "MSFS 2020";
         } else {
-            // Otherwise, the third word is the NB21 version,
-            // and the sim info is everything from the fourth part onward.
             nb21Version = parts[2];
             if (parts.length >= 4) {
                 sim = parts.slice(3).join(" ");
@@ -167,9 +158,8 @@ function parseALine(line) {
     return { nb21Version, sim };
 }
 
-// For HF lines like "HFPLTPILOTINCHARGE: SmartCat"
+// Parse HF lines like "HFPLTPILOTINCHARGE: SmartCat"
 function parseHFLine(line) {
-    // We'll split on the first colon
     const idx = line.indexOf(':');
     if (idx < 0) return null;
     const key = line.substring(0, idx).trim();
@@ -177,7 +167,7 @@ function parseHFLine(line) {
     return { key, value };
 }
 
-// We'll track these fields
+// Global fields for additional data
 let pilot = "";
 let gliderID = "";
 let competitionID = "";
@@ -186,7 +176,7 @@ let gliderType = "";
 let nb21Version = "";
 let sim = "";
 
-// -------------- MAIN PROCESSING --------------
+// Main processing function
 function processIGCFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -196,20 +186,17 @@ function processIGCFile(file) {
         let headerData = null;
         const waypoints = [];
 
-        // Parse top lines (AXXX, HF...) before we see the first "C"
+        // Parse top lines (AXXX, HF...) before encountering first "C"
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (line.startsWith("C")) {
-                // Once we hit a C line, break from this loop
                 break;
             }
             if (line.startsWith("AXXX")) {
-                // parse NB21 version, sim
                 const aObj = parseALine(line);
                 nb21Version = aObj.nb21Version;
                 sim = aObj.sim;
             } else if (line.startsWith("HF")) {
-                // parse HF lines
                 const hfObj = parseHFLine(line);
                 if (hfObj) {
                     if (hfObj.key === "HFPLTPILOTINCHARGE") {
@@ -227,7 +214,7 @@ function processIGCFile(file) {
             }
         }
 
-        // Now parse lines that begin with "C"
+        // Parse header and waypoints from C-lines
         for (const line of lines) {
             if (line.startsWith("C")) {
                 if (!headerData) {
@@ -242,12 +229,11 @@ function processIGCFile(file) {
         }
 
         if (headerData) {
-            // Combine UTC date/time
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
-            // Prepare the data to send to PHP (including flight ID, waypoints, etc. for matching)
+            // Prepare data to send to PHP (still including waypoints for matching)
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {}
@@ -256,28 +242,21 @@ function processIGCFile(file) {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
             });
 
-            // Build the output HTML
+            // Build output HTML (display only the requested fields)
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
             outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTC}</p>`;
             outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
-
-            // NB21 version & sim
             outputHTML += `<p><strong>NB21 Version:</strong> ${nb21Version}</p>`;
             outputHTML += `<p><strong>Sim:</strong> ${sim}</p>`;
-
-            // Pilot, glider, competition info
             outputHTML += `<p><strong>Pilot:</strong> ${pilot}</p>`;
             outputHTML += `<p><strong>Glider ID:</strong> ${gliderID}</p>`;
             outputHTML += `<p><strong>Competition ID:</strong> ${competitionID}</p>`;
             outputHTML += `<p><strong>Competition Class:</strong> ${competitionClass}</p>`;
             outputHTML += `<p><strong>Glider Type:</strong> ${gliderType}</p>`;
 
-            // If you want to debug what's being sent:
-            // outputHTML += `<pre>${JSON.stringify(igcData, null, 2)}</pre>`;
-
             outputDiv.innerHTML = outputHTML;
 
-            // Send igcData to your PHP script for matching
+            // Send igcData to the PHP script via AJAX for matching
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -287,8 +266,13 @@ function processIGCFile(file) {
                 .then(data => {
                     if (data.status === 'found') {
                         outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
-                        outputDiv.innerHTML += `<p>EntrySeqID: ${data.EntrySeqID}</p>`;
+                        outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
                         outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
+                        // Add a "Submit" button
+                        outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
+                        document.getElementById('submitButton').addEventListener('click', () => {
+                            alert("Submitted!");
+                        });
                     } else {
                         outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
                     }
