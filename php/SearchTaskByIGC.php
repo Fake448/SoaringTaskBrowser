@@ -109,7 +109,8 @@ try {
             // logMessage("Duplicate IGC record found for key: " . $IGCKey);
             echo json_encode([
                 'status' => 'duplicate',
-                'message' => 'An IGC record with this key already exists.'
+                'message' => 'An IGC record with this key already exists.',
+                'IGCKey' => $IGCKey
             ]);
         } else {
             // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
