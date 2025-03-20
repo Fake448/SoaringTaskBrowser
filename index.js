@@ -1,6 +1,9 @@
 ﻿var TB = new TaskBrowser();
 TB.init();
 
+var igcUploader = new IGCUpload(TB);
+igcUploader.init();
+
 // Add event listeners for resizing
 window.addEventListener('resize', TB.resizeMap);
 

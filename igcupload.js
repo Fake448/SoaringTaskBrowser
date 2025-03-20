@@ -1,407 +1,417 @@
-const dropZone = document.getElementById('dropZone');
-const fileInput = document.getElementById('igcFileInput');
-const selectFileButton = document.getElementById('selectFileButton');
-const outputDiv = document.getElementById('output');
+class IGCUpload {
+    constructor(taskBrowser) {
+        this.taskBrowser = taskBrowser;
 
-let igcFileGlobal = null; // Store the uploaded file globally
+        // Store references to DOM elements
+        this.dropZone = document.getElementById('dropZone');
+        this.fileInput = document.getElementById('igcFileInput');
+        this.selectFileButton = document.getElementById('selectFileButton');
+        this.outputDiv = document.getElementById('output');
 
-// -------------- EVENT LISTENERS --------------
+        // Global-like fields for storing data
+        this.igcFileGlobal = null;
 
-// Trigger file input when the button is clicked
-selectFileButton.addEventListener('click', () => {
-    fileInput.click();
-});
-
-// Handle file selection via file input
-fileInput.addEventListener('change', (event) => {
-    const file = event.target.files[0];
-    if (file) {
-        igcFileGlobal = file;
-        processIGCFile(file);
+        // Additional fields that were previously global
+        this.pilot = "";
+        this.gliderID = "";
+        this.competitionID = "";
+        this.competitionClass = "";
+        this.gliderType = "";
+        this.nb21Version = "";
+        this.sim = "";
     }
-});
 
-// Prevent default drag/drop behaviors
-['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    });
-});
+    init() {
+        // Set up event listeners for the file selection button
+        this.selectFileButton.addEventListener('click', () => {
+            this.fileInput.click();
+        });
 
-// Highlight drop zone when file is dragged over
-['dragenter', 'dragover'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.add('dragover');
-    });
-});
+        // Handle file selection via file input
+        this.fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                this.igcFileGlobal = file;
+                this.processIGCFile(file);
+            }
+        });
 
-// Remove highlight when file is dragged away or dropped
-['dragleave', 'drop'].forEach(eventName => {
-    dropZone.addEventListener(eventName, () => {
-        dropZone.classList.remove('dragover');
-    });
-});
+        // Prevent default drag/drop behaviors
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            this.dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
 
-// Handle dropped file
-dropZone.addEventListener('drop', (e) => {
-    const dt = e.dataTransfer;
-    const file = dt.files[0];
-    if (file) {
-        igcFileGlobal = file;
-        processIGCFile(file);
+        // Highlight drop zone when file is dragged over
+        ['dragenter', 'dragover'].forEach(eventName => {
+            this.dropZone.addEventListener(eventName, () => {
+                this.dropZone.classList.add('dragover');
+            });
+        });
+
+        // Remove highlight when file is dragged away or dropped
+        ['dragleave', 'drop'].forEach(eventName => {
+            this.dropZone.addEventListener(eventName, () => {
+                this.dropZone.classList.remove('dragover');
+            });
+        });
+
+        // Handle dropped file
+        this.dropZone.addEventListener('drop', (e) => {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+            if (file) {
+                this.igcFileGlobal = file;
+                this.processIGCFile(file);
+            }
+        });
     }
-});
 
-// -------------- PARSING FUNCTIONS --------------
+    // ---------------- PARSING FUNCTIONS ----------------
 
-function parseHeader(headerLine) {
-    const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
-    const match = headerLine.match(headerRegex);
-    if (!match) return null;
-    return {
-        utcDate: match[1],    // DDMMYY
-        utcTime: match[2],    // HHMMSS
-        localTime: match[3],  // HHMMSS
-        flightId: match[4],
-        numWaypoints: match[5],
-        taskTitle: match[6].trim()
-    };
-}
+    parseHeader(headerLine) {
+        const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
+        const match = headerLine.match(headerRegex);
+        if (!match) return null;
+        return {
+            utcDate: match[1],    // DDMMYY
+            utcTime: match[2],    // HHMMSS
+            localTime: match[3],  // HHMMSS
+            flightId: match[4],
+            numWaypoints: match[5],
+            taskTitle: match[6].trim()
+        };
+    }
 
-function parseWaypoint(line) {
-    const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
-    const match = line.match(wpRegex);
-    if (!match) return null;
-    const latDeg = match[1],
-        latMin = match[2],
-        latThousandths = match[3],
-        latHem = match[4];
-    const lonDeg = match[5],
-        lonMin = match[6],
-        lonThousandths = match[7],
-        lonHem = match[8];
-    const rawText = match[9].trim();
+    parseWaypoint(line) {
+        const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
+        const match = line.match(wpRegex);
+        if (!match) return null;
+        const latDeg = match[1],
+            latMin = match[2],
+            latThousandths = match[3],
+            latHem = match[4];
+        const lonDeg = match[5],
+            lonMin = match[6],
+            lonThousandths = match[7],
+            lonHem = match[8];
+        const rawText = match[9].trim();
 
-    let originalId = "";
-    if (rawText.slice(-1) === ';') {
-        originalId = rawText;
-    } else {
-        const parts = rawText.split(';').filter(x => x.trim() !== '');
-        if (parts.length === 3) {
-            originalId = parts[2].trim();
-        } else if (parts.length === 2) {
-            originalId = parts[1].trim();
-        } else {
+        let originalId = "";
+        if (rawText.slice(-1) === ';') {
             originalId = rawText;
-        }
-    }
-
-    return {
-        originalId,
-        latitude: formatCoordinate(latDeg, latMin, latThousandths, latHem),
-        longitude: formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem)
-    };
-}
-
-function formatCoordinate(deg, min, thousandths, hemisphere) {
-    const degrees = parseInt(deg, 10);
-    const minutes = parseInt(min, 10);
-    const thousandthsNum = parseInt(thousandths, 10);
-    const seconds = (thousandthsNum / 1000) * 60;
-    const secondsFormatted = seconds.toFixed(2);
-    return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
-}
-
-function formatUTCDate(ddmmyy) {
-    const day = parseInt(ddmmyy.substring(0, 2), 10);
-    const month = parseInt(ddmmyy.substring(2, 4), 10);
-    const year = parseInt(ddmmyy.substring(4, 6), 10) + 2000;
-    const utcDate = new Date(Date.UTC(year, month - 1, day));
-    const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
-    return utcDate.toLocaleDateString('en-US', options);
-}
-
-function formatTime(hhmmss) {
-    const hh = hhmmss.substring(0, 2);
-    const mm = hhmmss.substring(2, 4);
-    const ss = hhmmss.substring(4, 6);
-    return `${hh}:${mm}:${ss}`;
-}
-
-// New helper: Convert DDMMYY and HHMMSS to YYMMDDHHMMSS for key construction.
-function formatKeyDateTime(ddmmyy, hhmmss) {
-    if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
-    const day = ddmmyy.substring(0, 2);
-    const month = ddmmyy.substring(2, 4);
-    const year = ddmmyy.substring(4, 6);
-    return year + month + day + hhmmss;
-}
-
-function parseALine(line) {
-    const parts = line.split(/\s+/);
-    let nb21Version = "";
-    let sim = "";
-    if (parts.length >= 3) {
-        if (parts[2].toLowerCase() === "logger") {
-            if (parts.length >= 4) {
-                nb21Version = parts[3];
-            }
-            sim = "MSFS 2020";
         } else {
-            nb21Version = parts[2];
-            if (parts.length >= 4) {
-                sim = parts.slice(3).join(" ");
+            const parts = rawText.split(';').filter(x => x.trim() !== '');
+            if (parts.length === 3) {
+                originalId = parts[2].trim();
+            } else if (parts.length === 2) {
+                originalId = parts[1].trim();
             } else {
-                sim = "MSFS 2020";
+                originalId = rawText;
             }
         }
+
+        return {
+            originalId,
+            latitude: this.formatCoordinate(latDeg, latMin, latThousandths, latHem),
+            longitude: this.formatCoordinate(lonDeg, lonMin, lonThousandths, lonHem)
+        };
     }
-    return { nb21Version, sim };
-}
 
-function parseHFLine(line) {
-    const idx = line.indexOf(':');
-    if (idx < 0) return null;
-    const key = line.substring(0, idx).trim();
-    const value = line.substring(idx + 1).trim();
-    return { key, value };
-}
+    formatCoordinate(deg, min, thousandths, hemisphere) {
+        const degrees = parseInt(deg, 10);
+        const minutes = parseInt(min, 10);
+        const thousandthsNum = parseInt(thousandths, 10);
+        const seconds = (thousandthsNum / 1000) * 60;
+        const secondsFormatted = seconds.toFixed(2);
+        return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
+    }
 
-// Global fields for additional data
-let pilot = "";
-let gliderID = "";
-let competitionID = "";
-let competitionClass = "";
-let gliderType = "";
-let nb21Version = "";
-let sim = "";
+    formatUTCDate(ddmmyy) {
+        const day = parseInt(ddmmyy.substring(0, 2), 10);
+        const month = parseInt(ddmmyy.substring(2, 4), 10);
+        const year = parseInt(ddmmyy.substring(4, 6), 10) + 2000;
+        const utcDate = new Date(Date.UTC(year, month - 1, day));
+        const options = { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC' };
+        return utcDate.toLocaleDateString('en-US', options);
+    }
 
-function parseBRecord(lines) {
-    for (let i = 0; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (line.startsWith("B")) {
-            return line.substring(1, 7);
+    formatTime(hhmmss) {
+        const hh = hhmmss.substring(0, 2);
+        const mm = hhmmss.substring(2, 4);
+        const ss = hhmmss.substring(4, 6);
+        return `${hh}:${mm}:${ss}`;
+    }
+
+    // Convert DDMMYY and HHMMSS to YYMMDDHHMMSS for key construction
+    formatKeyDateTime(ddmmyy, hhmmss) {
+        if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
+        const day = ddmmyy.substring(0, 2);
+        const month = ddmmyy.substring(2, 4);
+        const year = ddmmyy.substring(4, 6);
+        return year + month + day + hhmmss;
+    }
+
+    parseALine(line) {
+        const parts = line.split(/\s+/);
+        let nb21Version = "";
+        let sim = "";
+        if (parts.length >= 3) {
+            if (parts[2].toLowerCase() === "logger") {
+                if (parts.length >= 4) {
+                    nb21Version = parts[3];
+                }
+                sim = "MSFS 2020";
+            } else {
+                nb21Version = parts[2];
+                if (parts.length >= 4) {
+                    sim = parts.slice(3).join(" ");
+                } else {
+                    sim = "MSFS 2020";
+                }
+            }
         }
+        return { nb21Version, sim };
     }
-    return "";
-}
 
-// -------------- MAIN PROCESSING --------------
-function processIGCFile(file) {
-    const reader = new FileReader();
-    reader.onload = function (e) {
-        const text = e.target.result;
-        const lines = text.split(/\r?\n/);
+    parseHFLine(line) {
+        const idx = line.indexOf(':');
+        if (idx < 0) return null;
+        const key = line.substring(0, idx).trim();
+        const value = line.substring(idx + 1).trim();
+        return { key, value };
+    }
 
-        let headerData = null;
-        const waypoints = [];
-
-        // Parse top lines (AXXX, HF...) before the first "C"
+    parseBRecord(lines) {
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            if (line.startsWith("C")) break;
-            if (line.startsWith("AXXX")) {
-                const aObj = parseALine(line);
-                nb21Version = aObj.nb21Version;
-                sim = aObj.sim;
-            } else if (line.startsWith("HF")) {
-                const hfObj = parseHFLine(line);
-                if (hfObj) {
-                    if (hfObj.key === "HFPLTPILOTINCHARGE") {
-                        pilot = hfObj.value;
-                    } else if (hfObj.key === "HFGIDGLIDERID") {
-                        gliderID = hfObj.value;
-                    } else if (hfObj.key === "HFCIDCOMPETITIONID") {
-                        competitionID = hfObj.value;
-                    } else if (hfObj.key === "HFCCLCOMPETITIONCLASS") {
-                        competitionClass = hfObj.value;
-                    } else if (hfObj.key === "HFGTYGLIDERTYPE") {
-                        gliderType = hfObj.value;
+            if (line.startsWith("B")) {
+                return line.substring(1, 7);
+            }
+        }
+        return "";
+    }
+
+    // -------------- MAIN PROCESSING --------------
+    processIGCFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const text = e.target.result;
+            const lines = text.split(/\r?\n/);
+
+            let headerData = null;
+            const waypoints = [];
+
+            // Reset data fields
+            this.pilot = "";
+            this.gliderID = "";
+            this.competitionID = "";
+            this.competitionClass = "";
+            this.gliderType = "";
+            this.nb21Version = "";
+            this.sim = "";
+
+            // Parse top lines (AXXX, HF...) before the first "C"
+            for (let i = 0; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (line.startsWith("C")) break;
+
+                if (line.startsWith("AXXX")) {
+                    const aObj = this.parseALine(line);
+                    this.nb21Version = aObj.nb21Version;
+                    this.sim = aObj.sim;
+                } else if (line.startsWith("HF")) {
+                    const hfObj = this.parseHFLine(line);
+                    if (hfObj) {
+                        if (hfObj.key === "HFPLTPILOTINCHARGE") {
+                            this.pilot = hfObj.value;
+                        } else if (hfObj.key === "HFGIDGLIDERID") {
+                            this.gliderID = hfObj.value;
+                        } else if (hfObj.key === "HFCIDCOMPETITIONID") {
+                            this.competitionID = hfObj.value;
+                        } else if (hfObj.key === "HFCCLCOMPETITIONCLASS") {
+                            this.competitionClass = hfObj.value;
+                        } else if (hfObj.key === "HFGTYGLIDERTYPE") {
+                            this.gliderType = hfObj.value;
+                        }
                     }
                 }
             }
-        }
 
-        // Parse header and waypoints from C-lines
-        for (const line of lines) {
-            if (line.startsWith("C")) {
-                if (!headerData) {
-                    headerData = parseHeader(line);
-                    if (headerData) continue;
-                }
-                const wp = parseWaypoint(line);
-                if (wp) waypoints.push(wp);
-            }
-        }
-
-        // Parse the B record for Begin Time
-        const beginTimeUTC = parseBRecord(lines);
-
-        if (headerData) {
-            const formattedDate = formatUTCDate(headerData.utcDate);
-            const formattedUTCTime = formatTime(headerData.utcTime);
-            const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
-            // For key construction, we need the date/time in YYMMDDHHMMSS format.
-            const keyRecordDateTime = formatKeyDateTime(headerData.utcDate, headerData.utcTime);
-
-            // Prepare data to send to PHP (including waypoints for matching)
-            const igcData = {
-                igcTitle: headerData.taskTitle,
-                igcWaypoints: {},
-                pilot: pilot,
-                gliderType: gliderType,
-                IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes
-                EntrySeqID: "", // Will be updated after matching.
-                LocalTime: headerData.localTime,
-                BeginTimeUTC: beginTimeUTC,
-                gliderID: gliderID,
-                competitionID: competitionID,
-                competitionClass: competitionClass,
-                NB21Version: nb21Version,
-                Sim: sim
-            };
-            waypoints.forEach(wp => {
-                igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
-            });
-
-            // Build output HTML (display only the requested fields)
-            let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
-            outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTCDisplay}</p>`;
-            outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
-            outputHTML += `<p><strong>Begin Time (UTC) from B record:</strong> ${formatTime(beginTimeUTC)}</p>`;
-            outputHTML += `<p><strong>NB21 Version:</strong> ${nb21Version}</p>`;
-            outputHTML += `<p><strong>Sim:</strong> ${sim}</p>`;
-            outputHTML += `<p><strong>Pilot:</strong> ${pilot}</p>`;
-            outputHTML += `<p><strong>Glider ID:</strong> ${gliderID}</p>`;
-            outputHTML += `<p><strong>Competition ID:</strong> ${competitionID}</p>`;
-            outputHTML += `<p><strong>Competition Class:</strong> ${competitionClass}</p>`;
-            outputHTML += `<p><strong>Glider Type:</strong> ${gliderType}</p>`;
-            outputDiv.innerHTML = outputHTML;
-
-            // First, send data to SearchTaskByIGC.php to match a task.
-            fetch('php/SearchTaskByIGC.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(igcData)
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status === 'found') {
-                        // Update igcData.EntrySeqID with the matched task's EntrySeqID.
-                        igcData.EntrySeqID = data.EntrySeqID;
-                        // Construct the IGCKey using the new format:
-                        // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
-                        const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
-                        igcData.IGCKey = key;
-                        outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
-                        outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
-                        outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
-                        // Add a "Submit" button to save the IGC record.
-                        outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
-                        document.getElementById('submitButton').addEventListener('click', () => {
-                            submitIGCRecord(igcData);
-                        });
-                    } else if (data.status === 'duplicate') {
-                        outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
-                        // Add a "Delete" button to remove the existing IGC record.
-                        outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
-                        document.getElementById('deleteButton').addEventListener('click', () => {
-                            deleteIGCRecord(data.IGCKey);
-                        });
-                    } else {
-                        outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
+            // Parse header and waypoints from C-lines
+            for (const line of lines) {
+                if (line.startsWith("C")) {
+                    if (!headerData) {
+                        headerData = this.parseHeader(line);
+                        if (headerData) continue;
                     }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
+                    const wp = this.parseWaypoint(line);
+                    if (wp) waypoints.push(wp);
+                }
+            }
+
+            // Parse the B record for Begin Time
+            const beginTimeUTC = this.parseBRecord(lines);
+
+            if (headerData) {
+                const formattedDate = this.formatUTCDate(headerData.utcDate);
+                const formattedUTCTime = this.formatTime(headerData.utcTime);
+                const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
+                // For key construction, we need the date/time in YYMMDDHHMMSS format.
+                const keyRecordDateTime = this.formatKeyDateTime(headerData.utcDate, headerData.utcTime);
+
+                // Prepare data to send to PHP (including waypoints for matching)
+                const igcData = {
+                    igcTitle: headerData.taskTitle,
+                    igcWaypoints: {},
+                    pilot: this.pilot,
+                    gliderType: this.gliderType,
+                    IGCRecordDateTimeUTC: keyRecordDateTime,
+                    EntrySeqID: "", // Will be updated after matching.
+                    LocalTime: headerData.localTime,
+                    BeginTimeUTC: beginTimeUTC,
+                    gliderID: this.gliderID,
+                    competitionID: this.competitionID,
+                    competitionClass: this.competitionClass,
+                    NB21Version: this.nb21Version,
+                    Sim: this.sim
+                };
+                waypoints.forEach(wp => {
+                    igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
                 });
 
-        } else {
-            outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
-        }
-    };
-    reader.readAsText(file);
-}
+                // Build output HTML (display only the requested fields)
+                let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
+                outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTCDisplay}</p>`;
+                outputHTML += `<p><strong>Local Time of Recording:</strong> ${this.formatTime(headerData.localTime)}</p>`;
+                outputHTML += `<p><strong>Begin Time (UTC) from B record:</strong> ${this.formatTime(beginTimeUTC)}</p>`;
+                outputHTML += `<p><strong>NB21 Version:</strong> ${this.nb21Version}</p>`;
+                outputHTML += `<p><strong>Sim:</strong> ${this.sim}</p>`;
+                outputHTML += `<p><strong>Pilot:</strong> ${this.pilot}</p>`;
+                outputHTML += `<p><strong>Glider ID:</strong> ${this.gliderID}</p>`;
+                outputHTML += `<p><strong>Competition ID:</strong> ${this.competitionID}</p>`;
+                outputHTML += `<p><strong>Competition Class:</strong> ${this.competitionClass}</p>`;
+                outputHTML += `<p><strong>Glider Type:</strong> ${this.gliderType}</p>`;
+                this.outputDiv.innerHTML = outputHTML;
 
-// This function is called when the user clicks "Submit" after a match is found.
-// It sends a FormData object (including the IGC file and all required parameters) to SaveIGCRecord.php.
-function submitIGCRecord(igcData) {
-    if (!igcFileGlobal) {
-        alert("No IGC file available for submission.");
-        return;
+                // First, send data to SearchTaskByIGC.php to match a task.
+                fetch('php/SearchTaskByIGC.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(igcData)
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'found') {
+                            igcData.EntrySeqID = data.EntrySeqID;
+                            // Construct the IGCKey using the new format:
+                            const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
+                            igcData.IGCKey = key;
+
+                            this.outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
+                            this.outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
+                            this.outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
+                            // Add a "Submit" button to save the IGC record.
+                            this.outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
+                            TB.tbm.selectTaskFromURL(data.EntrySeqID);
+                            document.getElementById('submitButton').addEventListener('click', () => {
+                                this.submitIGCRecord(igcData);
+                            });
+                        } else if (data.status === 'duplicate') {
+                            this.outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
+                            // Add a "Delete" button to remove the existing IGC record.
+                            // The key is provided in data.IGCKey (make sure your SearchTaskByIGC returns it).
+                            if (data.IGCKey) {
+                                this.outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
+                                document.getElementById('deleteButton').addEventListener('click', () => {
+                                    this.deleteIGCRecord(data.IGCKey);
+                                });
+                            }
+                        } else {
+                            this.outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        this.outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
+                    });
+
+            } else {
+                this.outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
+            }
+        };
+        reader.readAsText(file);
     }
-    const formData = new FormData();
-    // Construct the IGCKey using the new format: EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
-    const key = igcData.IGCKey; // Already constructed in processIGCFile.
-    formData.append('IGCKey', key);
-    formData.append('EntrySeqID', igcData.EntrySeqID);
-    formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
-    formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
-    formData.append('LocalTime', igcData.LocalTime);
-    formData.append('BeginTimeUTC', igcData.BeginTimeUTC);
-    formData.append('Pilot', igcData.pilot);
-    formData.append('GliderType', igcData.gliderType);
-    formData.append('GliderID', igcData.gliderID);
-    formData.append('CompetitionID', igcData.competitionID);
-    formData.append('CompetitionClass', igcData.competitionClass);
-    formData.append('NB21Version', igcData.NB21Version);
-    formData.append('Sim', igcData.Sim);
 
-    // Append the actual IGC file.
-    formData.append('igcFile', igcFileGlobal);
+    // Send a FormData object to SaveIGCRecord.php
+    submitIGCRecord(igcData) {
+        if (!this.igcFileGlobal) {
+            alert("No IGC file available for submission.");
+            return;
+        }
+        const formData = new FormData();
+        const key = igcData.IGCKey;
+        formData.append('IGCKey', key);
+        formData.append('EntrySeqID', igcData.EntrySeqID);
+        formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
+        formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
+        formData.append('LocalTime', igcData.LocalTime);
+        formData.append('BeginTimeUTC', igcData.BeginTimeUTC);
+        formData.append('Pilot', igcData.pilot);
+        formData.append('GliderType', igcData.gliderType);
+        formData.append('GliderID', igcData.gliderID);
+        formData.append('CompetitionID', igcData.competitionID);
+        formData.append('CompetitionClass', igcData.competitionClass);
+        formData.append('NB21Version', igcData.NB21Version);
+        formData.append('Sim', igcData.Sim);
 
-    fetch('php/SaveIGCRecord.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                alert("IGC record saved successfully with key: " + result.IGCKey);
-            } else if (result.status === 'duplicate') {
-                alert("Duplicate IGC record exists. Cannot offer Save.");
-            } else {
-                alert("Error saving IGC record: " + (result.message || result.error || "Unknown error"));
-            }
+        // Append the actual IGC file.
+        formData.append('igcFile', this.igcFileGlobal);
+
+        fetch('php/SaveIGCRecord.php', {
+            method: 'POST',
+            body: formData
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Error submitting IGC record.");
-        });
-}
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert("IGC record saved successfully with key: " + result.IGCKey);
+                } else if (result.status === 'duplicate') {
+                    alert("Duplicate IGC record exists. Cannot offer Save.");
+                } else {
+                    alert("Error saving IGC record: " + (result.message || result.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error submitting IGC record.");
+            });
+    }
 
-// This function is called when the user clicks "Delete" (when duplicate exists).
-// It sends the IGCKey to DeleteIGCRecord.php to remove the record and its file.
-function deleteIGCRecord(IGCKey) {
-    const formData = new FormData();
-    formData.append('IGCKey', IGCKey);
+    // Called when the user clicks "Delete" (when duplicate exists).
+    // Sends the IGCKey to DeleteIGCRecord.php to remove the record and file.
+    deleteIGCRecord(IGCKey) {
+        const formData = new FormData();
+        formData.append('IGCKey', IGCKey);
 
-    fetch('php/DeleteIGCRecord.php', {
-        method: 'POST',
-        body: formData
-    })
-        .then(response => response.json())
-        .then(result => {
-            if (result.status === 'success') {
-                alert("IGC record deleted successfully with key: " + result.IGCKey);
-                outputDiv.innerHTML += `<p style="color: green;"><strong>IGC record deleted.</strong></p>`;
-            } else {
-                alert("Error deleting IGC record: " + (result.message || result.error || "Unknown error"));
-            }
+        fetch('php/DeleteIGCRecord.php', {
+            method: 'POST',
+            body: formData
         })
-        .catch(error => {
-            console.error('Error:', error);
-            alert("Error deleting IGC record.");
-        });
-}
-
-// New helper to format key date/time in YYMMDDHHMMSS format
-function formatKeyDateTime(ddmmyy, hhmmss) {
-    if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
-    const day = ddmmyy.substring(0, 2);
-    const month = ddmmyy.substring(2, 4);
-    const year = ddmmyy.substring(4, 6);
-    return year + month + day + hhmmss;
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success') {
+                    alert("IGC record deleted successfully with key: " + result.IGCKey);
+                    this.outputDiv.innerHTML += `<p style="color: green;"><strong>IGC record deleted.</strong></p>`;
+                } else {
+                    alert("Error deleting IGC record: " + (result.message || result.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error deleting IGC record.");
+            });
+    }
 }
