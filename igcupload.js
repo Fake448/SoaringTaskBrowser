@@ -55,7 +55,6 @@ dropZone.addEventListener('drop', (e) => {
 
 // -------------- PARSING FUNCTIONS --------------
 
-// Parse the header (first C record) from the IGC file
 function parseHeader(headerLine) {
     const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
     const match = headerLine.match(headerRegex);
@@ -70,7 +69,6 @@ function parseHeader(headerLine) {
     };
 }
 
-// Parse a waypoint line using IGC format
 function parseWaypoint(line) {
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
@@ -106,7 +104,6 @@ function parseWaypoint(line) {
     };
 }
 
-// Convert coordinate parts to a human-readable string
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
@@ -116,7 +113,6 @@ function formatCoordinate(deg, min, thousandths, hemisphere) {
     return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
 }
 
-// Convert DDMMYY to a readable date
 function formatUTCDate(ddmmyy) {
     const day = parseInt(ddmmyy.substring(0, 2), 10);
     const month = parseInt(ddmmyy.substring(2, 4), 10);
@@ -126,7 +122,6 @@ function formatUTCDate(ddmmyy) {
     return utcDate.toLocaleDateString('en-US', options);
 }
 
-// Convert HHMMSS to HH:MM:SS
 function formatTime(hhmmss) {
     const hh = hhmmss.substring(0, 2);
     const mm = hhmmss.substring(2, 4);
@@ -137,14 +132,12 @@ function formatTime(hhmmss) {
 // New helper: Convert DDMMYY and HHMMSS to YYMMDDHHMMSS for key construction.
 function formatKeyDateTime(ddmmyy, hhmmss) {
     if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
-    // ddmmyy: first two are day, next two are month, last two are year.
     const day = ddmmyy.substring(0, 2);
     const month = ddmmyy.substring(2, 4);
     const year = ddmmyy.substring(4, 6);
     return year + month + day + hhmmss;
 }
 
-// Parse the AXXX line to extract NB21 version and Sim info
 function parseALine(line) {
     const parts = line.split(/\s+/);
     let nb21Version = "";
@@ -167,7 +160,6 @@ function parseALine(line) {
     return { nb21Version, sim };
 }
 
-// Parse HF lines like "HFPLTPILOTINCHARGE: SmartCat"
 function parseHFLine(line) {
     const idx = line.indexOf(':');
     if (idx < 0) return null;
@@ -185,7 +177,6 @@ let gliderType = "";
 let nb21Version = "";
 let sim = "";
 
-// Parse the first B record to extract UTC Begin Time (positions 2-7, HHMMSS)
 function parseBRecord(lines) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -240,9 +231,7 @@ function processIGCFile(file) {
                     if (headerData) continue;
                 }
                 const wp = parseWaypoint(line);
-                if (wp) {
-                    waypoints.push(wp);
-                }
+                if (wp) waypoints.push(wp);
             }
         }
 
@@ -253,7 +242,7 @@ function processIGCFile(file) {
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
             const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
-            // For key, we need the date/time in YYMMDDHHMMSS format.
+            // For key construction, we need the date/time in YYMMDDHHMMSS format.
             const keyRecordDateTime = formatKeyDateTime(headerData.utcDate, headerData.utcTime);
 
             // Prepare data to send to PHP (including waypoints for matching)
@@ -301,7 +290,6 @@ function processIGCFile(file) {
                     if (data.status === 'found') {
                         // Update igcData.EntrySeqID with the matched task's EntrySeqID.
                         igcData.EntrySeqID = data.EntrySeqID;
-                        // Also add competitionID to igcData if not already set (it should be).
                         // Construct the IGCKey using the new format:
                         // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
                         const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
@@ -316,6 +304,11 @@ function processIGCFile(file) {
                         });
                     } else if (data.status === 'duplicate') {
                         outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
+                        // Add a "Delete" button to remove the existing IGC record.
+                        outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
+                        document.getElementById('deleteButton').addEventListener('click', () => {
+                            deleteIGCRecord(data.IGCKey);
+                        });
                     } else {
                         outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
                     }
@@ -368,7 +361,7 @@ function submitIGCRecord(igcData) {
             if (result.status === 'success') {
                 alert("IGC record saved successfully with key: " + result.IGCKey);
             } else if (result.status === 'duplicate') {
-                alert("Duplicate IGC record exists. Not saved.");
+                alert("Duplicate IGC record exists. Cannot offer Save.");
             } else {
                 alert("Error saving IGC record: " + (result.message || result.error || "Unknown error"));
             }
@@ -376,6 +369,31 @@ function submitIGCRecord(igcData) {
         .catch(error => {
             console.error('Error:', error);
             alert("Error submitting IGC record.");
+        });
+}
+
+// This function is called when the user clicks "Delete" (when duplicate exists).
+// It sends the IGCKey to DeleteIGCRecord.php to remove the record and its file.
+function deleteIGCRecord(IGCKey) {
+    const formData = new FormData();
+    formData.append('IGCKey', IGCKey);
+
+    fetch('php/DeleteIGCRecord.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert("IGC record deleted successfully with key: " + result.IGCKey);
+                outputDiv.innerHTML += `<p style="color: green;"><strong>IGC record deleted.</strong></p>`;
+            } else {
+                alert("Error deleting IGC record: " + (result.message || result.error || "Unknown error"));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Error deleting IGC record.");
         });
 }
 
