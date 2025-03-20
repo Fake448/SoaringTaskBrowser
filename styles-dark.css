@@ -955,30 +955,57 @@ table.dataTable thead .sorting {
         z-index: -2;
     }
 
-/* IGC Upload Page Styles */
 
-/* Position the upload container at the top-left corner */
+/* Upload container with flex layout */
 .upload-container {
     position: absolute;
-    top: 20px;
-    left: 20px;
-    width: 200px;
+    top: 5px;
+    left: 170px;
+    /* Instead of fixed width/height, let content define size */
+    width: 160px;
     height: 40px;
     border: 2px dashed #7289da;
     border-radius: 10px;
-    padding: 20px;
+    padding: 5px;
     text-align: left;
-    background: transparent;
+    background: rgba(255, 255, 255, 0.4);
+    color: rgba(0,0,0);
+    z-index: 999;
+    display: flex; /* Enable flex layout */
+    align-items: center; /* Vertically center items */
+    gap: 8px; /* Space between button and text */
 }
 
-    /* Change background and border on dragover */
+    /* Change background/border on dragover */
     .upload-container.dragover {
-        background-color: #3a3d42;
+        background-color: #3c70c7;
         border-color: #99aab5;
     }
 
+    /* Hide the file input */
     .upload-container input[type="file"] {
         display: none;
+    }
+
+/* Style the selectFileButton to be positioned within the container, not absolute */
+#selectFileButton {
+    /* Remove position absolute so it stays in the flex container */
+    position: static;
+    width: 35px;
+    height: 35px;
+    color: white;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    font-size: 16px;
+    background: rgb(114 137 218 / 47%);
+    cursor: pointer;
+    padding: 5px;
+}
+
+    #selectFileButton:hover {
+        background: rgb(114 137 218 / 76%);
+        border-color: #888;
+        transform: scale(1.1);
     }
 
 /* Style for the output container */

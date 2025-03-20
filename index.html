@@ -55,6 +55,15 @@
                         <button id="tableToggleButton" onclick="TB.toggleTableVisibility()" title="Toggle Table Visibility">
                             <img src="images/Grid.png" alt="Toggle Table Visibility" style="width: 25px; height: 25px;">
                         </button>
+                        <div class="upload-container" id="dropZone">
+                            <button id="selectFileButton" title="IGC File Upload">
+                                <img src="images/FullWorld.png" alt="View full world" style="width: 25px; height: 25px;">
+                            </button>
+                            <span>
+                                Drop Zone
+                            </span>
+                            <input type="file" id="igcFileInput" accept=".igc">
+                        </div>
                         <div id="taskControlPanel">
                             <button id="zoomButton" onclick="TB.tbm.zoomToTask()" title="Zoom to task">
                                 <img src="images/ZoomToTask.png" alt="Zoom to task">
@@ -209,6 +218,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Main map JavaScript -->
     <script src="map2.js?v=2503.14.1"></script>
+    <script src="igcupload.js?v=2503.19.1"></script>
     <script src="semicircle.js"></script>
     <script src="b21_leaflet-canvas-markers.js"></script>
     <script src="b21_utils_static.js"></script>
@@ -220,12 +230,12 @@
     <script src="wsg_weather.js"></script>
     <script src="b21_server_shim/test_api.js"></script>
     <script>
-    var DEBUG_LOCAL = false;
+        var DEBUG_LOCAL = false;
         var VERSION = "0.0.5_MD";</script>
 
     <!-- Standalone-specific JavaScript -->
-    <script src="task_browser.js?v=2503.16.1"></script>
+    <script src="task_browser.js?v=2503.14.2"></script>
     <!-- Include the new index.js -->
-    <script src="index.js?v=2503.16.2"></script>
+    <script src="index.js?v=2503.10.1"></script>
 </body>
 </html>
