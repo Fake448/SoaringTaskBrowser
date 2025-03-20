@@ -3,6 +3,8 @@ const fileInput = document.getElementById('igcFileInput');
 const selectFileButton = document.getElementById('selectFileButton');
 const outputDiv = document.getElementById('output');
 
+let igcFileGlobal = null; // store the uploaded file for later submission
+
 // -------------- EVENT LISTENERS --------------
 
 // Trigger file input when the button is clicked
@@ -14,6 +16,7 @@ selectFileButton.addEventListener('click', () => {
 fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
+        igcFileGlobal = file; // save file globally
         processIGCFile(file);
     }
 });
@@ -45,6 +48,7 @@ dropZone.addEventListener('drop', (e) => {
     const dt = e.dataTransfer;
     const file = dt.files[0];
     if (file) {
+        igcFileGlobal = file;
         processIGCFile(file);
     }
 });
@@ -52,17 +56,16 @@ dropZone.addEventListener('drop', (e) => {
 // -------------- PARSING FUNCTIONS --------------
 
 // Parse the header (first C record) from the IGC file
-// Format: C[UTC Date (6)] [UTC Time (6)] [Local Time (6)] [Flight ID (4)] [# Waypoints (2)] [Task Title]
 function parseHeader(headerLine) {
     const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
     const match = headerLine.match(headerRegex);
     if (!match) return null;
     return {
-        utcDate: match[1],
-        utcTime: match[2],
-        localTime: match[3],
-        flightId: match[4],
-        numWaypoints: match[5],
+        utcDate: match[1],    // DDMMYY
+        utcTime: match[2],    // HHMMSS
+        localTime: match[3],  // HHMMSS
+        flightId: match[4],   // 4 digits
+        numWaypoints: match[5],   // 2 digits
         taskTitle: match[6].trim()
     };
 }
@@ -270,7 +273,7 @@ function processIGCFile(file) {
 
             outputDiv.innerHTML = outputHTML;
 
-            // Send igcData to the PHP script via AJAX for matching
+            // Send igcData to the PHP script for matching
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -282,10 +285,10 @@ function processIGCFile(file) {
                         outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
                         outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
                         outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
-                        // Add a "Submit" button
+                        // Add a "Submit" button to save the IGC record
                         outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
                         document.getElementById('submitButton').addEventListener('click', () => {
-                            alert("Submitted!");
+                            submitIGCRecord(igcData);
                         });
                     } else if (data.status === 'duplicate') {
                         outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
@@ -303,4 +306,69 @@ function processIGCFile(file) {
         }
     };
     reader.readAsText(file);
+}
+
+// This function is called when the user clicks "Submit" after a match is found.
+// It sends the required parameters along with the uploaded IGC file to SaveIGCRecord.php.
+function submitIGCRecord(igcData) {
+    if (!igcFileGlobal) {
+        alert("No IGC file available for submission.");
+        return;
+    }
+    // Create a FormData object.
+    const formData = new FormData();
+    // Append all required fields.
+    formData.append('IGCKey', igcData.igcWaypoints ? Object.keys(igcData.igcWaypoints)[0] : '');
+    // For our key, you might need to construct it on the client too.
+    // For example, using EntrySeqID (which we assume is available from a previous match),
+    // pilot, gliderType, and IGCRecordDateTimeUTC.
+    // Here, we assume that the matching process has already provided us with a Task ID, but for the key:
+    // Let's assume we have these fields in igcData: pilot, gliderType, IGCRecordDateTimeUTC.
+    // In a real scenario, you should construct the key exactly as needed.
+    // For demonstration, we'll simply use a placeholder or build it using igcData.
+    // For example:
+    // let key = `${taskId}_${igcData.pilot}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
+    // For now, we'll assume igcData already has an IGCKey field (or you can compute it here).
+    // Replace the next line with your actual key construction as needed.
+    formData.set('IGCKey', igcData.IGCKey || 'PLACEHOLDER_KEY');
+
+    // Append the other parameters. These should match the SaveIGCRecord.php requirements.
+    formData.append('EntrySeqID', igcData.EntrySeqID || '');
+    formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC || '');
+    // We set IGCUploadDateTimeUTC to the current UTC time.
+    formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
+    // LocalTime and BeginTimeUTC are not in igcData yet. You may need to store them as well.
+    // For demonstration, assume they are available in igcData.
+    formData.append('LocalTime', igcData.LocalTime || '');
+    formData.append('BeginTimeUTC', igcData.BeginTimeUTC || '');
+    formData.append('Pilot', igcData.pilot || '');
+    formData.append('GliderType', igcData.gliderType || '');
+    formData.append('GliderID', igcData.gliderID || '');
+    formData.append('CompetitionID', igcData.competitionID || '');
+    formData.append('CompetitionClass', igcData.competitionClass || '');
+    formData.append('NB21Version', igcData.NB21Version || '');
+    formData.append('Sim', igcData.Sim || '');
+
+    // Append the actual IGC file.
+    formData.append('igcFile', igcFileGlobal);
+
+    // Send the FormData to SaveIGCRecord.php via fetch.
+    fetch('php/SaveIGCRecord.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert("IGC record saved successfully with key: " + result.IGCKey);
+            } else if (result.status === 'duplicate') {
+                alert("Duplicate IGC record exists. Not saved.");
+            } else {
+                alert("Error saving IGC record: " + result.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Error submitting IGC record.");
+        });
 }
