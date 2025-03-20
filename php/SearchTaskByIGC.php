@@ -14,8 +14,8 @@ try {
         throw new Exception("No input received.");
     }
     $data = json_decode($input, true);
-    if (!$data || !isset($data['igcTitle']) || !isset($data['igcWaypoints'])) {
-        throw new Exception("Invalid input data. Required keys: igcTitle and igcWaypoints.");
+    if (!$data || !isset($data['igcTitle']) || !isset($data['igcWaypoints']) || !isset($data['pilot']) || !isset($data['gliderType']) || !isset($data['IGCRecordDateTimeUTC'])) {
+        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, IGCRecordDateTimeUTC.");
     }
     
     $igcTitle = trim($data['igcTitle']);
@@ -42,15 +42,12 @@ try {
     // logMessage("Title Results Count: " . count($titleResults));
     
     if (!empty($titleResults)) {
-        // Loop through each candidate and validate its waypoints.
         foreach ($titleResults as $candidate) {
             // logMessage("Validating candidate with EntrySeqID: " . $candidate['EntrySeqID']);
             if (validateCandidate($candidate, $igcWaypoints)) {
                 $foundTask = $candidate;
                 // logMessage("Candidate validated successfully.");
                 break;
-            } else {
-                // logMessage("Candidate with EntrySeqID " . $candidate['EntrySeqID'] . " failed waypoint validation.");
             }
         }
     }
@@ -78,19 +75,43 @@ try {
                 $foundTask = $candidate;
                 // logMessage("Candidate validated successfully in waypoint search.");
                 break;
-            } else {
-                // logMessage("Candidate with EntrySeqID " . $candidate['EntrySeqID'] . " failed waypoint validation (waypoint search).");
             }
         }
     }
 
     if ($foundTask) {
-        // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
-        echo json_encode([
-            'status' => 'found',
-            'EntrySeqID' => $foundTask['EntrySeqID'],
-            'Title' => $foundTask['Title']
-        ]);
+        // Build the IGCKey: EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
+        $entrySeqID = $foundTask['EntrySeqID'];
+        $pilot = trim($data['pilot']);
+        $gliderType = trim($data['gliderType']);
+        $recordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']); // already combined in JS
+        
+        $IGCKey = $entrySeqID . "_" . $pilot . "_" . $gliderType . "_" . $recordDateTimeUTC;
+        // logMessage("Constructed IGCKey: " . $IGCKey);
+        
+        // Check the IGCRecords table for a previous entry with the same key
+        $checkQuery = "SELECT * FROM IGCRecords WHERE IGCKey = :igcKey";
+        $stmt = $pdo->prepare($checkQuery);
+        $stmt->bindParam(':igcKey', $IGCKey, PDO::PARAM_STR);
+        $stmt->execute();
+        $existingRecord = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        if ($existingRecord) {
+            // If an entry already exists, return a duplicate message.
+            // logMessage("Duplicate IGC record found for key: " . $IGCKey);
+            echo json_encode([
+                'status' => 'duplicate',
+                'message' => 'An IGC record with this key already exists.'
+            ]);
+        } else {
+            // No duplicate found; return the found task.
+            // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
+            echo json_encode([
+                'status' => 'found',
+                'EntrySeqID' => $foundTask['EntrySeqID'],
+                'Title' => $foundTask['Title']
+            ]);
+        }
     } else {
         // logMessage("No matching task found.");
         echo json_encode([
@@ -107,7 +128,6 @@ try {
 
 /**
  * Convert a coordinate string (e.g., "N70° 56' 38.94\"" or "N70°56'38.94\"") to a decimal degree.
- *
  * This version normalizes the string using str_replace and preg_replace, then uses sscanf.
  *
  * @param string $coord
@@ -115,22 +135,16 @@ try {
  */
 function coordinateToDecimal($coord) {
     $coord = trim($coord);
-    // Replace any variant of the degree symbol with a standard one.
     $coord = str_replace(array("\xC2\xB0", "°"), "°", $coord);
-    // Replace multiple spaces with a single space.
     $coord = preg_replace('/\s+/', ' ', $coord);
-    // logMessage("coordinateToDecimal normalized: " . $coord . " (hex: " . bin2hex($coord) . ")");
-    // Use sscanf to extract the components.
+    // logMessage("coordinateToDecimal normalized: " . $coord);
     $result = sscanf($coord, "%c%d° %d' %f", $hem, $deg, $min, $sec);
     if ($result === 4) {
         $decimal = $deg + ($min / 60) + ($sec / 3600);
         if ($hem === 'S' || $hem === 'W') {
             $decimal = -$decimal;
         }
-        // logMessage("coordinateToDecimal (sscanf): Conversion result: " . $decimal);
         return $decimal;
-    } else {
-        // logMessage("coordinateToDecimal: sscanf failed for input: " . $coord);
     }
     return null;
 }
@@ -152,23 +166,20 @@ function normalizeXmlCoordinate($xmlCoord) {
 }
 
 /**
- * Compare two coordinate strings (e.g., "N70°56'38.94\"" vs "N70°56'38.92\"")
- * allowing for a small tolerance.
+ * Compare two coordinate strings allowing for a small tolerance.
  *
  * @param string $coord1
  * @param string $coord2
- * @param float $tolerance in decimal degrees (default: 0.001)
+ * @param float $tolerance (default: 0.001)
  * @return bool
  */
 function compareCoordinates($coord1, $coord2, $tolerance = 0.001) {
     $dec1 = coordinateToDecimal($coord1);
     $dec2 = coordinateToDecimal($coord2);
-    // logMessage("Decimal conversion: coord1 ($coord1) = " . var_export($dec1, true) . "; coord2 ($coord2) = " . var_export($dec2, true));
     if ($dec1 === null || $dec2 === null) {
         return false;
     }
     $difference = abs($dec1 - $dec2);
-    // logMessage("Difference: " . $difference . " (tolerance: " . $tolerance . ")");
     return $difference <= $tolerance;
 }
 
@@ -177,67 +188,47 @@ function compareCoordinates($coord1, $coord2, $tolerance = 0.001) {
  */
 function validateCandidate($candidate, $igcWaypoints) {
     if (!isset($candidate['PLNXML'])) {
-        // logMessage("Candidate missing PLNXML.");
         return false;
     }
     $xmlString = $candidate['PLNXML'];
     libxml_use_internal_errors(true);
     $xml = simplexml_load_string($xmlString);
     if (!$xml) {
-        // logMessage("Failed to parse PLNXML for candidate.");
         return false;
     }
     $xmlWaypoints = [];
-    // Extract waypoints from the XML.
     foreach ($xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint') as $wp) {
         $id = (string)$wp['id'];
         $worldPosRaw = trim((string)$wp->WorldPosition);
         $normalized = normalizeXmlCoordinate($worldPosRaw);
         if ($normalized) {
-            // Reassemble into a string with a comma between latitude and longitude.
             $position = $normalized[0] . "," . $normalized[1];
         } else {
             $position = $worldPosRaw;
         }
         $xmlWaypoints[$id] = $position;
     }
-    // logMessage("Extracted XML Waypoints: " . print_r($xmlWaypoints, true));
     
-    // Compare each required waypoint.
     foreach ($igcWaypoints as $wpID => $igcCoord) {
-        // logMessage("Comparing waypoint ID: " . $wpID);
-        // logMessage("IGC coordinate: " . $igcCoord);
         if (!isset($xmlWaypoints[$wpID])) {
-            // logMessage("Waypoint " . $wpID . " not found in XML.");
             return false;
         }
-        // logMessage("XML coordinate (normalized): " . $xmlWaypoints[$wpID]);
-        // Split XML coordinate into latitude and longitude parts.
         $xmlParts = explode(',', $xmlWaypoints[$wpID]);
         if (count($xmlParts) < 2) {
-            // logMessage("XML coordinate for " . $wpID . " is in unexpected format: " . $xmlWaypoints[$wpID]);
             return false;
         }
         $xmlLat = trim($xmlParts[0]);
         $xmlLon = trim($xmlParts[1]);
-        
-        // Process IGC coordinate: remove extra spaces and split by comma.
         $igcCoord = str_replace(" ", "", $igcCoord);
         $igcParts = explode(',', $igcCoord);
         if (count($igcParts) < 2) {
-            // logMessage("IGC coordinate for waypoint " . $wpID . " is in unexpected format: " . $igcCoord);
             return false;
         }
         $igcLat = trim($igcParts[0]);
         $igcLon = trim($igcParts[1]);
-        
-        // Compare latitude and longitude separately.
         $latMatch = compareCoordinates($igcLat, $xmlLat);
         $lonMatch = compareCoordinates($igcLon, $xmlLon);
-        // logMessage("Latitude comparison for " . $wpID . ": IGC (" . $igcLat . ") vs XML (" . $xmlLat . ") => " . ($latMatch ? "match" : "mismatch"));
-        // logMessage("Longitude comparison for " . $wpID . ": IGC (" . $igcLon . ") vs XML (" . $xmlLon . ") => " . ($lonMatch ? "match" : "mismatch"));
         if (!$latMatch || !$lonMatch) {
-            // logMessage("Coordinate mismatch for waypoint " . $wpID . ".");
             return false;
         }
     }

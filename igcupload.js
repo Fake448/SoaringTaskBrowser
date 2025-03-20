@@ -58,22 +58,20 @@ function parseHeader(headerLine) {
     const match = headerLine.match(headerRegex);
     if (!match) return null;
     return {
-        utcDate: match[1],    // DDMMYY
-        utcTime: match[2],    // HHMMSS
-        localTime: match[3],  // HHMMSS
-        flightId: match[4],   // 4 digits
-        numWaypoints: match[5],   // 2 digits
+        utcDate: match[1],
+        utcTime: match[2],
+        localTime: match[3],
+        flightId: match[4],
+        numWaypoints: match[5],
         taskTitle: match[6].trim()
     };
 }
 
 // Parse a waypoint line using IGC format
 function parseWaypoint(line) {
-    // Example: C7056370N00843548W*Start+1286x2000
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
     if (!match) return null;
-
     const latDeg = match[1],
         latMin = match[2],
         latThousandths = match[3],
@@ -82,9 +80,8 @@ function parseWaypoint(line) {
         lonMin = match[6],
         lonThousandths = match[7],
         lonHem = match[8];
-    const rawText = match[9].trim(); // waypoint id / extra text
+    const rawText = match[9].trim();
 
-    // Determine originalId for use in SQL comparison.
     let originalId = "";
     if (rawText.slice(-1) === ';') {
         originalId = rawText;
@@ -140,7 +137,6 @@ function parseALine(line) {
     let nb21Version = "";
     let sim = "";
     if (parts.length >= 3) {
-        // If the third word is "Logger" (case-insensitive), use parts[3] as NB21 version and default Sim.
         if (parts[2].toLowerCase() === "logger") {
             if (parts.length >= 4) {
                 nb21Version = parts[3];
@@ -176,7 +172,18 @@ let gliderType = "";
 let nb21Version = "";
 let sim = "";
 
-// Main processing function
+// Parse the first B record to extract UTC Begin Time (positions 2-7, HHMMSS)
+function parseBRecord(lines) {
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (line.startsWith("B")) {
+            return line.substring(1, 7);
+        }
+    }
+    return "";
+}
+
+// -------------- MAIN PROCESSING --------------
 function processIGCFile(file) {
     const reader = new FileReader();
     reader.onload = function (e) {
@@ -186,7 +193,7 @@ function processIGCFile(file) {
         let headerData = null;
         const waypoints = [];
 
-        // Parse top lines (AXXX, HF...) before encountering first "C"
+        // Parse top lines (AXXX, HF...) before the first "C"
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (line.startsWith("C")) {
@@ -228,15 +235,21 @@ function processIGCFile(file) {
             }
         }
 
+        // Parse the B record for Begin Time
+        const beginTimeUTC = parseBRecord(lines); // HHMMSS
+
         if (headerData) {
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
-            // Prepare data to send to PHP (still including waypoints for matching)
+            // Prepare data to send to PHP (including waypoints for matching)
             const igcData = {
                 igcTitle: headerData.taskTitle,
-                igcWaypoints: {}
+                igcWaypoints: {},
+                pilot: pilot,
+                gliderType: gliderType,
+                IGCRecordDateTimeUTC: combinedUTC
             };
             waypoints.forEach(wp => {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
@@ -246,6 +259,7 @@ function processIGCFile(file) {
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
             outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTC}</p>`;
             outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
+            outputHTML += `<p><strong>Begin Time (UTC) from B record:</strong> ${formatTime(beginTimeUTC)}</p>`;
             outputHTML += `<p><strong>NB21 Version:</strong> ${nb21Version}</p>`;
             outputHTML += `<p><strong>Sim:</strong> ${sim}</p>`;
             outputHTML += `<p><strong>Pilot:</strong> ${pilot}</p>`;
@@ -273,6 +287,8 @@ function processIGCFile(file) {
                         document.getElementById('submitButton').addEventListener('click', () => {
                             alert("Submitted!");
                         });
+                    } else if (data.status === 'duplicate') {
+                        outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
                     } else {
                         outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
                     }
