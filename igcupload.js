@@ -3,7 +3,7 @@ const fileInput = document.getElementById('igcFileInput');
 const selectFileButton = document.getElementById('selectFileButton');
 const outputDiv = document.getElementById('output');
 
-let igcFileGlobal = null; // store the uploaded file for later submission
+let igcFileGlobal = null; // Store the uploaded file for later submission
 
 // -------------- EVENT LISTENERS --------------
 
@@ -16,7 +16,7 @@ selectFileButton.addEventListener('click', () => {
 fileInput.addEventListener('change', (event) => {
     const file = event.target.files[0];
     if (file) {
-        igcFileGlobal = file; // save file globally
+        igcFileGlobal = file;
         processIGCFile(file);
     }
 });
@@ -64,8 +64,8 @@ function parseHeader(headerLine) {
         utcDate: match[1],    // DDMMYY
         utcTime: match[2],    // HHMMSS
         localTime: match[3],  // HHMMSS
-        flightId: match[4],   // 4 digits
-        numWaypoints: match[5],   // 2 digits
+        flightId: match[4],
+        numWaypoints: match[5],
         taskTitle: match[6].trim()
     };
 }
@@ -196,7 +196,7 @@ function processIGCFile(file) {
         let headerData = null;
         const waypoints = [];
 
-        // Parse top lines (AXXX, HF...) before the first "C"
+        // Parse top lines (AXXX, HF...) before encountering first "C"
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
             if (line.startsWith("C")) {
@@ -247,12 +247,21 @@ function processIGCFile(file) {
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
             // Prepare data to send to PHP (including waypoints for matching)
+            // We also add additional fields required to construct the IGCKey later.
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {},
                 pilot: pilot,
                 gliderType: gliderType,
-                IGCRecordDateTimeUTC: combinedUTC
+                IGCRecordDateTimeUTC: combinedUTC,
+                EntrySeqID: headerData.flightId,  // Adjust as needed; if the task EntrySeqID is known from matching, you can update it later.
+                LocalTime: headerData.localTime,
+                BeginTimeUTC: beginTimeUTC,
+                gliderID: gliderID,
+                competitionID: competitionID,
+                competitionClass: competitionClass,
+                NB21Version: nb21Version,
+                Sim: sim
             };
             waypoints.forEach(wp => {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
@@ -309,50 +318,37 @@ function processIGCFile(file) {
 }
 
 // This function is called when the user clicks "Submit" after a match is found.
-// It sends the required parameters along with the uploaded IGC file to SaveIGCRecord.php.
+// It sends a FormData object (including the IGC file and all required parameters) to SaveIGCRecord.php.
 function submitIGCRecord(igcData) {
     if (!igcFileGlobal) {
         alert("No IGC file available for submission.");
         return;
     }
-    // Create a FormData object.
     const formData = new FormData();
-    // Append all required fields.
-    formData.append('IGCKey', igcData.igcWaypoints ? Object.keys(igcData.igcWaypoints)[0] : '');
-    // For our key, you might need to construct it on the client too.
-    // For example, using EntrySeqID (which we assume is available from a previous match),
-    // pilot, gliderType, and IGCRecordDateTimeUTC.
-    // Here, we assume that the matching process has already provided us with a Task ID, but for the key:
-    // Let's assume we have these fields in igcData: pilot, gliderType, IGCRecordDateTimeUTC.
-    // In a real scenario, you should construct the key exactly as needed.
-    // For demonstration, we'll simply use a placeholder or build it using igcData.
-    // For example:
-    // let key = `${taskId}_${igcData.pilot}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
-    // For now, we'll assume igcData already has an IGCKey field (or you can compute it here).
-    // Replace the next line with your actual key construction as needed.
-    formData.set('IGCKey', igcData.IGCKey || 'PLACEHOLDER_KEY');
 
-    // Append the other parameters. These should match the SaveIGCRecord.php requirements.
-    formData.append('EntrySeqID', igcData.EntrySeqID || '');
-    formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC || '');
-    // We set IGCUploadDateTimeUTC to the current UTC time.
+    // Construct the IGCKey on the client side using the following format:
+    // EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
+    // Here we assume that EntrySeqID is available in igcData (if not, adjust accordingly)
+    const key = `${igcData.EntrySeqID}_${igcData.pilot}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
+    formData.append('IGCKey', key);
+    formData.append('EntrySeqID', igcData.EntrySeqID);
+    formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
+    // Set IGCUploadDateTimeUTC to the current UTC time.
     formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
-    // LocalTime and BeginTimeUTC are not in igcData yet. You may need to store them as well.
-    // For demonstration, assume they are available in igcData.
-    formData.append('LocalTime', igcData.LocalTime || '');
-    formData.append('BeginTimeUTC', igcData.BeginTimeUTC || '');
-    formData.append('Pilot', igcData.pilot || '');
-    formData.append('GliderType', igcData.gliderType || '');
-    formData.append('GliderID', igcData.gliderID || '');
-    formData.append('CompetitionID', igcData.competitionID || '');
-    formData.append('CompetitionClass', igcData.competitionClass || '');
-    formData.append('NB21Version', igcData.NB21Version || '');
-    formData.append('Sim', igcData.Sim || '');
+    formData.append('LocalTime', igcData.LocalTime);
+    formData.append('BeginTimeUTC', igcData.BeginTimeUTC);
+    formData.append('Pilot', igcData.pilot);
+    formData.append('GliderType', igcData.gliderType);
+    formData.append('GliderID', igcData.gliderID);
+    formData.append('CompetitionID', igcData.competitionID);
+    formData.append('CompetitionClass', igcData.competitionClass);
+    formData.append('NB21Version', igcData.NB21Version);
+    formData.append('Sim', igcData.Sim);
 
     // Append the actual IGC file.
     formData.append('igcFile', igcFileGlobal);
 
-    // Send the FormData to SaveIGCRecord.php via fetch.
+    // Submit the FormData to SaveIGCRecord.php via fetch.
     fetch('php/SaveIGCRecord.php', {
         method: 'POST',
         body: formData
@@ -364,7 +360,7 @@ function submitIGCRecord(igcData) {
             } else if (result.status === 'duplicate') {
                 alert("Duplicate IGC record exists. Not saved.");
             } else {
-                alert("Error saving IGC record: " + result.message);
+                alert("Error saving IGC record: " + (result.message || result.error || "Unknown error"));
             }
         })
         .catch(error => {
