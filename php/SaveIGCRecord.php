@@ -67,8 +67,8 @@ try {
     }
     
     // Determine the destination folder.
-    // Assume $taskBrowserPathHTTPS is a filesystem path to a folder containing IGCFiles.
-    $destFolder = rtrim($taskBrowserPathHTTPS, '/\\') . '/IGCFiles/' . $EntrySeqID;
+    // Assume $taskBrowserPath is a filesystem path to a folder containing IGCFiles.
+    $destFolder = rtrim($taskBrowserPath, '/\\') . '/IGCFiles/' . $EntrySeqID;
     if (!is_dir($destFolder)) {
         if (!mkdir($destFolder, 0755, true)) {
             throw new Exception("Failed to create destination folder: $destFolder");

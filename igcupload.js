@@ -3,7 +3,8 @@ const fileInput = document.getElementById('igcFileInput');
 const selectFileButton = document.getElementById('selectFileButton');
 const outputDiv = document.getElementById('output');
 
-let igcFileGlobal = null; // Store the uploaded file for later submission
+let igcFileGlobal = null; // Store the uploaded file globally
+let matchedEntrySeqID = ""; // Will be set after a match is found
 
 // -------------- EVENT LISTENERS --------------
 
@@ -55,22 +56,20 @@ dropZone.addEventListener('drop', (e) => {
 
 // -------------- PARSING FUNCTIONS --------------
 
-// Parse the header (first C record) from the IGC file
 function parseHeader(headerLine) {
     const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
     const match = headerLine.match(headerRegex);
     if (!match) return null;
     return {
-        utcDate: match[1],    // DDMMYY
-        utcTime: match[2],    // HHMMSS
-        localTime: match[3],  // HHMMSS
+        utcDate: match[1],
+        utcTime: match[2],
+        localTime: match[3],
         flightId: match[4],
         numWaypoints: match[5],
         taskTitle: match[6].trim()
     };
 }
 
-// Parse a waypoint line using IGC format
 function parseWaypoint(line) {
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
@@ -106,7 +105,6 @@ function parseWaypoint(line) {
     };
 }
 
-// Convert coordinate parts to a human-readable string
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
@@ -116,7 +114,6 @@ function formatCoordinate(deg, min, thousandths, hemisphere) {
     return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
 }
 
-// Convert DDMMYY to a readable date
 function formatUTCDate(ddmmyy) {
     const day = parseInt(ddmmyy.substring(0, 2), 10);
     const month = parseInt(ddmmyy.substring(2, 4), 10);
@@ -126,7 +123,6 @@ function formatUTCDate(ddmmyy) {
     return utcDate.toLocaleDateString('en-US', options);
 }
 
-// Convert HHMMSS to HH:MM:SS
 function formatTime(hhmmss) {
     const hh = hhmmss.substring(0, 2);
     const mm = hhmmss.substring(2, 4);
@@ -134,7 +130,6 @@ function formatTime(hhmmss) {
     return `${hh}:${mm}:${ss}`;
 }
 
-// Parse the AXXX line to extract NB21 version and Sim info
 function parseALine(line) {
     const parts = line.split(/\s+/);
     let nb21Version = "";
@@ -157,7 +152,6 @@ function parseALine(line) {
     return { nb21Version, sim };
 }
 
-// Parse HF lines like "HFPLTPILOTINCHARGE: SmartCat"
 function parseHFLine(line) {
     const idx = line.indexOf(':');
     if (idx < 0) return null;
@@ -166,7 +160,6 @@ function parseHFLine(line) {
     return { key, value };
 }
 
-// Global fields for additional data
 let pilot = "";
 let gliderID = "";
 let competitionID = "";
@@ -175,7 +168,6 @@ let gliderType = "";
 let nb21Version = "";
 let sim = "";
 
-// Parse the first B record to extract UTC Begin Time (positions 2-7, HHMMSS)
 function parseBRecord(lines) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -196,12 +188,10 @@ function processIGCFile(file) {
         let headerData = null;
         const waypoints = [];
 
-        // Parse top lines (AXXX, HF...) before encountering first "C"
+        // Parse top lines (AXXX, HF...) before the first "C"
         for (let i = 0; i < lines.length; i++) {
             const line = lines[i].trim();
-            if (line.startsWith("C")) {
-                break;
-            }
+            if (line.startsWith("C")) break;
             if (line.startsWith("AXXX")) {
                 const aObj = parseALine(line);
                 nb21Version = aObj.nb21Version;
@@ -232,14 +222,12 @@ function processIGCFile(file) {
                     if (headerData) continue;
                 }
                 const wp = parseWaypoint(line);
-                if (wp) {
-                    waypoints.push(wp);
-                }
+                if (wp) waypoints.push(wp);
             }
         }
 
         // Parse the B record for Begin Time
-        const beginTimeUTC = parseBRecord(lines); // HHMMSS
+        const beginTimeUTC = parseBRecord(lines);
 
         if (headerData) {
             const formattedDate = formatUTCDate(headerData.utcDate);
@@ -247,14 +235,15 @@ function processIGCFile(file) {
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
             // Prepare data to send to PHP (including waypoints for matching)
-            // We also add additional fields required to construct the IGCKey later.
+            // IMPORTANT: Set EntrySeqID to the matched task's EntrySeqID later.
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {},
                 pilot: pilot,
                 gliderType: gliderType,
                 IGCRecordDateTimeUTC: combinedUTC,
-                EntrySeqID: headerData.flightId,  // Adjust as needed; if the task EntrySeqID is known from matching, you can update it later.
+                // We'll update EntrySeqID after matching.
+                EntrySeqID: "",
                 LocalTime: headerData.localTime,
                 BeginTimeUTC: beginTimeUTC,
                 gliderID: gliderID,
@@ -267,7 +256,7 @@ function processIGCFile(file) {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
             });
 
-            // Build output HTML (display only the requested fields)
+            // Build output HTML (display only requested fields)
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
             outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTC}</p>`;
             outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
@@ -279,10 +268,9 @@ function processIGCFile(file) {
             outputHTML += `<p><strong>Competition ID:</strong> ${competitionID}</p>`;
             outputHTML += `<p><strong>Competition Class:</strong> ${competitionClass}</p>`;
             outputHTML += `<p><strong>Glider Type:</strong> ${gliderType}</p>`;
-
             outputDiv.innerHTML = outputHTML;
 
-            // Send igcData to the PHP script for matching
+            // First, send data to SearchTaskByIGC.php to match a task.
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -291,10 +279,12 @@ function processIGCFile(file) {
                 .then(response => response.json())
                 .then(data => {
                     if (data.status === 'found') {
+                        // Update igcData.EntrySeqID with the matched task's EntrySeqID.
+                        igcData.EntrySeqID = data.EntrySeqID;
                         outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
                         outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
                         outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
-                        // Add a "Submit" button to save the IGC record
+                        // Add a "Submit" button to save the IGC record.
                         outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
                         document.getElementById('submitButton').addEventListener('click', () => {
                             submitIGCRecord(igcData);
@@ -325,15 +315,11 @@ function submitIGCRecord(igcData) {
         return;
     }
     const formData = new FormData();
-
-    // Construct the IGCKey on the client side using the following format:
-    // EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
-    // Here we assume that EntrySeqID is available in igcData (if not, adjust accordingly)
+    // Construct the IGCKey using the format: EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
     const key = `${igcData.EntrySeqID}_${igcData.pilot}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
     formData.append('IGCKey', key);
     formData.append('EntrySeqID', igcData.EntrySeqID);
     formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
-    // Set IGCUploadDateTimeUTC to the current UTC time.
     formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
     formData.append('LocalTime', igcData.LocalTime);
     formData.append('BeginTimeUTC', igcData.BeginTimeUTC);
@@ -348,7 +334,6 @@ function submitIGCRecord(igcData) {
     // Append the actual IGC file.
     formData.append('igcFile', igcFileGlobal);
 
-    // Submit the FormData to SaveIGCRecord.php via fetch.
     fetch('php/SaveIGCRecord.php', {
         method: 'POST',
         body: formData
