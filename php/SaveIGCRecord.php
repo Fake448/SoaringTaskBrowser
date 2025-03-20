@@ -67,7 +67,6 @@ try {
     }
     
     // Determine the destination folder.
-    // Assume $taskBrowserPath is a filesystem path to a folder containing IGCFiles.
     $destFolder = rtrim($taskBrowserPath, '/\\') . '/IGCFiles/' . $EntrySeqID;
     if (!is_dir($destFolder)) {
         if (!mkdir($destFolder, 0755, true)) {

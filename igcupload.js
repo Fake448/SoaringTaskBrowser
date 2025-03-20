@@ -4,7 +4,6 @@ const selectFileButton = document.getElementById('selectFileButton');
 const outputDiv = document.getElementById('output');
 
 let igcFileGlobal = null; // Store the uploaded file globally
-let matchedEntrySeqID = ""; // Will be set after a match is found
 
 // -------------- EVENT LISTENERS --------------
 
@@ -56,20 +55,22 @@ dropZone.addEventListener('drop', (e) => {
 
 // -------------- PARSING FUNCTIONS --------------
 
+// Parse the header (first C record) from the IGC file
 function parseHeader(headerLine) {
     const headerRegex = /^C(\d{6})(\d{6})(\d{6})(\d{4})(\d{2})(.*)$/;
     const match = headerLine.match(headerRegex);
     if (!match) return null;
     return {
-        utcDate: match[1],
-        utcTime: match[2],
-        localTime: match[3],
+        utcDate: match[1],    // DDMMYY
+        utcTime: match[2],    // HHMMSS
+        localTime: match[3],  // HHMMSS
         flightId: match[4],
         numWaypoints: match[5],
         taskTitle: match[6].trim()
     };
 }
 
+// Parse a waypoint line using IGC format
 function parseWaypoint(line) {
     const wpRegex = /^C(\d{2})(\d{2})(\d{3})([NS])(\d{3})(\d{2})(\d{3})([EW])(.*)$/;
     const match = line.match(wpRegex);
@@ -105,6 +106,7 @@ function parseWaypoint(line) {
     };
 }
 
+// Convert coordinate parts to a human-readable string
 function formatCoordinate(deg, min, thousandths, hemisphere) {
     const degrees = parseInt(deg, 10);
     const minutes = parseInt(min, 10);
@@ -114,6 +116,7 @@ function formatCoordinate(deg, min, thousandths, hemisphere) {
     return `${hemisphere}${degrees}\u00B0 ${minutes}' ${secondsFormatted}"`;
 }
 
+// Convert DDMMYY to a readable date
 function formatUTCDate(ddmmyy) {
     const day = parseInt(ddmmyy.substring(0, 2), 10);
     const month = parseInt(ddmmyy.substring(2, 4), 10);
@@ -123,6 +126,7 @@ function formatUTCDate(ddmmyy) {
     return utcDate.toLocaleDateString('en-US', options);
 }
 
+// Convert HHMMSS to HH:MM:SS
 function formatTime(hhmmss) {
     const hh = hhmmss.substring(0, 2);
     const mm = hhmmss.substring(2, 4);
@@ -130,6 +134,17 @@ function formatTime(hhmmss) {
     return `${hh}:${mm}:${ss}`;
 }
 
+// New helper: Convert DDMMYY and HHMMSS to YYMMDDHHMMSS for key construction.
+function formatKeyDateTime(ddmmyy, hhmmss) {
+    if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
+    // ddmmyy: first two are day, next two are month, last two are year.
+    const day = ddmmyy.substring(0, 2);
+    const month = ddmmyy.substring(2, 4);
+    const year = ddmmyy.substring(4, 6);
+    return year + month + day + hhmmss;
+}
+
+// Parse the AXXX line to extract NB21 version and Sim info
 function parseALine(line) {
     const parts = line.split(/\s+/);
     let nb21Version = "";
@@ -152,6 +167,7 @@ function parseALine(line) {
     return { nb21Version, sim };
 }
 
+// Parse HF lines like "HFPLTPILOTINCHARGE: SmartCat"
 function parseHFLine(line) {
     const idx = line.indexOf(':');
     if (idx < 0) return null;
@@ -160,6 +176,7 @@ function parseHFLine(line) {
     return { key, value };
 }
 
+// Global fields for additional data
 let pilot = "";
 let gliderID = "";
 let competitionID = "";
@@ -168,6 +185,7 @@ let gliderType = "";
 let nb21Version = "";
 let sim = "";
 
+// Parse the first B record to extract UTC Begin Time (positions 2-7, HHMMSS)
 function parseBRecord(lines) {
     for (let i = 0; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -222,7 +240,9 @@ function processIGCFile(file) {
                     if (headerData) continue;
                 }
                 const wp = parseWaypoint(line);
-                if (wp) waypoints.push(wp);
+                if (wp) {
+                    waypoints.push(wp);
+                }
             }
         }
 
@@ -232,18 +252,18 @@ function processIGCFile(file) {
         if (headerData) {
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
-            const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
+            const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
+            // For key, we need the date/time in YYMMDDHHMMSS format.
+            const keyRecordDateTime = formatKeyDateTime(headerData.utcDate, headerData.utcTime);
 
             // Prepare data to send to PHP (including waypoints for matching)
-            // IMPORTANT: Set EntrySeqID to the matched task's EntrySeqID later.
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {},
                 pilot: pilot,
                 gliderType: gliderType,
-                IGCRecordDateTimeUTC: combinedUTC,
-                // We'll update EntrySeqID after matching.
-                EntrySeqID: "",
+                IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes
+                EntrySeqID: "", // Will be updated after matching.
                 LocalTime: headerData.localTime,
                 BeginTimeUTC: beginTimeUTC,
                 gliderID: gliderID,
@@ -256,9 +276,9 @@ function processIGCFile(file) {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
             });
 
-            // Build output HTML (display only requested fields)
+            // Build output HTML (display only the requested fields)
             let outputHTML = `<h2>Task: ${headerData.taskTitle}</h2>`;
-            outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTC}</p>`;
+            outputHTML += `<p><strong>UTC Date & Time of IGC record:</strong> ${combinedUTCDisplay}</p>`;
             outputHTML += `<p><strong>Local Time of Recording:</strong> ${formatTime(headerData.localTime)}</p>`;
             outputHTML += `<p><strong>Begin Time (UTC) from B record:</strong> ${formatTime(beginTimeUTC)}</p>`;
             outputHTML += `<p><strong>NB21 Version:</strong> ${nb21Version}</p>`;
@@ -281,6 +301,11 @@ function processIGCFile(file) {
                     if (data.status === 'found') {
                         // Update igcData.EntrySeqID with the matched task's EntrySeqID.
                         igcData.EntrySeqID = data.EntrySeqID;
+                        // Also add competitionID to igcData if not already set (it should be).
+                        // Construct the IGCKey using the new format:
+                        // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
+                        const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
+                        igcData.IGCKey = key;
                         outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
                         outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
                         outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
@@ -315,8 +340,8 @@ function submitIGCRecord(igcData) {
         return;
     }
     const formData = new FormData();
-    // Construct the IGCKey using the format: EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
-    const key = `${igcData.EntrySeqID}_${igcData.pilot}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
+    // Construct the IGCKey using the new format: EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
+    const key = igcData.IGCKey; // Already constructed in processIGCFile.
     formData.append('IGCKey', key);
     formData.append('EntrySeqID', igcData.EntrySeqID);
     formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
@@ -352,4 +377,13 @@ function submitIGCRecord(igcData) {
             console.error('Error:', error);
             alert("Error submitting IGC record.");
         });
+}
+
+// New helper to format key date/time in YYMMDDHHMMSS format
+function formatKeyDateTime(ddmmyy, hhmmss) {
+    if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
+    const day = ddmmyy.substring(0, 2);
+    const month = ddmmyy.substring(2, 4);
+    const year = ddmmyy.substring(4, 6);
+    return year + month + day + hhmmss;
 }

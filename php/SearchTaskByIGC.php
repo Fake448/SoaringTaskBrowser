@@ -14,8 +14,16 @@ try {
         throw new Exception("No input received.");
     }
     $data = json_decode($input, true);
-    if (!$data || !isset($data['igcTitle']) || !isset($data['igcWaypoints']) || !isset($data['pilot']) || !isset($data['gliderType']) || !isset($data['IGCRecordDateTimeUTC'])) {
-        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, IGCRecordDateTimeUTC.");
+    if (
+        !$data || 
+        !isset($data['igcTitle']) || 
+        !isset($data['igcWaypoints']) || 
+        !isset($data['pilot']) || 
+        !isset($data['gliderType']) || 
+        !isset($data['competitionID']) || 
+        !isset($data['IGCRecordDateTimeUTC'])
+    ) {
+        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, competitionID, IGCRecordDateTimeUTC.");
     }
     
     $igcTitle = trim($data['igcTitle']);
@@ -80,13 +88,14 @@ try {
     }
 
     if ($foundTask) {
-        // Build the IGCKey: EntrySeqID_Pilot_GliderType_IGCRecordDateTimeUTC
+        // Build the IGCKey using the new format:
+        // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
         $entrySeqID = $foundTask['EntrySeqID'];
-        $pilot = trim($data['pilot']);
+        $competitionID = trim($data['competitionID']);
         $gliderType = trim($data['gliderType']);
-        $recordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']); // already combined in JS
+        $recordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']); // expected in YYMMDDHHMMSS format
         
-        $IGCKey = $entrySeqID . "_" . $pilot . "_" . $gliderType . "_" . $recordDateTimeUTC;
+        $IGCKey = $entrySeqID . "_" . $competitionID . "_" . $gliderType . "_" . $recordDateTimeUTC;
         // logMessage("Constructed IGCKey: " . $IGCKey);
         
         // Check the IGCRecords table for a previous entry with the same key
@@ -97,14 +106,12 @@ try {
         $existingRecord = $stmt->fetch(PDO::FETCH_ASSOC);
         
         if ($existingRecord) {
-            // If an entry already exists, return a duplicate message.
             // logMessage("Duplicate IGC record found for key: " . $IGCKey);
             echo json_encode([
                 'status' => 'duplicate',
                 'message' => 'An IGC record with this key already exists.'
             ]);
         } else {
-            // No duplicate found; return the found task.
             // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
             echo json_encode([
                 'status' => 'found',
