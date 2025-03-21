@@ -377,8 +377,8 @@ class IGCUpload {
                 if (result.status === 'success') {
                     alert("Your IGC record was saved successfully! Thank you!");
                     // Clear the match data.
-                    this.tb.igcMatchData = "";
-                    this.tb.enableMapInteractions();
+                    this.taskBrowser.igcMatchData = "";
+                    this.taskBrowser.enableMapInteractions();
                     this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID);
                 } else if (result.status === 'duplicate') {
                     alert("Duplicate IGC record exists. Cannot offer Save.");
