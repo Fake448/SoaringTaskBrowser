@@ -139,7 +139,7 @@ try {
                 // Build a formatted date/time string
                 // e.g. "2024-11-13 00:35:50 UTC"
                 $record['IGCRecordDateTimeUTC'] = sprintf(
-                    "%04d-%02d-%02d %02d:%02d UTC",
+                    "%04d-%02d-%02d %02d:%02d",
                     $fullYear, $mm, $dd, $HH, $mi
                 );
             }
