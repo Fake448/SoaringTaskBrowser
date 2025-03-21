@@ -1315,8 +1315,8 @@ class TaskBrowser {
             <table id="igcRecordsTable" class="display" style="width: 100%;">
                 <thead>
                     <tr>
-                        <th>Select</th>
-                        <th>Date and time</th>
+                        <th>Sel.</th>
+                        <th>UTC</th>
                         <th>Pilot</th>
                         <th>Glider</th>
                         <th>Class</th>
