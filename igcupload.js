@@ -326,7 +326,7 @@ class IGCUpload {
                         this.taskBrowser.igcMatchData = html;
 
                         // Select the task on the map.
-                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID);
+                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID,true);
 
                     }
                     else if (data.error) {
@@ -380,7 +380,7 @@ class IGCUpload {
                     // Clear the match data.
                     this.taskBrowser.igcMatchData = "";
                     this.taskBrowser.enableMapInteractions();
-                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID);
+                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID,true);
                 } else if (result.status === 'duplicate') {
                     alert("Duplicate IGC record exists. Cannot offer Save.");
                 } else {

@@ -472,9 +472,14 @@ class TaskBrowserMap {
     //
 
     // Selecting a task from the "task" parameter in the URL string
-    selectTaskFromURL(entrySeqID) {
+    selectTaskFromURL(entrySeqID, doNotExpand = false) {
         let tbm = this;
-        tbm.tb.fromURL = true;
+        if (doNotExpand) {
+            tbm.tb.fromURL = false;
+        }
+        else {
+            tbm.tb.fromURL = true;
+        }
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
 
