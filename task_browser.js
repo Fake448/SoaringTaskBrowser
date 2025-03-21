@@ -1421,6 +1421,10 @@ class TaskBrowser {
 
     disableMapInteractions() {
         // Disable pointer events on the map to block interactions.
+        let tb = this;
+        tb.hideSearchFiltersPanel;
+        tb.toggleTableVisibility(true);
+
         const mapDiv = document.getElementById('map');
         if (mapDiv) {
             mapDiv.style.pointerEvents = 'none';
@@ -2345,10 +2349,23 @@ class TaskBrowser {
         }
     }
 
-    toggleTableVisibility() {
+    toggleTableVisibility(forceHide = false) {
         let tb = this;
         const taskGridOverlay = document.getElementById("taskGridOverlay");
 
+        // If forceHide is true, hide the overlay and remove listeners.
+        if (forceHide || taskGridOverlay.style.display !== "none" && forceHide) {
+            // Hide overlay
+            taskGridOverlay.style.display = "none";
+
+            // Remove event listeners using our named functions.
+            taskGridOverlay.removeEventListener("mouseenter", tb._overlayMouseEnter);
+            taskGridOverlay.removeEventListener("mouseleave", tb._overlayMouseLeave);
+            taskGridOverlay.removeEventListener("wheel", tb._overlayWheel);
+            return;
+        }
+
+        // If the overlay is currently hidden, show it and attach event listeners.
         if (taskGridOverlay.style.display === "none" || !taskGridOverlay.style.display) {
             // Show overlay
             taskGridOverlay.style.display = "flex";
@@ -2358,7 +2375,7 @@ class TaskBrowser {
 
             // Ensure the refresh button updates the grid
             refreshGridButton.addEventListener("click", () => {
-                tb.populateDataTable(tb.tbm.visibleTasks); // Refresh grid with latest visible tasks
+                tb.populateDataTable(tb.tbm.visibleTasks);
             });
 
             // Reselect the current task if one is selected
@@ -2366,35 +2383,35 @@ class TaskBrowser {
                 tb.selectGridTask(tb.tbm.currentEntrySeqID);
             }
 
-            // Disable map interactions only when hovering over the overlay
-            taskGridOverlay.addEventListener("mouseenter", () => {
-                tb.tbm.map.dragging.disable();  // Disable drag
-                tb.tbm.map.scrollWheelZoom.disable();  // Disable scroll zoom
-                tb.tbm.map.doubleClickZoom.disable();  // Optionally disable double-click zoom
-            });
+            // Define the event listener functions and store them for removal.
+            tb._overlayMouseEnter = () => {
+                tb.tbm.map.dragging.disable();
+                tb.tbm.map.scrollWheelZoom.disable();
+                tb.tbm.map.doubleClickZoom.disable();
+            };
 
-            taskGridOverlay.addEventListener("mouseleave", () => {
-                tb.tbm.map.dragging.enable();  // Re-enable drag
-                tb.tbm.map.scrollWheelZoom.enable();  // Re-enable scroll zoom
-                tb.tbm.map.doubleClickZoom.enable();  // Re-enable double-click zoom
-            });
+            tb._overlayMouseLeave = () => {
+                tb.tbm.map.dragging.enable();
+                tb.tbm.map.scrollWheelZoom.enable();
+                tb.tbm.map.doubleClickZoom.enable();
+            };
 
-            // Add scroll prevention to keep the map from zooming when scrolling over the overlay
-            taskGridOverlay.addEventListener("wheel", function (event) {
+            tb._overlayWheel = (event) => {
                 event.stopPropagation();
-            }, { passive: false });
+            };
+
+            // Attach the event listeners.
+            taskGridOverlay.addEventListener("mouseenter", tb._overlayMouseEnter);
+            taskGridOverlay.addEventListener("mouseleave", tb._overlayMouseLeave);
+            taskGridOverlay.addEventListener("wheel", tb._overlayWheel, { passive: false });
         } else {
-            // Hide overlay
+            // If not forcing and overlay is visible, hide it.
             taskGridOverlay.style.display = "none";
 
-            // Remove event listeners related to map interaction control
-            taskGridOverlay.removeEventListener("mouseenter", tb.disableMapInteractions);
-            taskGridOverlay.removeEventListener("mouseleave", tb.enableMapInteractions);
-
-            // Remove scroll prevention event listener
-            taskGridOverlay.removeEventListener("wheel", function (event) {
-                event.stopPropagation();
-            });
+            // Remove event listeners.
+            taskGridOverlay.removeEventListener("mouseenter", tb._overlayMouseEnter);
+            taskGridOverlay.removeEventListener("mouseleave", tb._overlayMouseLeave);
+            taskGridOverlay.removeEventListener("wheel", tb._overlayWheel);
         }
     }
 

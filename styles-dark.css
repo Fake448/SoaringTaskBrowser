@@ -1030,3 +1030,17 @@ table.dataTable thead .sorting {
     z-index: 9000; /* just below or above other UI as needed */
     display: none; /* hidden by default */
 }
+
+@keyframes blink {
+    0% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
