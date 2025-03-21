@@ -375,7 +375,11 @@ class IGCUpload {
             .then(response => response.json())
             .then(result => {
                 if (result.status === 'success') {
-                    alert("IGC record saved successfully with key: " + result.IGCKey);
+                    alert("Your IGC record was saved successfully! Thank you!");
+                    // Clear the match data.
+                    this.tb.igcMatchData = "";
+                    this.tb.enableMapInteractions();
+                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID);
                 } else if (result.status === 'duplicate') {
                     alert("Duplicate IGC record exists. Cannot offer Save.");
                 } else {
