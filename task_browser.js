@@ -1351,7 +1351,7 @@ class TaskBrowser {
                 columns: [
                     {
                         data: null,
-                        title: 'Select',
+                        title: 'Sel.',
                         name: 'Select',
                         orderable: false,
                         searchable: false,
@@ -1362,7 +1362,7 @@ class TaskBrowser {
                     },
                     {
                         data: 'IGCRecordDateTimeUTC',
-                        title: 'Date and time',
+                        title: 'UTC',
                         name: 'IGCRecordDateTimeUTC',
                         // If you want to do special date/time parsing for sorting, you can add a 'render' or 'type' here.
                     },
