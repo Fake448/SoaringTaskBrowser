@@ -131,6 +131,15 @@ function formatTime(hhmmss) {
     return `${hh}:${mm}:${ss}`;
 }
 
+// Convert DDMMYY and HHMMSS to YYMMDDHHMMSS for key construction
+function formatKeyDateTime(ddmmyy, hhmmss) {
+    if (ddmmyy.length !== 6 || hhmmss.length !== 6) return "";
+    const day = ddmmyy.substring(0, 2);
+    const month = ddmmyy.substring(2, 4);
+    const year = ddmmyy.substring(4, 6);
+    return year + month + day + hhmmss;
+}
+
 // Parse the AXXX line to extract NB21 version and Sim info
 function parseALine(line) {
     const parts = line.split(/\s+/);
@@ -242,22 +251,24 @@ function processIGCFile(file) {
             const formattedDate = formatUTCDate(headerData.utcDate);
             const formattedUTCTime = formatTime(headerData.utcTime);
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
+            // For key construction, date/time must be in YYMMDDHHMMSS format.
+            const keyRecordDateTime = formatKeyDateTime(headerData.utcDate, headerData.utcTime);
 
             // Prepare data to send to PHP.
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {},
-                pilot: this.pilot,
-                gliderType: this.gliderType,
+                pilot: pilot,
+                gliderType: gliderType,
                 IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes.
                 EntrySeqID: "", // To be updated after matching.
                 LocalTime: headerData.localTime,
                 BeginTimeUTC: beginTimeUTC,
-                gliderID: this.gliderID,
-                competitionID: this.competitionID,
-                competitionClass: this.competitionClass,
-                NB21Version: this.nb21Version,
-                Sim: this.sim
+                gliderID: gliderID,
+                competitionID: competitionID,
+                competitionClass: competitionClass,
+                NB21Version: nb21Version,
+                Sim: sim
             };
             waypoints.forEach(wp => {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
