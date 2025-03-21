@@ -120,6 +120,33 @@ try {
         $stmtIgc->execute();
         $igcRecords = $stmtIgc->fetchAll(PDO::FETCH_ASSOC);
 
+        foreach ($igcRecords as &$record) {
+            // If the field is set and exactly 12 characters (YYMMDDHHMMSS)
+            if (!empty($record['IGCRecordDateTimeUTC']) && strlen($record['IGCRecordDateTimeUTC']) === 12) {
+                $raw = $record['IGCRecordDateTimeUTC'];  // e.g. "241113003550"
+        
+                // Extract YY, MM, DD, HH, mm, ss
+                $yy = (int) substr($raw, 0, 2);  // "24" -> 24
+                $mm = (int) substr($raw, 2, 2);  // "11" -> 11
+                $dd = (int) substr($raw, 4, 2);  // "13" -> 13
+                $HH = (int) substr($raw, 6, 2);  // "00" -> 0
+                $mi = (int) substr($raw, 8, 2);  // "35" -> 35
+                $ss = (int) substr($raw, 10, 2); // "50" -> 50
+
+                // Convert short year 24 => 2024 (customize logic if you need beyond 2050)
+                $fullYear = $yy + 2000;
+
+                // Build a formatted date/time string
+                // e.g. "2024-11-13 00:35:50 UTC"
+                $record['IGCRecordDateTimeUTC'] = sprintf(
+                    "%04d-%02d-%02d %02d:%02d UTC",
+                    $fullYear, $mm, $dd, $HH, $mi
+                );
+            }
+            // else leave it as is (or handle invalid length)
+        }
+        unset($record); // good practice after foreach by reference
+
         // Attach the IGC records to the task details.
         $task['IGCRecords'] = $igcRecords;
 

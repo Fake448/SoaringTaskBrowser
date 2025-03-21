@@ -1307,54 +1307,84 @@ class TaskBrowser {
 
     generateTaskDetailsIGCRecords(task) {
         let tb = this;
-        // If there are no IGC records, do nothing.
         if (!task.IGCRecords || task.IGCRecords.length === 0) return;
 
-        // Build the IGC records table HTML.
+        // Build the HTML for the collapsible section
+        // including an empty <tbody> for #igcRecordsTable
         let igcContent = `
-        <table id="igcRecordsTable" class="display" style="width:100%">
-            <thead>
-                <tr>
-                    <th>Sel</th>
-                    <th>Date and time</th>
-                    <th>Pilot</th>
-                    <th>Glider</th>
-                    <th>Class</th>
-                    <th>Sim</th>
-                </tr>
-            </thead>
-            <tbody>
-    `;
-        task.IGCRecords.forEach(record => {
-            igcContent += `
-            <tr>
-                <td><input type="checkbox" class="igc-select-checkbox" data-key="${record.IGCKey}"></td>
-                <td>${record.IGCRecordDateTimeUTC}</td>
-                <td>${record.Pilot || ""}</td>
-                <td>${record.GliderType || ""}</td>
-                <td>${record.CompetitionClass || ""}</td>
-                <td>${record.Sim || ""}</td>
-            </tr>
+            <table id="igcRecordsTable" class="display" style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Select</th>
+                        <th>Date and time</th>
+                        <th>Pilot</th>
+                        <th>Glider</th>
+                        <th>Class</th>
+                        <th>Sim</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         `;
-        });
-        igcContent += `
-            </tbody>
-        </table>
-    `;
 
-        // Use your existing method to create a collapsible section.
-        // Assuming generateCollapsibleSection(title, content, container) exists.
+        // Insert as a collapsible section
         const container = document.getElementById("taskDetailContainer");
         tb.generateCollapsibleSection("📑 IGC Records", igcContent, container);
 
-        // Initialize DataTables on the new table.
-        // Make sure that jQuery and DataTables are loaded.
-        $('#igcRecordsTable').DataTable({
-            paging: true,
-            searching: true,
-            ordering: true,
-            order: [[1, "desc"]]  // For example, order by IGCRecordDateTimeUTC descending.
-        });
+        // Now that the HTML is in the DOM, call the population function
+        tb.populateIGCRecordsTable(task.IGCRecords);
+    }
+
+    populateIGCRecordsTable(igcRecords) {
+        const tableId = '#igcRecordsTable';
+
+        // If the DataTable is already initialized, just reload the data
+        if ($.fn.DataTable.isDataTable(tableId)) {
+            const dt = $(tableId).DataTable();
+            dt.clear();
+            dt.rows.add(igcRecords);
+            dt.draw();
+        } else {
+            // Initialize DataTable if it doesn't exist
+            const dt = $(tableId).DataTable({
+                data: igcRecords,
+                columns: [
+                    {
+                        data: null,
+                        title: 'Select',
+                        name: 'Select',
+                        orderable: false,
+                        searchable: false,
+                        render: function (data, type, row) {
+                            // Return a checkbox for each record
+                            return `<input type="checkbox" class="igc-select-checkbox" data-key="${row.IGCKey}">`;
+                        }
+                    },
+                    {
+                        data: 'IGCRecordDateTimeUTC',
+                        title: 'Date and time',
+                        name: 'IGCRecordDateTimeUTC',
+                        // If you want to do special date/time parsing for sorting, you can add a 'render' or 'type' here.
+                    },
+                    { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
+                    { data: 'GliderType', title: 'Glider', name: 'GliderType' },
+                    { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
+                    { data: 'Sim', title: 'Sim', name: 'Sim' }
+                ],
+                paging: false,      // Enable pagination
+                searching: true,   // Enable search/filter
+                ordering: true,    // Enable sorting
+                info: true,        // Show info text (e.g. "Showing X to Y of Z entries")
+                // No scrollY or scrollCollapse => no vertical sizing constraints
+                // If you want a custom default sort, you can do: order: [[1, 'desc']]
+            });
+
+            // If you need to move the search box or info text to a custom location,
+            // you can do something similar to what you do for the tasks table overlay.
+            // e.g., $("#myCustomDiv").append($("#igcRecordsTable_filter"));
+            // and so on.
+
+        }
     }
 
     showTaskDetailsStandalone(task) {
