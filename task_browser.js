@@ -1394,14 +1394,17 @@ class TaskBrowser {
         };
 
         // Set up the button event listeners
-        document.getElementById('submitIGCBtn').addEventListener('click', () => {
-            tb.IGCUpload.submitIGCRecord(igcData);
-        });
-        document.getElementById('cancelIGCBtn').addEventListener('click', () => {
-            // Clear the match data.
-            tb.igcMatchData = "";
-            tb.enableMapInteractions();
-        });
+        if (tb.igcMatchData != "") {
+            document.getElementById('submitIGCBtn').addEventListener('click', () => {
+                tb.IGCUpload.submitIGCRecord(igcData);
+            });
+            document.getElementById('cancelIGCBtn').addEventListener('click', () => {
+                // Clear the match data.
+                tb.igcMatchData = "";
+                tb.showTaskDetailsStandalone(task);
+                //tb.enableMapInteractions();
+            });
+        }
 
         if (tb.fromURL) {
             this.expandAllCollapsibleSections();
