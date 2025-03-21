@@ -78,8 +78,8 @@ try {
         // Get the current UTC timestamp
         $nowUTC = (new DateTime('now', new DateTimeZone('UTC')))->getTimestamp();
 
-        // Convert Availability to UTC timestamp
-        $availabilityTimestamp = !empty($task['Availability']) 
+        // Convert Availability to UTC timestamp (if set)
+        $availabilityTimestamp = !empty($task['Availability'])
             ? DateTime::createFromFormat('Y-m-d H:i:s', $task['Availability'], new DateTimeZone('UTC'))->getTimestamp()
             : null;
 
@@ -94,14 +94,40 @@ try {
             exit;
         }
 
+        // Format XML fields for nicer display.
         $task['PLNXML'] = prettyPrintXml($task['PLNXML']);
         $task['WPRXML'] = prettyPrintXml($task['WPRXML']);
 
-        // Output the task details as JSON
+        // Retrieve IGCRecords for this task (via EntrySeqID)
+        $igcQuery = "SELECT 
+                        IGCKey,
+                        EntrySeqID,
+                        IGCRecordDateTimeUTC,
+                        IGCUploadDateTimeUTC,
+                        LocalTime,
+                        BeginTimeUTC,
+                        Pilot,
+                        GliderType,
+                        GliderID,
+                        CompetitionID,
+                        CompetitionClass,
+                        NB21Version,
+                        Sim
+                     FROM IGCRecords
+                     WHERE EntrySeqID = :entrySeqID";
+        $stmtIgc = $pdo->prepare($igcQuery);
+        $stmtIgc->bindParam(':entrySeqID', $entrySeqID, PDO::PARAM_INT);
+        $stmtIgc->execute();
+        $igcRecords = $stmtIgc->fetchAll(PDO::FETCH_ASSOC);
+
+        // Attach the IGC records to the task details.
+        $task['IGCRecords'] = $igcRecords;
+
+        // Output the task details as JSON.
         header('Content-Type: application/json');
         echo json_encode($task);
     } else {
-        // If no task was found, return a clean message
+        // If no task was found, return a clean message.
         header('Content-Type: application/json');
         echo json_encode(['status' => 'not_found', 'message' => 'Task not found']);
     }
