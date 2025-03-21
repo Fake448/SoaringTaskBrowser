@@ -25,6 +25,7 @@ class IGCUpload {
     init() {
         // Set up event listeners
         this.selectFileButton.addEventListener('click', () => {
+            this.fileInput.value = ""; // Reset the file input.
             this.fileInput.click();
         });
 
