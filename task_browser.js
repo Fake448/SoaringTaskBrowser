@@ -1305,6 +1305,58 @@ class TaskBrowser {
         }
     }
 
+    generateTaskDetailsIGCRecords(task) {
+        let tb = this;
+        // If there are no IGC records, do nothing.
+        if (!task.IGCRecords || task.IGCRecords.length === 0) return;
+
+        // Build the IGC records table HTML.
+        let igcContent = `
+        <table id="igcRecordsTable" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Sel</th>
+                    <th>Date and time</th>
+                    <th>Pilot</th>
+                    <th>Glider</th>
+                    <th>Class</th>
+                    <th>Sim</th>
+                </tr>
+            </thead>
+            <tbody>
+    `;
+        task.IGCRecords.forEach(record => {
+            igcContent += `
+            <tr>
+                <td><input type="checkbox" class="igc-select-checkbox" data-key="${record.IGCKey}"></td>
+                <td>${record.IGCRecordDateTimeUTC}</td>
+                <td>${record.Pilot || ""}</td>
+                <td>${record.GliderType || ""}</td>
+                <td>${record.CompetitionClass || ""}</td>
+                <td>${record.Sim || ""}</td>
+            </tr>
+        `;
+        });
+        igcContent += `
+            </tbody>
+        </table>
+    `;
+
+        // Use your existing method to create a collapsible section.
+        // Assuming generateCollapsibleSection(title, content, container) exists.
+        const container = document.getElementById("taskDetailContainer");
+        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container);
+
+        // Initialize DataTables on the new table.
+        // Make sure that jQuery and DataTables are loaded.
+        $('#igcRecordsTable').DataTable({
+            paging: true,
+            searching: true,
+            ordering: true,
+            order: [[1, "desc"]]  // For example, order by IGCRecordDateTimeUTC descending.
+        });
+    }
+
     showTaskDetailsStandalone(task) {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
@@ -1338,6 +1390,7 @@ class TaskBrowser {
         tb.generateTaskDetailsClouds(task);
         tb.generateTaskDetailsWaypoints(task);
         tb.generateTaskDetailsRecommendedAddOns(task);
+        tb.generateTaskDetailsIGCRecords(task);
 
         // Show the task control panel
         const taskControlPanel = document.getElementById('taskControlPanel');
