@@ -308,6 +308,11 @@ function processIGCFile(file) {
                     });
                 } else if (data.status === 'duplicate') {
                     outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
+                    // Add a "Delete" button to remove the existing IGC record.
+                    outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
+                    document.getElementById('deleteButton').addEventListener('click', () => {
+                        deleteIGCRecord(data.IGCKey);
+                    });
                 } else {
                     outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
                 }
@@ -323,3 +328,29 @@ function processIGCFile(file) {
     };
     reader.readAsText(file);
 }
+
+// This function is called when the user clicks "Delete" (when duplicate exists).
+// It sends the IGCKey to DeleteIGCRecord.php to remove the record and its file.
+function deleteIGCRecord(IGCKey) {
+    const formData = new FormData();
+    formData.append('IGCKey', IGCKey);
+
+    fetch('php/DeleteIGCRecord.php', {
+        method: 'POST',
+        body: formData
+    })
+        .then(response => response.json())
+        .then(result => {
+            if (result.status === 'success') {
+                alert("IGC record deleted successfully with key: " + result.IGCKey);
+                outputDiv.innerHTML += `<p style="color: green;"><strong>IGC record deleted.</strong></p>`;
+            } else {
+                alert("Error deleting IGC record: " + (result.message || result.error || "Unknown error"));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("Error deleting IGC record.");
+        });
+}
+
