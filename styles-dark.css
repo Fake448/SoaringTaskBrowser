@@ -1102,3 +1102,8 @@ table.dataTable thead .sorting {
     background-color: #0000ff !important; /* or your chosen highlight color */
     color: #ffffff;
 }
+
+#igcRecordsTable.dataTable thead th,
+#igcRecordsTable.dataTable thead td {
+    text-align: left !important;
+}
