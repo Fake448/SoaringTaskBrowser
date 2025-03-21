@@ -1422,7 +1422,7 @@ class TaskBrowser {
     disableMapInteractions() {
         // Disable pointer events on the map to block interactions.
         let tb = this;
-        tb.hideSearchFiltersPanel;
+        tb.hideSearchFiltersPanel();
         tb.toggleTableVisibility(true);
 
         const mapDiv = document.getElementById('map');
