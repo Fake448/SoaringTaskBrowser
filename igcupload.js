@@ -315,7 +315,7 @@ class IGCUpload {
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
-                        html += `<span style="color: green; font-weight: bold; animation: blink 1s steps(2, start) infinite;">&larr; Select to continue</span>`;
+                        html += `<span style="color: green; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
                         html += `</br><hr>`;
 
                         this.taskBrowser.igcMatchData = html;
