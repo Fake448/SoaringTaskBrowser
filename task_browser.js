@@ -779,9 +779,16 @@ class TaskBrowser {
             distanceUnitLabel = 'miles';
         }
 
+        // If igcMatchData is present (non-empty), prepend it.
+        let igcContent = "";
+        if (tb.igcMatchData && tb.igcMatchData.trim() !== "") {
+            igcContent = tb.igcMatchData;
+        }
+
         // Create the task details HTML
         let taskDetailsHtml = `
             <div class="task-details markdown-content">
+                ${igcContent}
                 <div class="task-header">
                     <span class="task-number">#${task.EntrySeqID}</span>
                     <span class="task-flags">${this.addCountryFlags(task.Countries)}</span>
@@ -1299,8 +1306,16 @@ class TaskBrowser {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         tb.currentTask = task; // Save the current task for download use
+        const igcMatchData = document.getElementById("igcMatchData");
 
-        taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
+        // If igcMatchData has content, retrieve it.
+        let matchHTML = "";
+        if (igcMatchData && igcMatchData.innerHTML.trim() !== "") {
+            matchHTML = igcMatchData.innerHTML;
+        }
+
+        // Build the main section and prepend the matching details if they exist.
+        taskDetailContainer.innerHTML = matchHTML + tb.generateTaskDetailsMainSection(task);
 
         // If opacity is 0, remove the background image entirely
         if (tb.userSettings.coverImageOpacity > 0) {

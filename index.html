@@ -43,6 +43,7 @@
                 <div id="searchAndFilters" style="display:none; margin-right: 5px"></div>
                 <div id="mapContainer">
                     <div id="map">
+                        <div id="igcOverlay" style="display:none;"></div>
                         <div id="loadingSpinner" class="loading-spinner" style="display: none;">
                             <img src="images/loading_circle.gif" alt="Loading...">
                         </div>
@@ -113,7 +114,8 @@
                         </div>
                     </div>
                     <div id="resizer"></div>
-                    <div id="taskDetailContainer" style="display:none"></div>
+                    <div id="taskDetailContainer" style="display:none">
+                    </div>
                 </div>
             </div>
             <div id="toolsTab" class="tabContent"></div>
@@ -218,7 +220,7 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- Main map JavaScript -->
     <script src="map2.js?v=2503.14.1"></script>
-    <script src="igcupload.js?v=2503.20.1"></script>
+    <script src="igcupload.js?v=2503.20.2"></script>
     <script src="semicircle.js"></script>
     <script src="b21_leaflet-canvas-markers.js"></script>
     <script src="b21_utils_static.js"></script>
@@ -234,8 +236,8 @@
         var VERSION = "0.0.5_MD";</script>
 
     <!-- Standalone-specific JavaScript -->
-    <script src="task_browser.js?v=2503.14.2"></script>
+    <script src="task_browser.js?v=2503.20.1"></script>
     <!-- Include the new index.js -->
-    <script src="index.js?v=2503.20.1"></script>
+    <script src="index.js?v=2503.20.2"></script>
 </body>
 </html>

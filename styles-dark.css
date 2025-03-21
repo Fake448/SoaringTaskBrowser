@@ -1019,3 +1019,14 @@ table.dataTable thead .sorting {
     border-radius: 10px;
     max-width: 500px;
 }
+
+#igcOverlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.3); /* or 0 for fully transparent */
+    z-index: 9000; /* just below or above other UI as needed */
+    display: none; /* hidden by default */
+}
