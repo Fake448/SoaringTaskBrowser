@@ -1309,16 +1309,9 @@ class TaskBrowser {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         tb.currentTask = task; // Save the current task for download use
-        const igcMatchData = document.getElementById("igcMatchData");
-
-        // If igcMatchData has content, retrieve it.
-        let matchHTML = "";
-        if (igcMatchData && igcMatchData.innerHTML.trim() !== "") {
-            matchHTML = igcMatchData.innerHTML;
-        }
 
         // Build the main section and prepend the matching details if they exist.
-        taskDetailContainer.innerHTML = matchHTML + tb.generateTaskDetailsMainSection(task);
+        taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
 
         // If opacity is 0, remove the background image entirely
         if (tb.userSettings.coverImageOpacity > 0) {
@@ -1394,7 +1387,8 @@ class TaskBrowser {
         };
 
         // Set up the button event listeners
-        if (tb.igcMatchData != "") {
+        if (tb.igcMatchData && tb.igcMatchData !== "") {
+            tb.disableMapInteractions();
             document.getElementById('submitIGCBtn').addEventListener('click', () => {
                 tb.IGCUpload.submitIGCRecord(igcData);
             });
@@ -1402,7 +1396,7 @@ class TaskBrowser {
                 // Clear the match data.
                 tb.igcMatchData = "";
                 tb.showTaskDetailsStandalone(task);
-                //tb.enableMapInteractions();
+                tb.enableMapInteractions();
             });
         }
 
@@ -1410,6 +1404,32 @@ class TaskBrowser {
             this.expandAllCollapsibleSections();
         }
 
+    }
+
+    enableMapInteractions() {
+        // Allow map interactions again.
+        const mapDiv = document.getElementById('map');
+        if (mapDiv) {
+            mapDiv.style.pointerEvents = 'auto';
+        }
+        // Hide the overlay.
+        const overlay = document.getElementById('igcOverlay');
+        if (overlay) {
+            overlay.style.display = 'none';
+        }
+    }
+
+    disableMapInteractions() {
+        // Disable pointer events on the map to block interactions.
+        const mapDiv = document.getElementById('map');
+        if (mapDiv) {
+            mapDiv.style.pointerEvents = 'none';
+        }
+        // Show the transparent overlay to block clicks.
+        const overlay = document.getElementById('igcOverlay');
+        if (overlay) {
+            overlay.style.display = 'block';
+        }
     }
 
     // Function to show image in a modal
