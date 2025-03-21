@@ -307,31 +307,21 @@ class IGCUpload {
                         // Now build the matching details HTML and assign it to TB's igcMatchData property.
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
                         html += `<strong>UTC Date & Time of IGC record:</strong> ${combinedUTCDisplay}</br>`;
-                        html += `<strong>Local Time of Recording:</strong> ${this.formatTime(headerData.localTime)}</br>`;
                         html += `<strong>Begin Time (UTC):</strong> ${this.formatTime(beginTimeUTC)}</br>`;
+                        html += `<strong>Local Time of Recording:</strong> ${this.formatTime(headerData.localTime)}</br>`;
                         html += `<strong>Pilot:</strong> ${this.pilot}</br>`;
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
+                        html += `</br><hr>`;
 
                         this.taskBrowser.igcMatchData = html;
 
                         // Select the task on the map.
                         this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID);
 
-                        // Set up the button event listeners after a short delay.
-                        setTimeout(() => {
-                            document.getElementById('submitIGCBtn').addEventListener('click', () => {
-                                this.submitIGCRecord(igcData);
-                            });
-                            document.getElementById('cancelIGCBtn').addEventListener('click', () => {
-                                // Clear the match data.
-                                this.taskBrowser.igcMatchData = "";
-                                this.taskBrowser.enableMapInteractions();
-                            });
-                        }, 0);
                     }
                     else if (data.error) {
                         alert("Error from server: " + data.error);

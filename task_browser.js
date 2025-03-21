@@ -10,8 +10,11 @@ class TaskBrowser {
         tb.discordTasksChannel = "";
     }
 
-    init() {
+    init(igcUpload) {
         let tb = this;
+
+        // Store the reference to the TaskBrowser instance.
+        tb.IGCUpload = igcUpload;
 
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
@@ -1389,6 +1392,16 @@ class TaskBrowser {
                 tb.hideTaskDetailsPanel();
             }
         };
+
+        // Set up the button event listeners
+        document.getElementById('submitIGCBtn').addEventListener('click', () => {
+            tb.IGCUpload.submitIGCRecord(igcData);
+        });
+        document.getElementById('cancelIGCBtn').addEventListener('click', () => {
+            // Clear the match data.
+            tb.igcMatchData = "";
+            tb.enableMapInteractions();
+        });
 
         if (tb.fromURL) {
             this.expandAllCollapsibleSections();
