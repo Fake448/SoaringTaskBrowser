@@ -243,13 +243,21 @@ function processIGCFile(file) {
             const formattedUTCTime = formatTime(headerData.utcTime);
             const combinedUTC = `${formattedDate} ${formattedUTCTime}`;
 
-            // Prepare data to send to PHP (including waypoints for matching)
+            // Prepare data to send to PHP.
             const igcData = {
                 igcTitle: headerData.taskTitle,
                 igcWaypoints: {},
-                pilot: pilot,
-                gliderType: gliderType,
-                IGCRecordDateTimeUTC: combinedUTC
+                pilot: this.pilot,
+                gliderType: this.gliderType,
+                IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes.
+                EntrySeqID: "", // To be updated after matching.
+                LocalTime: headerData.localTime,
+                BeginTimeUTC: beginTimeUTC,
+                gliderID: this.gliderID,
+                competitionID: this.competitionID,
+                competitionClass: this.competitionClass,
+                NB21Version: this.nb21Version,
+                Sim: this.sim
             };
             waypoints.forEach(wp => {
                 igcData.igcWaypoints[wp.originalId] = wp.latitude + ", " + wp.longitude;
