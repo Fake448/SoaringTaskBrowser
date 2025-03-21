@@ -388,26 +388,4 @@ class IGCUpload {
             });
     }
 
-    deleteIGCRecord(IGCKey) {
-        const formData = new FormData();
-        formData.append('IGCKey', IGCKey);
-
-        fetch('php/DeleteIGCRecord.php', {
-            method: 'POST',
-            body: formData
-        })
-            .then(response => response.json())
-            .then(result => {
-                if (result.status === 'success') {
-                    alert("IGC record deleted successfully with key: " + result.IGCKey);
-                    this.outputDiv.innerHTML += `<p style="color: green;"><strong>IGC record deleted.</strong></p>`;
-                } else {
-                    alert("Error deleting IGC record: " + (result.message || result.error || "Unknown error"));
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert("Error deleting IGC record.");
-            });
-    }
 }
