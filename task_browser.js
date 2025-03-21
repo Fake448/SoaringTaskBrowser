@@ -1390,7 +1390,7 @@ class TaskBrowser {
         if (tb.igcMatchData && tb.igcMatchData !== "") {
             tb.disableMapInteractions();
             document.getElementById('submitIGCBtn').addEventListener('click', () => {
-                tb.IGCUpload.submitIGCRecord(igcData);
+                tb.IGCUpload.submitIGCRecord();
             });
             document.getElementById('cancelIGCBtn').addEventListener('click', () => {
                 // Clear the match data.

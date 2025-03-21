@@ -10,6 +10,7 @@ class IGCUpload {
         this.outputDiv = document.getElementById('taskDetailContainer');
 
         this.igcFileGlobal = null; // Store the uploaded file globally
+        this.igcData = null; // Will hold the parsed data for later submission
 
         // Global fields for additional data.
         this.pilot = "";
@@ -283,6 +284,9 @@ class IGCUpload {
                 igcData.igcWaypoints[wp.originalId] = `${wp.latitude}, ${wp.longitude}`;
             });
 
+            // Save igcData in the instance for later use.
+            this.igcData = igcData;
+
             // Query the server for a matching task.
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
@@ -315,7 +319,7 @@ class IGCUpload {
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
-                        html += `<span style="color: green; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
+                        html += `<span style="color: white; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
                         html += `</br><hr>`;
 
                         this.taskBrowser.igcMatchData = html;
@@ -339,11 +343,13 @@ class IGCUpload {
         reader.readAsText(file);
     }
 
-    submitIGCRecord(igcData) {
+    submitIGCRecord() {
         if (!this.igcFileGlobal) {
             alert("No IGC file available for submission.");
             return;
         }
+        // Use the stored igcData from processIGCFile.
+        const igcData = this.igcData;
         const formData = new FormData();
         const key = igcData.IGCKey;
         formData.append('IGCKey', key);
