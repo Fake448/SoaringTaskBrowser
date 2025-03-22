@@ -1346,37 +1346,47 @@ class TaskBrowser {
             dt.draw();
         } else {
             // Initialize DataTable if it doesn't exist
-            const dt = $(tableId).DataTable({
+            const dt = $('#igcRecordsTable').DataTable({
                 data: igcRecords,
+                autoWidth: false,
+                order: [[1, 'desc']],  // Order by the UTC column (index 1) descending
                 columns: [
                     {
                         data: null,
-                        title: 'Sel.',
                         name: 'Select',
                         orderable: false,
                         searchable: false,
                         render: function (data, type, row) {
-                            // Return a checkbox for each record
                             return `<input type="checkbox" class="igc-select-checkbox" data-key="${row.IGCKey}">`;
                         }
                     },
-                    {
-                        data: 'IGCRecordDateTimeUTC',
-                        title: 'UTC',
-                        name: 'IGCRecordDateTimeUTC',
-                        // If you want to do special date/time parsing for sorting, you can add a 'render' or 'type' here.
-                    },
+                    { data: 'IGCRecordDateTimeUTC', title: 'UTC', name: 'IGCRecordDateTimeUTC' },
                     { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
                     { data: 'GliderType', title: 'Glider', name: 'GliderType' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
                     { data: 'Sim', title: 'Sim', name: 'Sim' }
                 ],
-                paging: false,      // Enable pagination
-                searching: true,   // Enable search/filter
-                ordering: true,    // Enable sorting
-                info: true,        // Show info text (e.g. "Showing X to Y of Z entries")
-                // No scrollY or scrollCollapse => no vertical sizing constraints
-                // If you want a custom default sort, you can do: order: [[1, 'desc']]
+                paging: false,
+                searching: true,
+                ordering: true,
+                info: true,
+                columnDefs: [
+                    {
+                        targets: 0,        // The first column
+                        width: '15px'      // Fixed width
+                    }
+                ],
+                headerCallback: function (thead, data, start, end, display) {
+                    // Replace the first header cell with a checkbox
+                    $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
+                },
+                initComplete: function () {
+                    // When the select-all checkbox is clicked, toggle all row checkboxes
+                    $('#select-all').on('click', function () {
+                        let checked = this.checked;
+                        $('.igc-select-checkbox').prop('checked', checked);
+                    });
+                }
             });
 
             // If you need to move the search box or info text to a custom location,
