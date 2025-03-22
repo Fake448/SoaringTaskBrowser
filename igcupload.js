@@ -318,7 +318,7 @@ class IGCUpload {
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
-                        html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open these files on B21 Task Planner Online</a></br>`;
+                        html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open this IGC file on the B21 Task Planner</a></br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
                         html += `<span style="color: white; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
