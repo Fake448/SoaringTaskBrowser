@@ -318,7 +318,7 @@ class IGCUpload {
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
-                        html += `<button id="openPlannerBtn" class="button-style">View in Online Planner</button></br>`;
+                        html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open these files on B21 Task Planner Online</a></br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
                         html += `<span style="color: white; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
@@ -350,10 +350,11 @@ class IGCUpload {
             alert("No IGC file available for submission.");
             return;
         }
+        // TODO: We need to save the unsubmitted file to a temporary folder so we can use it to send to the Online Planner
+        // TODO: Define how we cleanup these files? With the cron job that runs every minute or after creating each new one?
+
         const newWindow = window.open('', '_blank');  // Open immediately on user click
-        // Create a blob URL for the IGC file and open the planner URL with that parameter.
-        const blobUrl = URL.createObjectURL(this.igcFileGlobal);
-        const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc=${encodeURIComponent(blobUrl)}`;
+        const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc=${tempIGCfile}`;
         newWindow.location.href = plannerUrl;  // Navigate the pre-opened window
     }
 

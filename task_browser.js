@@ -1491,10 +1491,6 @@ class TaskBrowser {
                 tb.showTaskDetailsStandalone(task);
                 tb.enableMapInteractions();
             });
-            document.getElementById('openPlannerBtn').addEventListener('click', () => {
-                // Create a blob URL for the IGC file and open the planner URL with that parameter.
-                tb.IGCUpload.sendIGCToOnlinePlanner();
-            });
         }
 
         if (tb.fromURL) {
