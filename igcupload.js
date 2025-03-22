@@ -318,6 +318,7 @@ class IGCUpload {
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
+                        html += `<button id="openPlannerBtn" class="button-style">View in Online Planner</button></br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
                         html += `<span style="color: white; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
@@ -342,6 +343,18 @@ class IGCUpload {
                 });
         };
         reader.readAsText(file);
+    }
+
+    sendIGCToOnlinePlanner() {
+        if (!this.igcFileGlobal) {
+            alert("No IGC file available for submission.");
+            return;
+        }
+        const newWindow = window.open('', '_blank');  // Open immediately on user click
+        // Create a blob URL for the IGC file and open the planner URL with that parameter.
+        const blobUrl = URL.createObjectURL(this.igcFileGlobal);
+        const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc=${encodeURIComponent(blobUrl)}`;
+        newWindow.location.href = plannerUrl;  // Navigate the pre-opened window
     }
 
     submitIGCRecord() {
