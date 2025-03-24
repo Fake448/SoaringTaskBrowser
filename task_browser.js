@@ -1394,11 +1394,22 @@ class TaskBrowser {
                     const tableWrapper = $(this.api().table().container());
                     const filterDiv = tableWrapper.find('div.dataTables_filter');  // The "Search" container
 
+                    // Make the filter area a flex container
+                    filterDiv.css({
+                        display: 'flex',
+                        'align-items': 'center',
+                        'justify-content': 'flex-start', // so the search label+input stays on the right
+                        'width': '100%'                // ensure it spans enough space
+                    });
+
                     // Create the "Analyze Selected" button
                     const analyzeBtn = $('<button>')
                         .attr('id', 'analyzeIGCBtn')
                         .addClass('igc-button-style')
-                        .css('margin-right', '10px')
+                        .css({
+                            'margin-right': 'auto',   // push the search box to the far right
+                            'margin-left': '0'       // ensure no extra margin on the left
+                        })
                         .text('Analyze Selected')
                         .on('click', function () {
                             // Gather selected keys
