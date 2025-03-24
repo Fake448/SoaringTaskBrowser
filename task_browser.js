@@ -1397,7 +1397,7 @@ class TaskBrowser {
                     // Create the "Analyze Selected" button
                     const analyzeBtn = $('<button>')
                         .attr('id', 'analyzeIGCBtn')
-                        .addClass('button-style')
+                        .addClass('igc-button-style')
                         .css('margin-right', '10px')
                         .text('Analyze Selected')
                         .on('click', function () {

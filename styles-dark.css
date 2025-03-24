@@ -1107,3 +1107,21 @@ table.dataTable thead .sorting {
 #igcRecordsTable.dataTable thead td {
     text-align: left !important;
 }
+
+.igc-button-style {
+    background-color: #7289da;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    cursor: pointer;
+    border-radius: 4px;
+    font-size: 12px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    height: 25px; /* Set a fixed height */
+    line-height: 20px; /* Adjust line-height to center the text vertically */
+}
+
+    .igc-button-style:hover {
+        background-color: #0056b3;
+    }
