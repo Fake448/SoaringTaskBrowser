@@ -43,9 +43,16 @@ try {
     }
     
     // Build the URL to access the uploaded IGC file.
-    // (The $taskBrowserPathHTTPS variable is still used here if needed to form the URL)
-    $igcFileUrl = rtrim($taskBrowserPathHTTPS, '/') . '/TempIGCUploads/' . $randomFolder . '/' . $destFilename;
-    // Remove protocol (http:// or https://) for the planner parameters.
+    // Derive the base path from the file system path and then transform it.
+    $igcBasePath = __DIR__ . '/DPHXTemp';
+    if (strpos($igcBasePath, '/home3/siglr3/soaring.siglr.com/') === 0) {
+        $igcBasePath = str_replace('/home3/siglr3/soaring.siglr.com/', 'soaring.siglr.com/', $igcBasePath);
+    } elseif (strpos($igcBasePath, '/home3/siglr3/wesimglide/') === 0) {
+        $igcBasePath = str_replace('/home3/siglr3/wesimglide/', 'wesimglide.org/', $igcBasePath);
+    }
+    // Now build the IGC file URL using the transformed base path.
+    $igcFileUrl = $igcBasePath . '/' . $randomFolder . '/' . $destFilename;
+    // Remove protocol (if any) for the planner parameters.
     $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     
     // Call the PrepareSendToB21OnlineTaskPlanner.php script located in the same folder.
