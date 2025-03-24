@@ -360,7 +360,7 @@ class IGCUpload {
 
         // Call the new PHP script that saves the IGC file to a temporary folder
         // and returns the URL parts for the Online Planner.
-        fetch('php/UploadTempIGC.php', {
+        fetch('php/SendIGCToTaskPlanner.php', {
             method: 'POST',
             body: formData
         })
