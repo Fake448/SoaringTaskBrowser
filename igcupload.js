@@ -311,8 +311,8 @@ class IGCUpload {
 
                         // Now build the matching details HTML and assign it to TB's igcMatchData property.
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
-                        html += `<strong>UTC Date & Time of IGC record:</strong> ${combinedUTCDisplay}</br>`;
-                        html += `<strong>Begin Time (UTC):</strong> ${this.formatTime(beginTimeUTC)}</br>`;
+                        html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
+                        html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
                         html += `<strong>Local Time of Recording:</strong> ${this.formatTime(headerData.localTime)}</br>`;
                         html += `<strong>Pilot:</strong> ${this.pilot}</br>`;
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
