@@ -1436,8 +1436,42 @@ class TaskBrowser {
     }
 
     sendSelectedIGCRecordsToTaskPlanner(selectedKeys) {
-        // You can fill this with logic to handle the selected IGC records.
-        console.log("sendSelectedIGCRecordsToTaskPlanner called with:", selectedKeys);
+        if (!selectedKeys || !selectedKeys.length) {
+            alert("No IGC keys selected for submission.");
+            return;
+        }
+        let tb = this;
+        // Create a FormData object and append required fields.
+        const formData = new FormData();
+        formData.append('EntrySeqID', tb.currentTask.EntrySeqID);
+        formData.append('TaskID', tb.currentTask.TaskID);
+        formData.append('PLNFilename', tb.currentTask.PLNFilename);
+        formData.append('WPRFilename', tb.currentTask.WPRFilename);
+        // Append the IGC keys as a comma-separated string.
+        formData.append('igcKeys', selectedKeys.join(','));
+
+        // Call the PHP script that processes IGC keys and returns the planner URL.
+        fetch('php/SendIGCToTaskPlanner.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success' && result.plannerUrl) {
+                    // Remove protocol if present.
+                    let plannerUrl = result.plannerUrl.replace(/^https?:\/\//, '');
+                    // Build the full URL for the planner.
+                    const fullPlannerUrl = `https://${plannerUrl}`;
+                    const newWindow = window.open('', '_blank');  // Open immediately on user click
+                    newWindow.location.href = fullPlannerUrl;  // Navigate the pre-opened window
+                } else {
+                    alert("Error sending IGC keys for planner: " + (result.message || result.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error sending IGC keys for planner.");
+            });
     }
 
     showTaskDetailsStandalone(task) {

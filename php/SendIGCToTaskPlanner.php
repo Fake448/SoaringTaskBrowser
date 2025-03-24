@@ -102,7 +102,7 @@ try {
             $igcKeyUrl = rtrim($taskBrowserPathHTTPS, '/') . '/IGCFiles/' . $entrySeqID . '/' . $key;
             // Ensure the URL starts with "https://"
             if (stripos($igcKeyUrl, 'http') !== 0) {
-                $igcKeyUrl = 'https://' . $igcKeyUrl;
+                $igcKeyUrl = 'https://' . $igcKeyUrl . '.igc';
             }
             $compLines[] = $igcKeyUrl;
         }
