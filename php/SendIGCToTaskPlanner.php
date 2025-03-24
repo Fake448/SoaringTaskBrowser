@@ -99,10 +99,10 @@ try {
         }
         foreach ($igcKeys as $key) {
             // Build URL: $taskBrowserPathHTTPS/IGCFiles/EntrySeqID/key
-            $igcKeyUrl = rtrim($taskBrowserPathHTTPS, '/') . '/IGCFiles/' . $entrySeqID . '/' . $key;
+            $igcKeyUrl = rtrim($taskBrowserPathHTTPS, '/') . '/IGCFiles/' . $entrySeqID . '/' . $key . '.igc';
             // Ensure the URL starts with "https://"
             if (stripos($igcKeyUrl, 'http') !== 0) {
-                $igcKeyUrl = 'https://' . $igcKeyUrl . '.igc';
+                $igcKeyUrl = 'https://' . $igcKeyUrl;
             }
             $compLines[] = $igcKeyUrl;
         }
