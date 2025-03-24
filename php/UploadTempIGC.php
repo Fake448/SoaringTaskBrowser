@@ -33,25 +33,25 @@ try {
         throw new Exception("Failed to create temporary folder: $destFolder");
     }
     
-    // Use the original file name.
+    // Use the original file name for the IGC file.
     $destFilename = basename($_FILES['igcFile']['name']);
     $destFilePath = $destFolder . '/' . $destFilename;
     
-    // Move the uploaded file.
+    // Move the uploaded IGC file.
     if (!move_uploaded_file($_FILES['igcFile']['tmp_name'], $destFilePath)) {
         throw new Exception("Failed to move uploaded IGC file.");
     }
     
     // Build the URL to access the uploaded IGC file.
-    // Derive the base path dynamically and transform it.
+    // First, derive the base path from __DIR__ and then apply path transformation.
     $igcBasePath = __DIR__ . '/DPHXTemp';
     if (strpos($igcBasePath, '/home3/siglr3/soaring.siglr.com/') === 0) {
         $igcBasePath = str_replace('/home3/siglr3/soaring.siglr.com/', 'soaring.siglr.com/', $igcBasePath);
     } elseif (strpos($igcBasePath, '/home3/siglr3/wesimglide/') === 0) {
         $igcBasePath = str_replace('/home3/siglr3/wesimglide/', 'wesimglide.org/', $igcBasePath);
     }
+    // IGC file URL (without any protocol)
     $igcFileUrl = $igcBasePath . '/' . $randomFolder . '/' . $destFilename;
-    // Remove protocol if any.
     $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     
     // Call the PrepareSendToB21OnlineTaskPlanner.php script located in the same folder.
@@ -67,18 +67,36 @@ try {
     if (!$prepareData || $prepareData['status'] !== 'success') {
         throw new Exception("PrepareSendToB21OnlineTaskPlanner error: " . ($prepareData['message'] ?? 'Unknown error'));
     }
+    // $taskFolder is expected to be a URL path like:
+    // soaring.siglr.com/php/DPHXTemp/P-83263a91-88dd-4507-97e5-983f8dc4b082
     $taskFolder = $prepareData['taskFolder'];
     
-    // Build query parameters using rawurlencode to output %20 for spaces.
-    $plnParam = rawurlencode($taskFolder . "/" . $plnFilename);
-    $wprParam = rawurlencode($taskFolder . "/" . $wprFilename);
-    $igcParam = rawurlencode($igcFileUrlNoProtocol);
+    // Build URLs for the PLN and WPR files using $taskFolder.
+    $plnFileUrl = $taskFolder . "/" . $plnFilename;
+    $wprFileUrl = $taskFolder . "/" . $wprFilename;
     
-    // Build the planner URL (parameters without protocol as requested).
-    $plannerUrl = "xp-soaring.github.io/tasks/b21_task_planner/index.html?pln={$plnParam}&wpr={$wprParam}&igc={$igcParam}";
+    // Create the comp file with three lines: PLN file, WPR file, and IGC file.
+    $compFileContent = $plnFileUrl . "\n" . $wprFileUrl . "\n" . $igcFileUrlNoProtocol;
+    $compFilePath = $destFolder . '/listoffiles.comp';
+    if (file_put_contents($compFilePath, $compFileContent) === false) {
+        throw new Exception("Failed to create comp file: $compFilePath");
+    }
+    
+    // Build the comp file URL (using the same base transformation).
+    $compFileUrl = $igcBasePath . '/' . $randomFolder . '/listoffiles.comp';
+    
+    // Build the final planner URL.
+    // Instead of passing separate PLN and IGC parameters, we pass:
+    // - wpr: the URL for the WPR file (from $taskFolder)
+    // - comp: the URL for the comp file.
+    // Use rawurlencode to ensure spaces are encoded as %20.
+    $wprParam = rawurlencode($wprFileUrl);
+    $compParam = rawurlencode($compFileUrl);
+    
+    $plannerUrl = "xp-soaring.github.io/tasks/b21_task_planner/index.html?wpr={$wprParam}&comp={$compParam}";
     
     echo json_encode([
-        'status' => 'success',
+        'status'     => 'success',
         'plannerUrl' => $plannerUrl,
         'tempFolder' => $randomFolder
     ]);
