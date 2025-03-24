@@ -15,8 +15,8 @@ try {
     $entrySeqID = (int) $_POST['EntrySeqID'];
     $taskID = trim($_POST['TaskID']);
     // Strip any directory paths; keep only the filenames.
-    $plnFilename = basename(trim($_POST['PLNFilename']));
-    $wprFilename = basename(trim($_POST['WPRFilename']));
+    $plnFilename = basename(str_replace('\\', '/', trim($_POST['PLNFilename'])));
+    $wprFilename = basename(str_replace('\\', '/', trim($_POST['WPRFilename'])));
     
     // Check file upload.
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
