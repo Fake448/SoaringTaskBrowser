@@ -1337,6 +1337,7 @@ class TaskBrowser {
 
     populateIGCRecordsTable(igcRecords) {
         const tableId = '#igcRecordsTable';
+        let tb = this;
 
         // If the DataTable is already initialized, just reload the data
         if ($.fn.DataTable.isDataTable(tableId)) {
@@ -1386,6 +1387,32 @@ class TaskBrowser {
                         const checked = this.checked;
                         $('.igc-select-checkbox').prop('checked', checked);
                     });
+                },
+                initComplete: function () {
+                    // Move the search box, then prepend our custom button
+                    // DataTables places the filter box in a container with an ID like "#igcRecordsTable_filter"
+                    const tableWrapper = $(this.api().table().container());
+                    const filterDiv = tableWrapper.find('div.dataTables_filter');  // The "Search" container
+
+                    // Create the "Analyze Selected" button
+                    const analyzeBtn = $('<button>')
+                        .attr('id', 'analyzeIGCBtn')
+                        .addClass('button-style')
+                        .css('margin-right', '10px')
+                        .text('Analyze Selected')
+                        .on('click', function () {
+                            // Gather selected keys
+                            const selectedKeys = [];
+                            $('.igc-select-checkbox:checked').each(function () {
+                                selectedKeys.push($(this).data('key'));
+                            });
+                            // Call your custom function
+                            tb.sendSelectedIGCRecordsToTaskPlanner(selectedKeys);
+                        });
+
+                    // Prepend the button to the filterDiv so it appears left of "Search:"
+                    // (You could also append or insert in other ways, depending on your desired layout)
+                    filterDiv.prepend(analyzeBtn);
                 }
             });
 
@@ -1395,6 +1422,11 @@ class TaskBrowser {
             // and so on.
 
         }
+    }
+
+    sendSelectedIGCRecordsToTaskPlanner(selectedKeys) {
+        // You can fill this with logic to handle the selected IGC records.
+        console.log("sendSelectedIGCRecordsToTaskPlanner called with:", selectedKeys);
     }
 
     showTaskDetailsStandalone(task) {
