@@ -43,14 +43,14 @@ try {
     }
     
     // Build the URL to access the uploaded IGC file.
-    // First, derive the base path from __DIR__ and then apply path transformation.
+    // Derive the base path from __DIR__ and then apply path transformation.
     $igcBasePath = __DIR__ . '/DPHXTemp';
     if (strpos($igcBasePath, '/home3/siglr3/soaring.siglr.com/') === 0) {
         $igcBasePath = str_replace('/home3/siglr3/soaring.siglr.com/', 'soaring.siglr.com/', $igcBasePath);
     } elseif (strpos($igcBasePath, '/home3/siglr3/wesimglide/') === 0) {
         $igcBasePath = str_replace('/home3/siglr3/wesimglide/', 'wesimglide.org/', $igcBasePath);
     }
-    // IGC file URL (without any protocol)
+    // IGC file URL (without protocol)
     $igcFileUrl = $igcBasePath . '/' . $randomFolder . '/' . $destFilename;
     $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     
@@ -75,21 +75,25 @@ try {
     $plnFileUrl = $taskFolder . "/" . $plnFilename;
     $wprFileUrl = $taskFolder . "/" . $wprFilename;
     
-    // Create the comp file with three lines: PLN file, WPR file, and IGC file.
-    $compFileContent = $plnFileUrl . "\n" . $wprFileUrl . "\n" . $igcFileUrlNoProtocol;
+    // Build comp file content.
+    // For the comp file, each URL MUST include "https://".
+    $plnFileUrlComp = 'https://' . $plnFileUrl;
+    $wprFileUrlComp = 'https://' . $wprFileUrl;
+    $igcFileUrlComp = 'https://' . $igcFileUrlNoProtocol;
+    
+    $compFileContent = $plnFileUrlComp . "\n" . $wprFileUrlComp . "\n" . $igcFileUrlComp;
     $compFilePath = $destFolder . '/listoffiles.comp';
     if (file_put_contents($compFilePath, $compFileContent) === false) {
         throw new Exception("Failed to create comp file: $compFilePath");
     }
     
-    // Build the comp file URL (using the same base transformation).
+    // Build the comp file URL (without protocol) for the planner URL.
     $compFileUrl = $igcBasePath . '/' . $randomFolder . '/listoffiles.comp';
     
     // Build the final planner URL.
-    // Instead of passing separate PLN and IGC parameters, we pass:
-    // - wpr: the URL for the WPR file (from $taskFolder)
-    // - comp: the URL for the comp file.
-    // Use rawurlencode to ensure spaces are encoded as %20.
+    // The planner URL will pass:
+    // - wpr: the URL for the WPR file (without protocol)
+    // - comp: the URL for the comp file (without protocol)
     $wprParam = rawurlencode($wprFileUrl);
     $compParam = rawurlencode($compFileUrl);
     
