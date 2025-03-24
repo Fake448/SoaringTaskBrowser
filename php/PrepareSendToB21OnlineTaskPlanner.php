@@ -1,5 +1,5 @@
 <?php
-require __DIR__ . '/CommonFunctions.php';
+require_once __DIR__ . '/CommonFunctions.php';
 
 header('Content-Type: application/json');
 
