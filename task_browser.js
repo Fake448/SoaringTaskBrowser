@@ -1380,10 +1380,10 @@ class TaskBrowser {
                     // Replace the first header cell with a checkbox
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
                 },
-                initComplete: function () {
-                    // When the select-all checkbox is clicked, toggle all row checkboxes
-                    $('#select-all').on('click', function () {
-                        let checked = this.checked;
+                drawCallback: function (settings) {
+                    // Rebind the "select all" event on every draw (after filtering, etc.)
+                    $('#select-all').off('click').on('click', function () {
+                        const checked = this.checked;
                         $('.igc-select-checkbox').prop('checked', checked);
                     });
                 }
