@@ -14,7 +14,7 @@ try {
     
     $entrySeqID = (int) $_POST['EntrySeqID'];
     $taskID = trim($_POST['TaskID']);
-    // Use basename to strip out any directory paths from the filenames.
+    // Strip any directory paths; keep only the filenames.
     $plnFilename = basename(trim($_POST['PLNFilename']));
     $wprFilename = basename(trim($_POST['WPRFilename']));
     
@@ -43,16 +43,19 @@ try {
     }
     
     // Build the URL to access the uploaded IGC file.
-    // Assume that the TempIGCUploads folder is accessible via the web at $taskBrowserPathHTTPS.
+    // (The $taskBrowserPathHTTPS variable is still used here if needed to form the URL)
     $igcFileUrl = rtrim($taskBrowserPathHTTPS, '/') . '/TempIGCUploads/' . $randomFolder . '/' . $destFilename;
     // Remove protocol (http:// or https://) for the planner parameters.
     $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     
     // Call the PrepareSendToB21OnlineTaskPlanner.php script located in the same folder.
-    $prepareUrl = rtrim($taskBrowserPathHTTPS, '/') . "/PrepareSendToB21OnlineTaskPlanner.php?taskID=" . urlencode($taskID);
-    $prepareResponse = file_get_contents($prepareUrl);
+    // Use output buffering and set $_GET to simulate query parameters.
+    ob_start();
+    $_GET['taskID'] = $taskID;
+    include __DIR__ . '/PrepareSendToB21OnlineTaskPlanner.php';
+    $prepareResponse = ob_get_clean();
     if ($prepareResponse === false) {
-        throw new Exception("Failed to call PrepareSendToB21OnlineTaskPlanner.php: " . $prepareUrl);
+        throw new Exception("Failed to capture output from PrepareSendToB21OnlineTaskPlanner.php");
     }
     $prepareData = json_decode($prepareResponse, true);
     if (!$prepareData || $prepareData['status'] !== 'success') {
@@ -60,12 +63,12 @@ try {
     }
     $taskFolder = $prepareData['taskFolder'];
     
-    // Construct the URL for the Online Planner using the provided filenames.
+    // Construct the URL for the Online Planner using the provided (sanitized) filenames.
     $plnParam = urlencode($taskFolder . "/" . $plnFilename);
     $wprParam = urlencode($taskFolder . "/" . $wprFilename);
     $igcParam = urlencode($igcFileUrlNoProtocol);
     
-    // Build the planner URL (without protocol in the parameters, as requested).
+    // Build the planner URL (parameters without protocol as requested).
     $plannerUrl = "xp-soaring.github.io/tasks/b21_task_planner/index.html?pln={$plnParam}&wpr={$wprParam}&igc={$igcParam}";
     
     echo json_encode([
