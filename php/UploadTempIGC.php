@@ -14,8 +14,9 @@ try {
     
     $entrySeqID = (int) $_POST['EntrySeqID'];
     $taskID = trim($_POST['TaskID']);
-    $plnFilename = trim($_POST['PLNFilename']);
-    $wprFilename = trim($_POST['WPRFilename']);
+    // Use basename to strip out any directory paths from the filenames.
+    $plnFilename = basename(trim($_POST['PLNFilename']));
+    $wprFilename = basename(trim($_POST['WPRFilename']));
     
     // Check file upload.
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
@@ -47,8 +48,8 @@ try {
     // Remove protocol (http:// or https://) for the planner parameters.
     $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     
-    // Call the existing PrepareSendToB21OnlineTaskPlanner.php script to get the task folder.
-    $prepareUrl = rtrim($taskBrowserPathHTTPS, '/') . "/php/PrepareSendToB21OnlineTaskPlanner.php?taskID=" . urlencode($taskID);
+    // Call the PrepareSendToB21OnlineTaskPlanner.php script located in the same folder.
+    $prepareUrl = rtrim($taskBrowserPathHTTPS, '/') . "/PrepareSendToB21OnlineTaskPlanner.php?taskID=" . urlencode($taskID);
     $prepareResponse = file_get_contents($prepareUrl);
     if ($prepareResponse === false) {
         throw new Exception("Failed to call PrepareSendToB21OnlineTaskPlanner.php: " . $prepareUrl);
@@ -65,7 +66,6 @@ try {
     $igcParam = urlencode($igcFileUrlNoProtocol);
     
     // Build the planner URL (without protocol in the parameters, as requested).
-    // Adjust the base URL as needed.
     $plannerUrl = "xp-soaring.github.io/tasks/b21_task_planner/index.html?pln={$plnParam}&wpr={$wprParam}&igc={$igcParam}";
     
     echo json_encode([
