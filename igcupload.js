@@ -254,7 +254,7 @@ class IGCUpload {
             const beginTimeUTC = this.parseBRecord(lines);
 
             if (!headerData) {
-                alert("Could not parse header from IGC file.");
+                alert("Could not load flight plan from IGC file!");
                 return;
             }
 
