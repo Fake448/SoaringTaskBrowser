@@ -350,12 +350,37 @@ class IGCUpload {
             alert("No IGC file available for submission.");
             return;
         }
-        // TODO: We need to save the unsubmitted file to a temporary folder so we can use it to send to the Online Planner
-        // TODO: Define how we cleanup these files? With the cron job that runs every minute or after creating each new one?
+        // Create a FormData object and append required fields.
+        const formData = new FormData();
+        formData.append('EntrySeqID', this.igcData.EntrySeqID);
+        formData.append('TaskID', this.taskBrowser.currentTask.TaskID);
+        formData.append('PLNFilename', this.taskBrowser.currentTask.PLNFilename);
+        formData.append('WPRFilename', this.taskBrowser.currentTask.WPRFilename);
+        formData.append('igcFile', this.igcFileGlobal);
 
-        const newWindow = window.open('', '_blank');  // Open immediately on user click
-        const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc=${tempIGCfile}`;
-        newWindow.location.href = plannerUrl;  // Navigate the pre-opened window
+        // Call the new PHP script that saves the IGC file to a temporary folder
+        // and returns the URL parts for the Online Planner.
+        fetch('php/UploadTempIGC.php', {
+            method: 'POST',
+            body: formData
+        })
+            .then(response => response.json())
+            .then(result => {
+                if (result.status === 'success' && result.plannerUrl) {
+                    // Remove protocol (http:// or https://) if needed.
+                    let plannerUrl = result.plannerUrl.replace(/^https?:\/\//, '');
+                    // Build the full URL for the planner.
+                    const fullPlannerUrl = `https://${plannerUrl}`;
+                    const newWindow = window.open('', '_blank');  // Open immediately on user click
+                    newWindow.location.href = fullPlannerUrl;  // Navigate the pre-opened window
+                } else {
+                    alert("Error uploading IGC file for planner: " + (result.message || result.error || "Unknown error"));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert("Error uploading IGC file for planner.");
+            });
     }
 
     submitIGCRecord() {
