@@ -2,7 +2,7 @@
 var igcUpload = new IGCUpload(TB);
 
 TB.init(igcUpload);
-if (window.location.pathname.indexOf("index.html") !== -1) {
+if (window.location.pathname.indexOf("download.html") == -1) {
     igcUpload.init();
 }
 
