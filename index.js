@@ -2,7 +2,9 @@
 var igcUpload = new IGCUpload(TB);
 
 TB.init(igcUpload);
-igcUpload.init();
+if (window.location.pathname.indexOf("index.html") !== -1) {
+    igcUpload.init();
+}
 
 // Add event listeners for resizing
 window.addEventListener('resize', TB.resizeMap);
