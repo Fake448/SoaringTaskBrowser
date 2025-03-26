@@ -142,6 +142,10 @@ try {
                     "%04d-%02d-%02d %02d:%02d",
                     $fullYear, $mm, $dd, $HH, $mi
                 );
+                // Transform the "Sim" field so that it only returns the year.
+                if (!empty($record['Sim'])) {
+                    $record['Sim'] = 'MS' . substr($record['Sim'], -4);
+                }
             }
             // else leave it as is (or handle invalid length)
         }
