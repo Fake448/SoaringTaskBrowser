@@ -79,7 +79,7 @@ function loadTabContent(tabId) {
             content = `
                 <div class="header-container">
                     <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
-                    <h2>Our home is under construction!</h2>
+                    <h2>Our home is always a work in progress!</h2>
                 </div>
                 <p>Currently, you can use the tabs above to access the available features that are ready:</p>
                 <ul class="all-links">
