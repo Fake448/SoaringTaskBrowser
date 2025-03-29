@@ -184,6 +184,15 @@ function loadTabContent(tabId) {
             break;
         case 'settingsTab':
             break;
+        case 'accountTab':
+            content = `
+                <div class="header-container">
+                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <h2>Your User Account</h2>
+                </div>
+                <p>Coming soon!</p>
+                `;
+            break;
         case 'aboutTab':
             content = `
                 <div class="header-container">
