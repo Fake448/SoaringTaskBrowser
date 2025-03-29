@@ -30,7 +30,7 @@ body {
 
 .tabButton {
     flex-grow: 1;
-    padding: 10px;
+    padding: 8px;
     cursor: pointer;
     text-align: center;
     background-color: #2c2f33;
