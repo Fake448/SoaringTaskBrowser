@@ -190,8 +190,10 @@ function loadTabContent(tabId) {
                     <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Your User Account</h2>
                 </div>
-                <p>Coming soon!</p>
-                `;
+                <div id="account-content">
+                    <p>Loading user info...</p>
+                </div>
+            `;
             break;
         case 'aboutTab':
             content = `
@@ -230,6 +232,31 @@ function loadTabContent(tabId) {
     if (tabId == 'homeTab') {
         addScrollEventListeners();
     }
+    // If the user account tab is loaded, fetch and display user connection info
+    if (tabId === 'accountTab') {
+        loadAccountInfo();
+    }
+}
+
+function loadAccountInfo() {
+    TB.getUserConnectionInfo().then(info => {
+        const accountContent = document.getElementById('account-content');
+        if (info.loggedIn) {
+            accountContent.innerHTML = `
+                <h3>Welcome, ${info.user.username}!</h3>
+                <p>User ID: ${info.user.id}</p>
+                <p>Avatar:<br>
+                    <img src="https://cdn.discordapp.com/avatars/${info.user.id}/${info.user.avatar}.png" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
+                </p>
+                <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
+            `;
+        } else {
+            accountContent.innerHTML = `
+                <p>You are not logged in.</p>
+                <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
+            `;
+        }
+    });
 }
 
 function addScrollEventListeners() {
