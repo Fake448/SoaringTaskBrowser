@@ -4,7 +4,7 @@ session_start();
 // Include common functions and configuration
 include_once 'CommonFunctions.php';
 
-// Retrieve Discord credentials and redirect URI from configuration
+// Retrieve Discord credentials from configuration
 $clientId     = $config['discordClientId'];
 $clientSecret = $config['discordClientSecret'];
 $redirectUri  = $config['discordRedirectUri'];
@@ -12,6 +12,18 @@ $redirectUri  = $config['discordRedirectUri'];
 // Set session and cookie parameters to persist for 30 days
 ini_set('session.gc_maxlifetime', 86400 * 30);
 session_set_cookie_params(86400 * 30);
+
+// Check if an error occurred (user cancelled, etc.)
+if (isset($_GET['error'])) {
+    // Option 1: Redirect the user back to your login page with an error message.
+    header('Location: ../login_failed.html');
+    exit();
+
+    // Option 2: Display an error message directly
+    // echo "Error: " . htmlspecialchars($_GET['error']) . "<br>";
+    // echo "Description: " . htmlspecialchars($_GET['error_description']);
+    // exit();
+}
 
 if (isset($_GET['code'])) {
     $code = $_GET['code'];
@@ -34,7 +46,7 @@ if (isset($_GET['code'])) {
     ];
 
     $context = stream_context_create($options);
-    $result  = file_get_contents($tokenUrl, false, $context);
+    $result = file_get_contents($tokenUrl, false, $context);
     if ($result === FALSE) {
         die('Error fetching access token.');
     }
