@@ -243,8 +243,7 @@ function loadAccountInfo() {
         const accountContent = document.getElementById('account-content');
         if (info.loggedIn) {
             accountContent.innerHTML = `
-                <h3>Welcome, ${info.user.username}!</h3>
-                <p>User ID: ${info.user.id}</p>
+                <h3>Welcome, ${info.user.global_name}!</h3>
                 <p>Avatar:<br>
                     <img src="https://cdn.discordapp.com/avatars/${info.user.id}/${info.user.avatar}.png" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
                 </p>

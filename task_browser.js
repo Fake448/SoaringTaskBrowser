@@ -2832,7 +2832,7 @@ class TaskBrowser {
         if (userImg) {
             if (tb.isUserConnected) {
                 userImg.src = "images/user_account_connected.png";
-                userImg.title = "You are currently logged in as COMING SOON.";
+                userImg.title = "You are currently logged in as " + tb.user.global_name;
             }
             else {
                 userImg.src = "images/user_account_disconnected.png";
