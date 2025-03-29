@@ -19,7 +19,7 @@ if (isset($_GET['error'])) {
     // logMessage("Discord OAuth error: " . $_GET['error'] . " - " . $_GET['error_description']);
     
     // Redirect back to the account tab without logging in
-    header('Location: ../index.html?tab=accountTab');
+    header('Location: ../index.html?tab=account');
     exit();
 }
 
@@ -80,7 +80,7 @@ if (isset($_GET['code'])) {
     setcookie('avatar',    $userData['avatar'],   time() + (86400 * 30), "/");
 
     // Redirect to the account tab on your main page
-    header('Location: ../index.html?tab=accountTab');
+    header('Location: ../index.html?tab=account');
     exit();
 }
 ?>
