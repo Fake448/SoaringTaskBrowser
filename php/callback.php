@@ -13,16 +13,14 @@ $redirectUri  = $config['discordRedirectUri'];
 ini_set('session.gc_maxlifetime', 86400 * 30);
 session_set_cookie_params(86400 * 30);
 
-// Check if an error occurred (user cancelled, etc.)
+// Check for error (user cancelled, etc.)
 if (isset($_GET['error'])) {
-    // Option 1: Redirect the user back to your login page with an error message.
-    header('Location: ../login_failed.html');
+    // Optionally, you can log the error:
+    // logMessage("Discord OAuth error: " . $_GET['error'] . " - " . $_GET['error_description']);
+    
+    // Redirect back to the account tab without logging in
+    header('Location: ../index.html?tab=accountTab');
     exit();
-
-    // Option 2: Display an error message directly
-    // echo "Error: " . htmlspecialchars($_GET['error']) . "<br>";
-    // echo "Description: " . htmlspecialchars($_GET['error_description']);
-    // exit();
 }
 
 if (isset($_GET['code'])) {
@@ -77,9 +75,9 @@ if (isset($_GET['code'])) {
     $_SESSION['user'] = $userData;
 
     // Set cookies for persistent login (30 days)
-    setcookie('user_id',   $userData['id'],        time() + (86400 * 30), "/");
-    setcookie('username',  $userData['username'],  time() + (86400 * 30), "/");
-    setcookie('avatar',    $userData['avatar'],    time() + (86400 * 30), "/");
+    setcookie('user_id',   $userData['id'],       time() + (86400 * 30), "/");
+    setcookie('username',  $userData['username'], time() + (86400 * 30), "/");
+    setcookie('avatar',    $userData['avatar'],   time() + (86400 * 30), "/");
 
     // Redirect to the account tab on your main page
     header('Location: ../index.html?tab=accountTab');
