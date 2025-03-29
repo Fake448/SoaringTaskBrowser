@@ -8,6 +8,7 @@ class TaskBrowser {
         tb.isDownloadPage = false;
         tb.discordPostHelperTaskBrowserPath = "";
         tb.discordTasksChannel = "";
+        tb.isUserConnected = false;
     }
 
     init(igcUpload) {
@@ -61,6 +62,7 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
+        tb.setUserAccountImage();
 
     }
 
@@ -2798,4 +2800,18 @@ class TaskBrowser {
         const rowCount = $('#taskGridTable tbody tr').length;
         tb.adjustGridHeight(rowCount);
     }
+
+    setUserAccountImage() {
+        let tb = this;
+        const userImg = document.getElementById('userAccountImage');
+        if (userImg) {
+            if (tb.isUserConnected) {
+                userImg.src = "images/user_account_connected.png";
+            }
+            else {
+                userImg.src = "images/user_account_disconnected.png";
+            }
+        }
+    }
+
 }
