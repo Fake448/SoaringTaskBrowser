@@ -63,7 +63,6 @@ class TaskBrowser {
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
         tb.getUserConnectionInfo();
-        tb.setUserAccountImage();
 
     }
 
@@ -2809,17 +2808,20 @@ class TaskBrowser {
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.statusText);
                 }
+                tb.setUserAccountImage();
                 return response.json();
             })
             .then(data => {
                 // Save the connection info in your TB object.
                 tb.isUserConnected = data.loggedIn;
                 tb.user = data.loggedIn ? data.user : null;
+                tb.setUserAccountImage();
                 return data;
             })
             .catch(error => {
                 tb.isUserConnected = false;
                 tb.user = null;
+                tb.setUserAccountImage();
                 return { loggedIn: false };
             });
     }
