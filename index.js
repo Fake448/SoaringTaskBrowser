@@ -728,6 +728,9 @@ function handleParams(params) {
             case 'settings':
                 TB.switchTab('settingsTab');
                 break;
+            case 'account':
+                TB.switchTab('accountTab');
+                break;
             case 'about':
                 TB.switchTab('aboutTab');
                 break;
