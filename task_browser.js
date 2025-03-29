@@ -62,6 +62,7 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
+        tb.getUserConnectionInfo();
         tb.setUserAccountImage();
 
     }
@@ -2799,6 +2800,28 @@ class TaskBrowser {
         // Get row count and adjust height
         const rowCount = $('#taskGridTable tbody tr').length;
         tb.adjustGridHeight(rowCount);
+    }
+
+     getUserConnectionInfo() {
+        let tb = this;
+        return fetch('php/session_status.php')
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Save the connection info in your TB object.
+                tb.isUserConnected = data.loggedIn;
+                tb.user = data.loggedIn ? data.user : null;
+                return data;
+            })
+            .catch(error => {
+                tb.isUserConnected = false;
+                tb.user = null;
+                return { loggedIn: false };
+            });
     }
 
     setUserAccountImage() {
