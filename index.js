@@ -231,7 +231,9 @@ function loadTabContent(tabId) {
                 <h3>Affiliation</h3>
                 <p>WeSimGlide.org has no affiliation whatsoever with <strong><a href="https://WeGlide.org" target="_blank">WeGlide.org</a></strong>.</p>
                 <h3>Be Advised</h3>
-                <p><strong>Note:</strong> WeSimGlide.org is still a work in progress. I appreciate your patience and feedback as I continue to improve and expand the feature set.</p>`;
+                <p><strong>Note:</strong> WeSimGlide.org is still a work in progress. I appreciate your patience and feedback as I continue to improve and expand the feature set.</p>
+                <h3>Privacy Policy</h3>
+                <p>WeSimGlide.org stores basic user information (username, Discord ID, and avatar) obtained through the 'Login with Discord' feature solely to manage account functionality. We do not use this data for any other purpose.</p>`;
             break;
     }
     document.getElementById(tabId).innerHTML = content;
