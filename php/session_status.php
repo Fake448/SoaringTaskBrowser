@@ -36,19 +36,18 @@ else if (isset($_COOKIE['WSGUserID'])) {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Retrieve the user record from the Users table
-    $stmt = $pdo->prepare("SELECT WSGUserID, WSGDisplayName FROM Users WHERE WSGUserID = ?");
+    // Retrieve the user record from the Users table (including AvatarURL)
+    $stmt = $pdo->prepare("SELECT WSGUserID, WSGDisplayName, AvatarURL FROM Users WHERE WSGUserID = ?");
     $stmt->execute([$wsgUserID]);
     $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
     
     if ($userRow) {
-        // Set session using available info; additional fields (like discordID and avatar)
-        // could be retrieved if stored, but here we set them to null.
+        // Set session using available info
         $_SESSION['user'] = [
             'id'          => $userRow['WSGUserID'],
             'displayName' => $userRow['WSGDisplayName'],
-            'discordID'   => null,
-            'avatar'      => null
+            'discordID'   => null,  // No info from Discord here
+            'avatar'      => $userRow['AvatarURL']
         ];
         
         // Update the last login time in the database

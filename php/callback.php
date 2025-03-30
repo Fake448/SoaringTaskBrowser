@@ -74,8 +74,11 @@ if (isset($_GET['code'])) {
         die('Invalid user data response: ' . json_encode($discordUser));
     }
 
-    // Always use the global_name from Discord for the display name
+    // Always use the global_name from Discord for the display name.
     $displayName = $discordUser['global_name'];
+    
+    // Construct the full avatar URL using Discord's CDN.
+    $avatarURL = "https://cdn.discordapp.com/avatars/" . $discordUser['id'] . "/" . $discordUser['avatar'] . ".png";
 
     // Connect to the SQLite database using $databasePath from CommonFunctions.php
     $pdo = new PDO("sqlite:$databasePath");
@@ -93,13 +96,13 @@ if (isset($_GET['code'])) {
         // Existing user found; retrieve the internal user ID
         $wsgUserID = $resultRow['WSGUserID'];
         
-        // Update the user's display name with the new global_name and update LastLoginUTC
-        $updateStmt = $pdo->prepare("UPDATE Users SET WSGDisplayName = ?, LastLoginUTC = ? WHERE WSGUserID = ?");
-        $updateStmt->execute([$displayName, $nowUTC, $wsgUserID]);
+        // Update the user's display name, avatar URL, and LastLoginUTC
+        $updateStmt = $pdo->prepare("UPDATE Users SET WSGDisplayName = ?, LastLoginUTC = ?, AvatarURL = ? WHERE WSGUserID = ?");
+        $updateStmt->execute([$displayName, $nowUTC, $avatarURL, $wsgUserID]);
     } else {
-        // New user: create an entry in Users using the global_name, then create UsersDiscord entry.
-        $insertStmt = $pdo->prepare("INSERT INTO Users (WSGDisplayName, JoinedUTC, LastLoginUTC) VALUES (?, ?, ?)");
-        $insertStmt->execute([$displayName, $nowUTC, $nowUTC]);
+        // New user: create an entry in Users using the global_name and avatar URL, then create UsersDiscord entry.
+        $insertStmt = $pdo->prepare("INSERT INTO Users (WSGDisplayName, JoinedUTC, LastLoginUTC, AvatarURL) VALUES (?, ?, ?, ?)");
+        $insertStmt->execute([$displayName, $nowUTC, $nowUTC, $avatarURL]);
         $wsgUserID = $pdo->lastInsertId();
 
         // Create the association in UsersDiscord
@@ -107,13 +110,13 @@ if (isset($_GET['code'])) {
         $insertDiscordStmt->execute([$discordUser['id'], $wsgUserID]);
     }
 
-    // Update the session with the internal WSGUserID and minimal user info
+    // Update the session with the internal WSGUserID and minimal user info including AvatarURL
     $_SESSION['WSGUserID'] = $wsgUserID;
     $_SESSION['user'] = [
        'id'          => $wsgUserID,
        'displayName' => $displayName,
        'discordID'   => $discordUser['id'],
-       'avatar'      => $discordUser['avatar']
+       'avatar'      => $avatarURL
     ];
 
     // Optionally, set a cookie for the WSGUserID (if needed)

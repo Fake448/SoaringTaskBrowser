@@ -253,7 +253,7 @@ function loadAccountInfo() {
             accountContent.innerHTML = `
                 <h3>Welcome, ${info.user.displayName}!</h3>
                 <p>Avatar:<br>
-                    <img src="https://cdn.discordapp.com/avatars/${info.user.discordID}/${info.user.avatar}.png" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
+                    <img src="${info.user.avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
                 </p>
                 <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
             `;
