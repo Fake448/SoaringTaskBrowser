@@ -196,7 +196,7 @@ class IGCUpload {
         // Check if the user is logged in
         if (!this.taskBrowser.user) {
             alert("You must be logged in to upload IGC files. Please log in.");
-            this.taskBrowser.switchTab("account");
+            this.taskBrowser.switchTab("accountTab");
             return;
         }
         const reader = new FileReader();
