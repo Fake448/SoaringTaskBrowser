@@ -625,6 +625,9 @@ class TaskBrowser {
             case 'settingsTab':
                 document.title = "WeSimGlide - Settings";
                 break;
+            case 'accountTab':
+                document.title = "WeSimGlide - Account";
+                break;
             case 'aboutTab':
                 document.title = "WeSimGlide - About";
                 break;
