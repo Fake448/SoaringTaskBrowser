@@ -1,4 +1,7 @@
 <?php
+// Set session and cookie parameters to persist for 30 days BEFORE starting the session.
+ini_set('session.gc_maxlifetime', 86400 * 30);
+session_set_cookie_params(86400 * 30);
 session_start();
 
 // Include common functions and configuration
@@ -8,10 +11,6 @@ include_once 'CommonFunctions.php';
 $clientId     = $config['discordClientId'];
 $clientSecret = $config['discordClientSecret'];
 $redirectUri  = $config['discordRedirectUri'];
-
-// Set session and cookie parameters to persist for 30 days
-ini_set('session.gc_maxlifetime', 86400 * 30);
-session_set_cookie_params(86400 * 30);
 
 // Check for error (user cancelled, etc.)
 if (isset($_GET['error'])) {
