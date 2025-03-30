@@ -18,7 +18,8 @@ try {
         'CompetitionID',
         'CompetitionClass',
         'NB21Version',
-        'Sim'
+        'Sim',
+        'WSGUserID'
     ];
     
     foreach ($required as $field) {
@@ -41,6 +42,8 @@ try {
     $CompetitionClass = trim($_POST['CompetitionClass']);
     $NB21Version = trim($_POST['NB21Version']);
     $Sim = trim($_POST['Sim']);
+    $IGCComment = isset($_POST['IGCComment']) ? trim($_POST['IGCComment']) : "";
+    $WSGUserID = (int) trim($_POST['WSGUserID']);
     
     // Ensure file is uploaded.
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
@@ -84,9 +87,9 @@ try {
     
     // Insert the new record into IGCRecords table.
     $insertQuery = "INSERT INTO IGCRecords 
-        (IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime, BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID, CompetitionClass, NB21Version, Sim)
+        (IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime, BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID, CompetitionClass, NB21Version, Sim, WSGUserID, Comment)
         VALUES 
-        (:IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime, :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID, :CompetitionClass, :NB21Version, :Sim)";
+        (:IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime, :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID, :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment)";
     
     $stmt = $pdo->prepare($insertQuery);
     $stmt->bindParam(':IGCKey', $IGCKey, PDO::PARAM_STR);
@@ -102,6 +105,8 @@ try {
     $stmt->bindParam(':CompetitionClass', $CompetitionClass, PDO::PARAM_STR);
     $stmt->bindParam(':NB21Version', $NB21Version, PDO::PARAM_STR);
     $stmt->bindParam(':Sim', $Sim, PDO::PARAM_STR);
+    $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+    $stmt->bindParam(':Comment', $IGCComment, PDO::PARAM_STR);
     
     $stmt->execute();
     
