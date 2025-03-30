@@ -1,5 +1,5 @@
 <?php
-// Set session and cookie parameters to persist for 30 days BEFORE starting the session.
+// Set session and cookie parameters to persist for 30 days BEFORE starting the session
 ini_set('session.gc_maxlifetime', 86400 * 30);
 session_set_cookie_params(86400 * 30);
 session_start();
