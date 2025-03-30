@@ -193,6 +193,11 @@ class IGCUpload {
 
     // Main processing function.
     processIGCFile(file) {
+        // Check if the user is logged in
+        if (!this.taskBrowser.user) {
+            alert("You must be logged in to upload IGC files. Please log in.");
+            return;
+        }
         const reader = new FileReader();
         reader.onload = (e) => {
             const text = e.target.result;
