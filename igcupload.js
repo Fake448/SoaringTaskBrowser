@@ -315,7 +315,7 @@ class IGCUpload {
                         const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
                         igcData.IGCKey = key;
 
-                        // Now build the matching details HTML and assign it to TB's igcMatchData property.
+                        // Build the matching details HTML.
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
                         html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
                         html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
@@ -324,6 +324,7 @@ class IGCUpload {
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
+                        html += `<strong>Comment:</strong> <input type="text" id="igcCommentField" placeholder="Enter your comment here"></br>`;
                         html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open this IGC file on the B21 Task Planner</a></br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
                         html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
@@ -414,6 +415,16 @@ class IGCUpload {
 
         formData.append('igcFile', this.igcFileGlobal);
 
+        // Retrieve the IGC comment from the input field.
+        const commentField = document.getElementById('igcCommentField');
+        const igcComment = commentField ? commentField.value : "";
+        formData.append('IGCComment', igcComment);
+
+        // Append the internal user ID (WSGUserID) from the TB object.
+        if (this.taskBrowser.user && this.taskBrowser.user.id) {
+            formData.append('WSGUserID', this.taskBrowser.user.id);
+        }
+
         fetch('php/SaveIGCRecord.php', {
             method: 'POST',
             body: formData
@@ -425,7 +436,7 @@ class IGCUpload {
                     // Clear the match data.
                     this.taskBrowser.igcMatchData = "";
                     this.taskBrowser.enableMapInteractions();
-                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID,true);
+                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID, true);
                 } else if (result.status === 'duplicate') {
                     alert("Duplicate IGC record exists. Cannot offer Save.");
                 } else {
