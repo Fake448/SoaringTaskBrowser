@@ -2801,21 +2801,20 @@ class TaskBrowser {
         tb.adjustGridHeight(rowCount);
     }
 
-     getUserConnectionInfo() {
+    getUserConnectionInfo() {
         let tb = this;
         return fetch('php/session_status.php')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.statusText);
                 }
-                tb.setUserAccountImage();
                 return response.json();
             })
             .then(data => {
                 // Save the connection info in your TB object.
                 tb.isUserConnected = data.loggedIn;
                 tb.user = data.loggedIn ? data.user : null;
-                tb.setUserAccountImage();
+                tb.setUserAccountImage();  // Update the account image based on new session data.
                 return data;
             })
             .catch(error => {

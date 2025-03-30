@@ -243,9 +243,9 @@ function loadAccountInfo() {
         const accountContent = document.getElementById('account-content');
         if (info.loggedIn) {
             accountContent.innerHTML = `
-                <h3>Welcome, ${info.user.global_name}!</h3>
+                <h3>Welcome, ${info.user.displayName}!</h3>
                 <p>Avatar:<br>
-                    <img src="https://cdn.discordapp.com/avatars/${info.user.id}/${info.user.avatar}.png" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
+                    <img src="https://cdn.discordapp.com/avatars/${info.user.discordID}/${info.user.avatar}.png" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
                 </p>
                 <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
             `;
