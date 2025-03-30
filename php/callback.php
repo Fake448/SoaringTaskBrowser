@@ -15,7 +15,7 @@ session_set_cookie_params(86400 * 30);
 
 // Check for error (user cancelled, etc.)
 if (isset($_GET['error'])) {
-    // Optionally, you can log the error:
+    // Optionally log the error:
     // logMessage("Discord OAuth error: " . $_GET['error'] . " - " . $_GET['error_description']);
     
     // Redirect back to the account tab without logging in
@@ -26,6 +26,7 @@ if (isset($_GET['error'])) {
 if (isset($_GET['code'])) {
     $code = $_GET['code'];
 
+    // Exchange the authorization code for an access token
     $tokenUrl = 'https://discord.com/api/oauth2/token';
     $data = [
         'client_id'     => $clientId,
@@ -54,6 +55,7 @@ if (isset($_GET['code'])) {
     }
     $accessToken = $tokenData['access_token'];
 
+    // Fetch Discord user data
     $userUrl = 'https://discord.com/api/users/@me';
     $options = [
         'http' => [
@@ -67,17 +69,55 @@ if (isset($_GET['code'])) {
     if ($userResult === FALSE) {
         die('Error fetching user data.');
     }
-    $userData = json_decode($userResult, true);
-    if (!isset($userData['id'])) {
-        die('Invalid user data response: ' . json_encode($userData));
+    $discordUser = json_decode($userResult, true);
+    if (!isset($discordUser['id'])) {
+        die('Invalid user data response: ' . json_encode($discordUser));
     }
 
-    $_SESSION['user'] = $userData;
+    // Always use the global_name from Discord for the display name
+    $displayName = $discordUser['global_name'];
 
-    // Set cookies for persistent login (30 days)
-    setcookie('user_id',   $userData['id'],       time() + (86400 * 30), "/");
-    setcookie('username',  $userData['username'], time() + (86400 * 30), "/");
-    setcookie('avatar',    $userData['avatar'],   time() + (86400 * 30), "/");
+    // Connect to the SQLite database using $databasePath from CommonFunctions.php
+    $pdo = new PDO("sqlite:$databasePath");
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Get current UTC timestamp
+    $nowUTC = gmdate('Y-m-d H:i:s');
+
+    // Check if this Discord ID already exists in UsersDiscord
+    $stmt = $pdo->prepare("SELECT WSGUserID FROM UsersDiscord WHERE DiscordID = ?");
+    $stmt->execute([$discordUser['id']]);
+    $resultRow = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($resultRow && isset($resultRow['WSGUserID'])) {
+        // Existing user found; retrieve the internal user ID
+        $wsgUserID = $resultRow['WSGUserID'];
+        
+        // Update the user's display name with the new global_name and update LastLoginUTC
+        $updateStmt = $pdo->prepare("UPDATE Users SET WSGDisplayName = ?, LastLoginUTC = ? WHERE WSGUserID = ?");
+        $updateStmt->execute([$displayName, $nowUTC, $wsgUserID]);
+    } else {
+        // New user: create an entry in Users using the global_name, then create UsersDiscord entry.
+        $insertStmt = $pdo->prepare("INSERT INTO Users (WSGDisplayName, JoinedUTC, LastLoginUTC) VALUES (?, ?, ?)");
+        $insertStmt->execute([$displayName, $nowUTC, $nowUTC]);
+        $wsgUserID = $pdo->lastInsertId();
+
+        // Create the association in UsersDiscord
+        $insertDiscordStmt = $pdo->prepare("INSERT INTO UsersDiscord (DiscordID, WSGUserID) VALUES (?, ?)");
+        $insertDiscordStmt->execute([$discordUser['id'], $wsgUserID]);
+    }
+
+    // Update the session with the internal WSGUserID and minimal user info
+    $_SESSION['WSGUserID'] = $wsgUserID;
+    $_SESSION['user'] = [
+       'id'          => $wsgUserID,
+       'displayName' => $displayName,
+       'discordID'   => $discordUser['id'],
+       'avatar'      => $discordUser['avatar']
+    ];
+
+    // Optionally, set a cookie for the WSGUserID (if needed)
+    setcookie('WSGUserID', $wsgUserID, time() + (86400 * 30), "/");
 
     // Redirect to the account tab on your main page
     header('Location: ../index.html?tab=account');
