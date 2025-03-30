@@ -107,6 +107,17 @@ if (isset($_GET['code'])) {
         // Create the association in UsersDiscord
         $insertDiscordStmt = $pdo->prepare("INSERT INTO UsersDiscord (DiscordID, WSGUserID) VALUES (?, ?)");
         $insertDiscordStmt->execute([$discordUser['id'], $wsgUserID]);
+
+        // Send email notification for new user
+        $to = "guy@siglr.com"; // Replace with your email address.
+        $subject = "New User Created on WeSimGlide.org";
+        $message = "A new user has been created on WeSimGlide.org.\n\n"
+                 . "Display Name: " . $displayName . "\n"
+                 . "Joined UTC: " . $nowUTC;
+        $headers = "From: no-reply@wesimglide.org\r\n" .
+                   "Reply-To: no-reply@wesimglide.org\r\n" .
+                   "X-Mailer: PHP/" . phpversion();
+        mail($to, $subject, $message, $headers);
     }
 
     // Update the session with the internal WSGUserID and minimal user info including AvatarURL
