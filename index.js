@@ -339,8 +339,8 @@ function refreshIGCSubmissionsContent() {
                         <tr>
                             <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true) }</td>
                             <td>
-                                <a href="${TB.wsgRoot}index.html?task=${record.EntrySeqID}" target="_blank">
-                                    ${record.EntrySeqID}
+                                <a href="#" onclick="switchToMapAndSelectTask(${record.EntrySeqID}); return false;">
+                                  ${record.EntrySeqID}
                                 </a>
                             </td>
                             <td>${record.Pilot}</td>
