@@ -293,7 +293,6 @@ function forceDownload(url, filename) {
         .catch(err => console.error('Download error:', err));
 }
 
-// Function to load the IGC Submissions section.
 function loadIGCSubmissionsSection(parentContainer) {
     // Create a container for the IGC Submissions section.
     const igcContainer = document.createElement('div');
@@ -374,20 +373,22 @@ function loadIGCSubmissionsSection(parentContainer) {
 
             document.getElementById('igc-submissions-content').innerHTML = tableHtml;
 
-            // Initialize the DataTable
+            // Initialize the DataTable with custom column widths.
             const dt = $('#userIGCRecordsTable').DataTable({
                 pageLength: 100,
                 order: [[2, "desc"]],
-                dom: '<"top"f>rt<"bottom"lip><"clear">'
+                dom: '<"top"f>rt<"bottom"lip><"clear">',
+                columnDefs: [
+                    { targets: 0, width: "10%" }, // Key column narrower
+                    { targets: 9, width: "40%" }  // Comment column wider
+                ]
             });
 
             // Attach event listener for the Save button
             $('#userIGCRecordsTable').on('click', '.save-comment', function () {
                 const entryKey = $(this).data('entry');
-                // Find the corresponding comment value from the input
                 const newComment = $(this).closest('tr').find('.comment-input').val();
 
-                // Send the update to the server via POST
                 fetch('php/UpdateIGCComment.php', {
                     method: 'POST',
                     headers: {
@@ -401,6 +402,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                     .then(response => response.json())
                     .then(result => {
                         if (result.status === 'success') {
+                            alert('Comment updated successfully!');
                         } else {
                             alert('Error updating comment: ' + (result.message || result.error));
                         }
@@ -415,7 +417,6 @@ function loadIGCSubmissionsSection(parentContainer) {
             $('#userIGCRecordsTable').on('click', '.delete-igc', function () {
                 const entryKey = $(this).data('entry');
                 if (confirm("Are you sure you want to delete this IGC submission? This action cannot be undone.")) {
-                    // Build URL-encoded form data
                     const formData = new URLSearchParams();
                     formData.append('IGCKey', entryKey);
 
@@ -429,7 +430,6 @@ function loadIGCSubmissionsSection(parentContainer) {
                         .then(response => response.json())
                         .then(result => {
                             if (result.status === 'success') {
-                                // Remove the row from the DataTable (assuming dt is your DataTable instance)
                                 dt.row($(this).closest('tr')).remove().draw();
                             } else {
                                 alert('Error deleting submission: ' + (result.error || result.message));
