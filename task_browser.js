@@ -1320,7 +1320,7 @@ class TaskBrowser {
         // Build the HTML for the collapsible section
         // including an empty <tbody> for #igcRecordsTable
         let igcContent = `
-            <table id="igcRecordsTable" class="display" style="width: 100%;">
+            <table id="igcRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                 <thead>
                     <tr>
                         <th>Sel.</th>

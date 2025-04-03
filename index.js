@@ -312,7 +312,7 @@ function loadIGCSubmissionsSection(parentContainer) {
         .then(response => response.json())
         .then(data => {
             let tableHtml = `
-                <table id="userIGCRecordsTable" class="display">
+                <table id="userIGCRecordsTable" class="display igcRecordsTable">
                     <thead>
                         <tr>
                             <th>Key</th>
