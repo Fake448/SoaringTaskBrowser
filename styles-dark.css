@@ -1070,13 +1070,17 @@ table.dataTable thead .sorting {
     color: #dcdcdc;
 }
 
-    .igcRecordsTable tbody tr:nth-child(even) {
-        background-color: #252525cf; /* same alt row color */
+    .igcRecordsTable tbody tr:nth-child(odd) {
+        background-color: #2b2b2ba8 !important;
+        color: #dcdcdc !important;
     }
 
-    /* Hover highlight on row hover */
+    .igcRecordsTable tbody tr:nth-child(even) {
+        background-color: #252525cf !important;
+    }
+
     .igcRecordsTable tbody tr:hover {
-        background-color: #7289da; /* same highlight color */
+        background-color: #1da1f245 !important;
     }
 
 /* Table cell spacing & color */
@@ -1095,12 +1099,6 @@ table.dataTable thead .sorting {
         background-color: inherit !important;
         color: inherit !important;
     }
-
-/* Optional: row selection color if you do that in code */
-.igcRecordsTable tbody tr.selected {
-    background-color: #0000ff !important; /* or your chosen highlight color */
-    color: #ffffff;
-}
 
 /* Header alignment for DataTables */
 .igcRecordsTable.dataTable thead th,
@@ -1125,8 +1123,3 @@ table.dataTable thead .sorting {
     .igc-button-style:hover {
         background-color: #0056b3;
     }
-
-/* If you want to disable hover highlighting (if needed) for both tables: */
-.igcRecordsTable tbody tr:hover {
-    background-color: transparent !important;
-}
