@@ -22,6 +22,7 @@ try {
                 IGCKey,
                 EntrySeqID,
                 IGCUploadDateTimeUTC,
+                IGCRecordDateTimeUTC,
                 Pilot,
                 GliderType,
                 GliderID,

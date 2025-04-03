@@ -319,7 +319,7 @@ function refreshIGCSubmissionsContent() {
                 <table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Uploaded on</th>
+                            <th>Created on</th>
                             <th>Task</th>
                             <th>Pilot</th>
                             <th>Glider</th>
@@ -342,7 +342,7 @@ function refreshIGCSubmissionsContent() {
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true)}</td>
+                            <td>${TB.formatSimDateTime(record.IGCRecordDateTimeUTC, true, false, true, true)}</td>
                             <td>
                                 <a href="#" onclick="switchToMapAndSelectTask(${record.EntrySeqID}); return false;">
                                   ${record.EntrySeqID}
