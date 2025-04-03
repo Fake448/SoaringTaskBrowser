@@ -452,7 +452,6 @@ function refreshIGCSubmissionsContent() {
                     .then(response => response.json())
                     .then(result => {
                         if (result.status === 'success') {
-                            alert('Comment updated successfully!');
                             // Update the original value stored in the input
                             $(this).closest('tr').find('.comment-input').data('original', newComment);
                             $(this).prop('disabled', true);
