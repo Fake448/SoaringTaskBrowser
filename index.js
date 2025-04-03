@@ -294,7 +294,6 @@ function forceDownload(url, filename) {
 }
 
 function loadIGCSubmissionsSection(parentContainer) {
-
     // Create a container for the IGC Submissions section.
     const igcContainer = document.createElement('div');
     igcContainer.id = "igc-submissions";
@@ -315,7 +314,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                 <table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Upload</th>
+                            <th>UTC Upload</th>
                             <th>Task</th>
                             <th>Pilot</th>
                             <th>Glider</th>
@@ -334,10 +333,11 @@ function loadIGCSubmissionsSection(parentContainer) {
                 data.forEach(record => {
                     // Remove "MSFS " from the Sim value if present.
                     const simValue = record.Sim.replace("MSFS ", "");
-
+                    // Save original comment value
+                    const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true)}</td>
+                            <td>${record.IGCUploadDateTimeUTC}</td>
                             <td>
                                 <a href="${TB.wsgRoot}index.html?task=${record.EntrySeqID}" target="_blank">
                                     ${record.EntrySeqID}
@@ -350,15 +350,16 @@ function loadIGCSubmissionsSection(parentContainer) {
                             <td>${record.NB21Version}</td>
                             <td>${simValue}</td>
                             <td>
-                                <input type="text" value="${record.Comment ? record.Comment : ''}" 
-                                       class="comment-input" data-entry="${record.EntrySeqID}" style="width: 95%;">
+                                <input type="text" value="${originalComment}" 
+                                       class="comment-input" data-entry="${record.EntrySeqID}"
+                                       data-original="${originalComment}" style="width: 95%;">
                             </td>
                             <td>
                                 <button class="igc-button-style download-igc" data-entry="${record.EntrySeqID}" 
                                   onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc', '${record.IGCKey}.igc'); return false;">
                                   Download
                                 </button>
-                                <button class="igc-button-style save-comment" data-entry="${record.EntrySeqID}">Save</button>
+                                <button class="igc-button-style save-comment" data-entry="${record.EntrySeqID}" disabled>Save</button>
                                 <button class="igc-button-style delete-igc" data-entry="${record.EntrySeqID}">Delete</button>
                             </td>
                         </tr>
@@ -382,7 +383,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                 order: [[0, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
                 columnDefs: [
-                    { targets: 0, width: "170px" },  // Upload date
+                    { targets: 0, width: "170px" },  // UTC Upload: fixed wide
                     { targets: 1, width: "1px" },    // Task: narrow
                     { targets: 2, width: "100px" },  // Pilot: moderate
                     { targets: 3, width: "100px" },  // Glider: moderate
@@ -393,6 +394,18 @@ function loadIGCSubmissionsSection(parentContainer) {
                     // Comment (index 8) is left flexible.
                     { targets: 9, width: "170px" }   // Actions: fixed width for buttons
                 ]
+            });
+
+            // Attach event listener to update Save button state when comment changes.
+            $('#userIGCRecordsTable').on('input', '.comment-input', function () {
+                const original = $(this).data('original');
+                const currentVal = $(this).val();
+                const saveButton = $(this).closest('tr').find('.save-comment');
+                if (currentVal === original) {
+                    saveButton.prop('disabled', true);
+                } else {
+                    saveButton.prop('disabled', false);
+                }
             });
 
             // Attach event listener for the Save button
@@ -414,6 +427,9 @@ function loadIGCSubmissionsSection(parentContainer) {
                     .then(result => {
                         if (result.status === 'success') {
                             alert('Comment updated successfully!');
+                            // Update the original value stored in the input
+                            $(this).closest('tr').find('.comment-input').data('original', newComment);
+                            $(this).prop('disabled', true);
                         } else {
                             alert('Error updating comment: ' + (result.message || result.error));
                         }

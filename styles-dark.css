@@ -1124,6 +1124,12 @@ table.dataTable thead .sorting {
         background-color: #0056b3;
     }
 
+    .igc-button-style:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background-color: #7289da;
+    }
+
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover, .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:active {
     cursor: default;
     color: #ffffff !important;
