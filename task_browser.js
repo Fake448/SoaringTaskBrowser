@@ -1330,7 +1330,7 @@ class TaskBrowser {
                 <thead>
                     <tr>
                         <th>Sel.</th>
-                        <th>UTC</th>
+                        <th>Created on</th>
                         <th>Pilot</th>
                         <th>Glider</th>
                         <th>Class</th>
