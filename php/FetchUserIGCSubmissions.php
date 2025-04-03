@@ -1,5 +1,5 @@
 <?php
-session_start();
+require __DIR__ . '/session_status.php';  // This file sets cookie parameters, starts the session, and restores session data from the cookie if available.
 require __DIR__ . '/CommonFunctions.php';
 
 // Ensure the user is logged in; if not, return an error response.
