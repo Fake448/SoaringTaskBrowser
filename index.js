@@ -312,7 +312,7 @@ function loadIGCSubmissionsSection(parentContainer) {
         .then(response => response.json())
         .then(data => {
             let tableHtml = `
-                <table id="igcRecordsTable" class="display">
+                <table id="userIGCRecordsTable" class="display">
                     <thead>
                         <tr>
                             <th>Key</th>
@@ -375,7 +375,7 @@ function loadIGCSubmissionsSection(parentContainer) {
             document.getElementById('igc-submissions-content').innerHTML = tableHtml;
 
             // Initialize the DataTable for a full datagrid experience (search, sort, pagination, etc.)
-            $('#igcRecordsTable').DataTable({
+            $('#userIGCRecordsTable').DataTable({
                 pageLength: 100,
                 order: [[2, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">'
