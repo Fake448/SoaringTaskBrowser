@@ -257,6 +257,12 @@ function loadAccountInfo() {
                 </p>
                 <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
             `;
+            // Create the IGC Submissions collapsible section with placeholder content.
+            const igcSection = TB.generateCollapsibleSection("IGC Submissions", '<div id="igc-submissions-content">Loading...</div>');
+            accountContent.appendChild(igcSection);
+
+            // Later you can fetch the IGC submissions from FetchUserIGCSubmissions.php
+            // and populate the 'igc-submissions-content' div with a table.
         } else {
             accountContent.innerHTML = `
                 <p>You are not logged in.</p>
