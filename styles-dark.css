@@ -1125,3 +1125,7 @@ table.dataTable thead .sorting {
     .igc-button-style:hover {
         background-color: #0056b3;
     }
+
+#igcRecordsTable tbody tr:hover {
+    background-color: transparent !important;
+}
