@@ -8,6 +8,7 @@ class TaskBrowser {
         tb.isDownloadPage = false;
         tb.discordPostHelperTaskBrowserPath = "";
         tb.discordTasksChannel = "";
+        tb.wsgRoot = "";
         tb.isUserConnected = false;
     }
 
@@ -23,10 +24,12 @@ class TaskBrowser {
         if (window.location.origin.includes("wesimglide.org")) {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
             tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1155511739799060552/";
+            tb.wsgRoot = "https://wesimglide.org/";
         }
         else {
             tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
             tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1067288937527246868/";
+            tb.wsgRoot = "https://soaring.siglr.com/";
         }
 
         if (tb.isDownloadPage) {

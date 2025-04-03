@@ -314,12 +314,12 @@ function loadIGCSubmissionsSection(parentContainer) {
                     tableHtml += `
                         <tr>
                             <td>
-                                <a href="${$taskBrowserPathHTTPS}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
+                                <a href="${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
                                     ${record.IGCKey}
                                 </a>
                             </td>
                             <td>
-                                <a href="${$wsgRoot}/index.html?task=${record.EntrySeqID}" target="_blank">
+                                <a href="${TB.wsgRoot}index.html?task=${record.EntrySeqID}" target="_blank">
                                     ${record.EntrySeqID}
                                 </a>
                             </td>
