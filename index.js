@@ -327,16 +327,6 @@ function refreshIGCSubmissionsContent() {
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
                 columns: [
                     {
-                        // Checkbox for selection.
-                        data: null,
-                        name: 'Select',
-                        orderable: false,
-                        searchable: false,
-                        render: function (data, type, row) {
-                            return `<input type="checkbox" class="igc-select-checkbox" data-key="${row.IGCKey}">`;
-                        }
-                    },
-                    {
                         // UTC Date/Time (display formatted, raw for sorting/filtering)
                         data: 'IGCRecordDateTimeUTC',
                         title: 'Created on',
@@ -407,32 +397,21 @@ function refreshIGCSubmissionsContent() {
                 ],
                 // Column definitions for widths (adjust as needed).
                 columnDefs: [
-                    { targets: 0, width: '15px' },      // Select checkbox
-                    { targets: 1, width: '140px' },     // Created on (UTC Upload)
-                    { targets: 2, width: '1px' },       // Task (narrow, auto-sized)
-                    { targets: 3, width: '100px' },     // Pilot
-                    { targets: 4, width: '100px' },     // Glider
-                    { targets: 5, width: '40px' },      // Ident
-                    { targets: 6, width: '80px' },      // Class
-                    { targets: 7, width: '1px' },       // Version
-                    { targets: 8, width: '40px' },      // Sim
-                    { targets: 9, width: 'auto' },      // Comment (flexible)
-                    { targets: 10, width: '110px' }     // Actions
+                    { targets: 0, width: '140px' },     // Created on (UTC Upload)
+                    { targets: 1, width: '1px' },       // Task (narrow, auto-sized)
+                    { targets: 2, width: '100px' },     // Pilot
+                    { targets: 3, width: '100px' },     // Glider
+                    { targets: 4, width: '40px' },      // Ident
+                    { targets: 5, width: '80px' },      // Class
+                    { targets: 6, width: '1px' },       // Version
+                    { targets: 7, width: '40px' },      // Sim
+                    { targets: 8, width: 'auto' },      // Comment (flexible)
+                    { targets: 9, width: '110px' }     // Actions
                 ],
                 paging: false,
                 searching: true,
                 ordering: true,
                 info: true,
-                headerCallback: function (thead, data, start, end, display) {
-                    // Replace the first header cell with a "select all" checkbox.
-                    $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
-                },
-                drawCallback: function (settings) {
-                    $('#select-all').off('click').on('click', function () {
-                        const checked = this.checked;
-                        $('.igc-select-checkbox').prop('checked', checked);
-                    });
-                },
                 initComplete: function () {
                     // Move the search box and add a Refresh button.
                     const tableWrapper = $(this.api().table().container());
