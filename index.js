@@ -337,7 +337,7 @@ function refreshIGCSubmissionsContent() {
             if (data.length > 0) {
                 data.forEach(record => {
                     // Remove "MSFS " from the Sim value if present.
-                    const simValue = record.Sim.replace("MSFS ", "");
+                    const simValue = record.Sim.replace("MSFS ", "MS");
                     // Save original comment value
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
