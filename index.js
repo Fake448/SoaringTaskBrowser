@@ -293,17 +293,15 @@ function loadIGCSubmissionsSection(parentContainer) {
                 <table id="igcRecordsTable" class="display">
                     <thead>
                         <tr>
-                            <th>IGCKey</th>
-                            <th>EntrySeqID</th>
-                            <th>IGCUploadDateTimeUTC</th>
+                            <th>Key</th>
+                            <th>Task</th>
+                            <th>UTC Upload</th>
                             <th>Pilot</th>
-                            <th>GliderType</th>
-                            <th>GliderID</th>
-                            <th>CompetitionID</th>
-                            <th>CompetitionClass</th>
-                            <th>NB21Version</th>
+                            <th>Glider</th>
+                            <th>Ident</th>
+                            <th>Class</th>
+                            <th>Version</th>
                             <th>Sim</th>
-                            <th>WSGUserID</th>
                             <th>Comment</th>
                             <th>Actions</th>
                         </tr>
@@ -316,27 +314,25 @@ function loadIGCSubmissionsSection(parentContainer) {
                     tableHtml += `
                         <tr>
                             <td>
-                                <a href="https://siglr.com/DiscordPostHelper/TaskBrowser/IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
+                                <a href="${$taskBrowserPathHTTPS}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
                                     ${record.IGCKey}
                                 </a>
                             </td>
                             <td>
-                                <a href="https://wesimglide.org/index.html?task=${record.EntrySeqID}" target="_blank">
+                                <a href="${$wsgRoot}/index.html?task=${record.EntrySeqID}" target="_blank">
                                     ${record.EntrySeqID}
                                 </a>
                             </td>
                             <td>${record.IGCUploadDateTimeUTC}</td>
                             <td>${record.Pilot}</td>
                             <td>${record.GliderType}</td>
-                            <td>${record.GliderID}</td>
                             <td>${record.CompetitionID}</td>
                             <td>${record.CompetitionClass}</td>
                             <td>${record.NB21Version}</td>
                             <td>${record.Sim}</td>
-                            <td>${record.WSGUserID}</td>
                             <td>
                                 <input type="text" value="${record.Comment ? record.Comment : ''}" 
-                                       class="comment-input" data-entry="${record.EntrySeqID}" style="width: 100%;">
+                                       class="comment-input" data-entry="${record.EntrySeqID}" style="width: 95%;">
                             </td>
                             <td>
                                 <button class="igc-button-style save-comment" data-entry="${record.EntrySeqID}">Save</button>
