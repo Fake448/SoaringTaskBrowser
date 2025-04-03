@@ -3,13 +3,14 @@ session_start();
 require __DIR__ . '/CommonFunctions.php';
 
 // Ensure the user is logged in; if not, return an error response.
-if (!isset($_SESSION['WSGUserID'])) {
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     http_response_code(401);
     echo json_encode(["error" => "User not authenticated"]);
     exit;
 }
 
-$wsgUserID = $_SESSION['WSGUserID'];
+// Use the user id stored in the session
+$wsgUserID = $_SESSION['user']['id'];
 
 try {
     // Open the database connection using the path from CommonFunctions.php.
