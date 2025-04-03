@@ -271,6 +271,28 @@ function loadAccountInfo() {
     });
 }
 
+function forceDownload(url, filename) {
+    fetch(url)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error("Network response was not ok");
+            }
+            return response.blob();
+        })
+        .then(blob => {
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = blobUrl;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            window.URL.revokeObjectURL(blobUrl);
+        })
+        .catch(err => console.error('Download error:', err));
+}
+
 // Function to load the IGC Submissions section.
 function loadIGCSubmissionsSection(parentContainer) {
     // Create a container for the IGC Submissions section.
@@ -314,7 +336,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                     tableHtml += `
                         <tr>
                             <td>
-                                <a href="${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
+                                <a href="#" onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc', '${record.IGCKey}.igc'); return false;">
                                     ${record.IGCKey}
                                 </a>
                             </td>
