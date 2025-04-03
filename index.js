@@ -268,6 +268,11 @@ function forceDownload(url, filename) {
         .catch(err => console.error('Download error:', err));
 }
 
+function switchToMapAndSelectTask(entrySeqID) {
+    TB.switchTab('mapTab'); 
+    TB.tbm.selectTaskFromURL(entrySeqID); 
+}
+
 function loadAccountInfo() {
     TB.getUserConnectionInfo().then(info => {
         const accountContent = document.getElementById('account-content');
