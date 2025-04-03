@@ -1377,7 +1377,7 @@ class TaskBrowser {
                     },
                     {
                         data: 'IGCRecordDateTimeUTC',
-                        title: 'UTC',
+                        title: 'Created on',
                         name: 'IGCRecordDateTimeUTC',
                         render: function (data, type, row) {
                             return tb.formatSimDateTime(data, true, false, true, true, true);
