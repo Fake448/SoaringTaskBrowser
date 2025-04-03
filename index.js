@@ -337,7 +337,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${record.IGCUploadDateTimeUTC}</td>
+                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true) }</td>
                             <td>
                                 <a href="${TB.wsgRoot}index.html?task=${record.EntrySeqID}" target="_blank">
                                     ${record.EntrySeqID}
