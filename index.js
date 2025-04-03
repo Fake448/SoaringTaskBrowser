@@ -269,8 +269,8 @@ function forceDownload(url, filename) {
 }
 
 function switchToMapAndSelectTask(entrySeqID) {
-    TB.switchTab('mapTab'); 
-    TB.tbm.selectTaskFromURL(entrySeqID); 
+    TB.switchTab('mapTab');
+    TB.tbm.selectTaskFromURL(entrySeqID);
 }
 
 function loadAccountInfo() {
@@ -342,7 +342,7 @@ function refreshIGCSubmissionsContent() {
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true) }</td>
+                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true)}</td>
                             <td>
                                 <a href="#" onclick="switchToMapAndSelectTask(${record.EntrySeqID}); return false;">
                                   ${record.EntrySeqID}
@@ -361,11 +361,14 @@ function refreshIGCSubmissionsContent() {
                             </td>
                             <td>
                                 <button class="igc-button-style download-igc" data-entry="${record.IGCKey}" 
-                                  onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc', '${record.IGCKey}.igc'); return false;">
-                                  Download
+                                  onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc', '${record.IGCKey}.igc'); return false;"
+                                  title="Download this IGC file">
+                                  <img src="images/IGCDownload.png" alt="Download" style="height:20px; vertical-align:middle;">
                                 </button>
-                                <button class="igc-button-style save-comment" data-entry="${record.IGCKey}" disabled>Save</button>
-                                <button class="igc-button-style delete-igc" data-entry="${record.IGCKey}">Delete</button>
+                                <button class="igc-button-style save-comment" data-entry="${record.IGCKey}" disabled title="Save comment">
+                                  <img src="images/ApplyChanges.png" alt="Save" style="height:20px; vertical-align:middle;">
+                                </button>
+                                <button class="igc-button-style delete-igc" data-entry="${record.IGCKey}" title="Delete this IGC record">🗑️</button>
                             </td>
                         </tr>
                     `;
@@ -397,7 +400,7 @@ function refreshIGCSubmissionsContent() {
                     { targets: 6, width: "1px" },    // Version: narrow
                     { targets: 7, width: "40px" },   // Sim: narrow
                     // Column 8 (Comment) is left flexible.
-                    { targets: 9, width: "170px" }   // Actions: fixed width for buttons
+                    { targets: 9, width: "110px" }   // Actions: fixed width for buttons
                 ],
                 initComplete: function () {
                     // Locate the filter container (which holds the search box)
