@@ -246,31 +246,6 @@ function loadTabContent(tabId) {
     }
 }
 
-function loadAccountInfo() {
-    TB.getUserConnectionInfo().then(info => {
-        const accountContent = document.getElementById('account-content');
-        if (info.loggedIn) {
-            accountContent.innerHTML = `
-                <h3>Welcome, ${info.user.displayName}!</h3>
-                <p>Avatar:<br>
-                    <img src="${info.user.avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
-                </p>
-                <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
-            `;
-
-            // Load the IGC Submissions section.
-            loadIGCSubmissionsSection(accountContent);
-
-            // Additional sections can be added here by calling their respective functions.
-        } else {
-            accountContent.innerHTML = `
-                <p>You are not logged in.</p>
-                <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
-            `;
-        }
-    });
-}
-
 function forceDownload(url, filename) {
     fetch(url)
         .then(response => {
@@ -293,18 +268,43 @@ function forceDownload(url, filename) {
         .catch(err => console.error('Download error:', err));
 }
 
-function loadIGCSubmissionsSection(parentContainer) {
-    // Create a container for the IGC Submissions section.
-    const igcContainer = document.createElement('div');
-    igcContainer.id = "igc-submissions";
-    parentContainer.appendChild(igcContainer);
+function loadAccountInfo() {
+    TB.getUserConnectionInfo().then(info => {
+        const accountContent = document.getElementById('account-content');
+        if (info.loggedIn) {
+            accountContent.innerHTML = `
+                <h3>Welcome, ${info.user.displayName}!</h3>
+                <p>Avatar:<br>
+                    <img src="${info.user.avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
+                </p>
+                <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
+            `;
 
-    // Generate the collapsible section with placeholder content.
-    TB.generateCollapsibleSection(
-        "IGC Submissions",
-        `<div id="igc-submissions-content">Loading...</div>`,
-        igcContainer
-    );
+            // Create the skeleton for the IGC Submissions section.
+            createSectionSkeleton("IGC Submissions", "igc-submissions", "igc-submissions-content", accountContent);
+            // Load data into that section.
+            refreshIGCSubmissionsContent();
+
+
+        } else {
+            accountContent.innerHTML = `
+                <p>You are not logged in.</p>
+                <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
+            `;
+        }
+    });
+}
+
+function createSectionSkeleton(title, sectionId, contentId, parentContainer) {
+    const sectionContainer = document.createElement('div');
+    sectionContainer.id = sectionId;
+    parentContainer.appendChild(sectionContainer);
+    // TB.generateCollapsibleSection builds the collapsible UI with a placeholder.
+    TB.generateCollapsibleSection(title, `<div id="${contentId}">Loading...</div>`, sectionContainer);
+}
+function refreshIGCSubmissionsContent() {
+    const contentDiv = document.getElementById('igc-submissions-content');
+    contentDiv.innerHTML = 'Loading...';
 
     // Fetch IGC submissions data for the logged in user.
     fetch('php/FetchUserIGCSubmissions.php')
@@ -391,9 +391,35 @@ function loadIGCSubmissionsSection(parentContainer) {
                     { targets: 5, width: "80px" },   // Class: moderate
                     { targets: 6, width: "1px" },    // Version: narrow
                     { targets: 7, width: "40px" },   // Sim: narrow
-                    // Comment (index 8) is left flexible.
+                    // Column 8 (Comment) is left flexible.
                     { targets: 9, width: "170px" }   // Actions: fixed width for buttons
-                ]
+                ],
+                initComplete: function () {
+                    // Locate the filter container (which holds the search box)
+                    var tableWrapper = $(this.api().table().container());
+                    var filterDiv = tableWrapper.find('div.dataTables_filter');
+                    // Make the filter area a flex container
+                    filterDiv.css({
+                        display: 'flex',
+                        'align-items': 'center',
+                        'justify-content': 'flex-start', // so the search label+input stays on the right
+                        'width': '100%'                // ensure it spans enough space
+                    });
+                    // Create the "Refresh" button
+                    var refreshBtn = $('<button>')
+                        .attr('id', 'refreshIGCBtn')
+                        .addClass('igc-button-style')
+                        .css({
+                            'margin-right': 'auto', // Pushes the search box to the right
+                            'margin-left': '0'
+                        })
+                        .text('Refresh')
+                        .on('click', function () {
+                            refreshIGCSubmissionsContent();
+                        });
+                    // Prepend the button so it appears to the left of the search box
+                    filterDiv.prepend(refreshBtn);
+                }
             });
 
             // Attach event listener to update Save button state when comment changes.
