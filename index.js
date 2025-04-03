@@ -319,7 +319,7 @@ function refreshIGCSubmissionsContent() {
                 <table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Uploaded on</th>
+                            <th>Created on</th>
                             <th>Task</th>
                             <th>Pilot</th>
                             <th>Glider</th>
@@ -336,13 +336,11 @@ function refreshIGCSubmissionsContent() {
 
             if (data.length > 0) {
                 data.forEach(record => {
-                    // Remove "MSFS " from the Sim value if present.
-                    const simValue = record.Sim.replace("MSFS ", "MS");
                     // Save original comment value
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true)}</td>
+                            <td>${TB.formatSimDateTime(record.IGCRecordDateTimeUTC, true, false, true, true, true)}</td>
                             <td>
                                 <a href="#" onclick="switchToMapAndSelectTask(${record.EntrySeqID}); return false;">
                                   ${record.EntrySeqID}
@@ -353,7 +351,7 @@ function refreshIGCSubmissionsContent() {
                             <td>${record.CompetitionID}</td>
                             <td>${record.CompetitionClass}</td>
                             <td>${record.NB21Version}</td>
-                            <td>${simValue}</td>
+                            <td>${record.Sim}</td>
                             <td>
                                 <input type="text" value="${originalComment}" 
                                        class="comment-input" data-entry="${record.IGCKey}"
@@ -391,7 +389,7 @@ function refreshIGCSubmissionsContent() {
                 order: [[0, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
                 columnDefs: [
-                    { targets: 0, width: "170px" },  // UTC Upload: fixed wide
+                    { targets: 0, width: "140px" },  // Created: fixed wide
                     { targets: 1, width: "1px" },    // Task: narrow
                     { targets: 2, width: "100px" },  // Pilot: moderate
                     { targets: 3, width: "100px" },  // Glider: moderate

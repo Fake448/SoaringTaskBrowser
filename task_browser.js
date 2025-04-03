@@ -737,11 +737,13 @@ class TaskBrowser {
         }
     }
 
-    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false, replaceAt = false) {
+    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false, replaceAt = false, abbreviateMonth = false) {
         const timeFormat = this.userSettings.timeFormat || 'usa';
+        // Use "short" for abbreviated months, "long" otherwise.
+        const monthFormat = abbreviateMonth ? 'short' : 'long';
         const options = includeYear
-            ? { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' }
-            : { month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' };
+            ? { year: 'numeric', month: monthFormat, day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' }
+            : { month: monthFormat, day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' };
 
         let date = new Date(simDateTime);
         if (convertToLocal) {
@@ -750,9 +752,9 @@ class TaskBrowser {
 
         let formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
         if (replaceAt) {
-            // Replace " at " with a single space.
             formattedDate = formattedDate.replace(' at ', ' ');
         }
+
         return appendLocalInMSFS ? formattedDate + ' local in MSFS' : formattedDate;
     }
 
@@ -1373,7 +1375,14 @@ class TaskBrowser {
                             return `<input type="checkbox" class="igc-select-checkbox" data-key="${row.IGCKey}">`;
                         }
                     },
-                    { data: 'IGCRecordDateTimeUTC', title: 'UTC', name: 'IGCRecordDateTimeUTC' },
+                    {
+                        data: 'IGCRecordDateTimeUTC',
+                        title: 'Created on',
+                        name: 'IGCRecordDateTimeUTC',
+                        render: function (data, type, row) {
+                            return tb.formatSimDateTime(data, true, false, true, true, true);
+                        }
+                    },
                     { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
                     { data: 'GliderType', title: 'Glider', name: 'GliderType' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
@@ -1402,16 +1411,14 @@ class TaskBrowser {
                 },
                 initComplete: function () {
                     // Move the search box, then prepend our custom button
-                    // DataTables places the filter box in a container with an ID like "#igcRecordsTable_filter"
                     const tableWrapper = $(this.api().table().container());
-                    const filterDiv = tableWrapper.find('div.dataTables_filter');  // The "Search" container
+                    const filterDiv = tableWrapper.find('div.dataTables_filter');
 
-                    // Make the filter area a flex container
                     filterDiv.css({
                         display: 'flex',
                         'align-items': 'center',
-                        'justify-content': 'flex-start', // so the search label+input stays on the right
-                        'width': '100%'                // ensure it spans enough space
+                        'justify-content': 'flex-start',
+                        'width': '100%'
                     });
 
                     // Create the "Analyze Selected" button
@@ -1419,31 +1426,21 @@ class TaskBrowser {
                         .attr('id', 'analyzeIGCBtn')
                         .addClass('igc-button-style')
                         .css({
-                            'margin-right': 'auto',   // push the search box to the far right
-                            'margin-left': '0'       // ensure no extra margin on the left
+                            'margin-right': 'auto',
+                            'margin-left': '0'
                         })
                         .text('Analyze Selected')
                         .on('click', function () {
-                            // Gather selected keys
                             const selectedKeys = [];
                             $('.igc-select-checkbox:checked').each(function () {
                                 selectedKeys.push($(this).data('key'));
                             });
-                            // Call your custom function
                             tb.sendSelectedIGCRecordsToTaskPlanner(selectedKeys);
                         });
 
-                    // Prepend the button to the filterDiv so it appears left of "Search:"
-                    // (You could also append or insert in other ways, depending on your desired layout)
                     filterDiv.prepend(analyzeBtn);
                 }
             });
-
-            // If you need to move the search box or info text to a custom location,
-            // you can do something similar to what you do for the tasks table overlay.
-            // e.g., $("#myCustomDiv").append($("#igcRecordsTable_filter"));
-            // and so on.
-
         }
     }
 

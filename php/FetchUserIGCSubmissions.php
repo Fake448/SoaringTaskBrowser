@@ -22,6 +22,7 @@ try {
                 IGCKey,
                 EntrySeqID,
                 IGCUploadDateTimeUTC,
+                IGCRecordDateTimeUTC,
                 Pilot,
                 GliderType,
                 GliderID,
@@ -39,6 +40,36 @@ try {
     $stmt->bindParam(':wsgUserID', $wsgUserID, PDO::PARAM_STR);
     $stmt->execute();
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // Process each record
+    foreach ($records as &$record) {
+        // Convert IGCRecordDateTimeUTC if it is exactly 12 characters (format: YYMMDDHHMMSS)
+        if (!empty($record['IGCRecordDateTimeUTC']) && strlen($record['IGCRecordDateTimeUTC']) === 12) {
+            $raw = $record['IGCRecordDateTimeUTC'];  // e.g. "241113003550"
+            
+            // Extract YY, MM, DD, HH, mm (we'll ignore seconds for formatting)
+            $yy = (int) substr($raw, 0, 2);
+            $mm = (int) substr($raw, 2, 2);
+            $dd = (int) substr($raw, 4, 2);
+            $HH = (int) substr($raw, 6, 2);
+            $mi = (int) substr($raw, 8, 2);
+            
+            // Convert short year to full year (e.g., 24 becomes 2024)
+            $fullYear = $yy + 2000;
+            
+            // Build a formatted date/time string, e.g. "2024-11-13 00:35"
+            $record['IGCRecordDateTimeUTC'] = sprintf(
+                "%04d-%02d-%02d %02d:%02d",
+                $fullYear, $mm, $dd, $HH, $mi
+            );
+        }
+        
+        // Transform the "Sim" field so that it only returns the year, prefixed by "MS"
+        if (!empty($record['Sim'])) {
+            $record['Sim'] = 'MS' . substr($record['Sim'], -4);
+        }
+    }
+    unset($record); // Good practice after foreach by reference
 
     // Output the records as JSON.
     header('Content-Type: application/json');
