@@ -314,7 +314,7 @@ function refreshIGCSubmissionsContent() {
                 <table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>Upload</th>
+                            <th>Uploaded on</th>
                             <th>Task</th>
                             <th>Pilot</th>
                             <th>Glider</th>
