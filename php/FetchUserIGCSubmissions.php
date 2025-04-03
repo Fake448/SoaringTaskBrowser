@@ -1,6 +1,7 @@
 <?php
-require __DIR__ . '/session_status.php';  // This file sets cookie parameters, starts the session, and restores session data from the cookie if available.
-require __DIR__ . '/CommonFunctions.php';
+// Use the dedicated session restoration file instead of calling session_start() directly.
+require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/CommonFunctions.php';
 
 // Ensure the user is logged in; if not, return an error response.
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
@@ -9,7 +10,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     exit;
 }
 
-// Use the user id stored in the session
+// Use the user id stored in the session.
 $wsgUserID = $_SESSION['user']['id'];
 
 try {
@@ -41,35 +42,35 @@ try {
     $stmt->execute();
     $records = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Process each record
+    // Process each record.
     foreach ($records as &$record) {
-        // Convert IGCRecordDateTimeUTC if it is exactly 12 characters (format: YYMMDDHHMMSS)
+        // Convert IGCRecordDateTimeUTC if it is exactly 12 characters (format: YYMMDDHHMMSS).
         if (!empty($record['IGCRecordDateTimeUTC']) && strlen($record['IGCRecordDateTimeUTC']) === 12) {
             $raw = $record['IGCRecordDateTimeUTC'];  // e.g. "241113003550"
             
-            // Extract YY, MM, DD, HH, mm (we'll ignore seconds for formatting)
+            // Extract YY, MM, DD, HH, mm (ignore seconds for formatting).
             $yy = (int) substr($raw, 0, 2);
             $mm = (int) substr($raw, 2, 2);
             $dd = (int) substr($raw, 4, 2);
             $HH = (int) substr($raw, 6, 2);
             $mi = (int) substr($raw, 8, 2);
             
-            // Convert short year to full year (e.g., 24 becomes 2024)
+            // Convert short year to full year (e.g., 24 becomes 2024).
             $fullYear = $yy + 2000;
             
-            // Build a formatted date/time string, e.g. "2024-11-13 00:35"
+            // Build a formatted date/time string, e.g. "2024-11-13 00:35".
             $record['IGCRecordDateTimeUTC'] = sprintf(
                 "%04d-%02d-%02d %02d:%02d",
                 $fullYear, $mm, $dd, $HH, $mi
             );
         }
         
-        // Transform the "Sim" field so that it only returns the year, prefixed by "MS"
+        // Transform the "Sim" field so that it only returns the year, prefixed by "MS".
         if (!empty($record['Sim'])) {
             $record['Sim'] = 'MS' . substr($record['Sim'], -4);
         }
     }
-    unset($record); // Good practice after foreach by reference
+    unset($record); // Good practice when iterating by reference.
 
     // Output the records as JSON.
     header('Content-Type: application/json');
