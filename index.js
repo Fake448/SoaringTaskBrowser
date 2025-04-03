@@ -257,12 +257,11 @@ function loadAccountInfo() {
                 </p>
                 <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
             `;
-            // Create the IGC Submissions collapsible section with placeholder content.
-            const igcSection = TB.generateCollapsibleSection("IGC Submissions", '<div id="igc-submissions-content">Loading...</div>');
-            accountContent.appendChild(igcSection);
 
-            // Later you can fetch the IGC submissions from FetchUserIGCSubmissions.php
-            // and populate the 'igc-submissions-content' div with a table.
+            // Load the IGC Submissions section.
+            loadIGCSubmissionsSection(accountContent);
+
+            // Additional sections can be added here by calling their respective functions.
         } else {
             accountContent.innerHTML = `
                 <p>You are not logged in.</p>
@@ -270,6 +269,102 @@ function loadAccountInfo() {
             `;
         }
     });
+}
+
+// Function to load the IGC Submissions section.
+function loadIGCSubmissionsSection(parentContainer) {
+    // Create a container for the IGC Submissions section.
+    const igcContainer = document.createElement('div');
+    igcContainer.id = "igc-submissions";
+    parentContainer.appendChild(igcContainer);
+
+    // Generate the collapsible section with placeholder content.
+    TB.generateCollapsibleSection(
+        "IGC Submissions",
+        `<div id="igc-submissions-content">Loading...</div>`,
+        igcContainer
+    );
+
+    // Fetch the IGC submissions data from the PHP endpoint.
+    fetch('php/FetchUserIGCSubmissions.php')
+        .then(response => response.json())
+        .then(data => {
+            let tableHtml = `
+                <table id="igcTable">
+                    <thead>
+                        <tr>
+                            <th>IGCKey</th>
+                            <th>EntrySeqID</th>
+                            <th>IGCUploadDateTimeUTC</th>
+                            <th>Pilot</th>
+                            <th>GliderType</th>
+                            <th>GliderID</th>
+                            <th>CompetitionID</th>
+                            <th>CompetitionClass</th>
+                            <th>NB21Version</th>
+                            <th>Sim</th>
+                            <th>WSGUserID</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            if (data.length > 0) {
+                data.forEach(record => {
+                    tableHtml += `
+                        <tr>
+                            <td>
+                                <a href="https://siglr.com/DiscordPostHelper/TaskBrowser/IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc" download="${record.IGCKey}.igc">
+                                    ${record.IGCKey}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="https://wesimglide.org/index.html?task=${record.EntrySeqID}" target="_blank">
+                                    ${record.EntrySeqID}
+                                </a>
+                            </td>
+                            <td>${record.IGCUploadDateTimeUTC}</td>
+                            <td>${record.Pilot}</td>
+                            <td>${record.GliderType}</td>
+                            <td>${record.GliderID}</td>
+                            <td>${record.CompetitionID}</td>
+                            <td>${record.CompetitionClass}</td>
+                            <td>${record.NB21Version}</td>
+                            <td>${record.Sim}</td>
+                            <td>${record.WSGUserID}</td>
+                            <td>
+                                <span class="editable-comment" data-entry="${record.EntrySeqID}">${record.Comment}</span>
+                                <button class="edit-comment">Edit</button>
+                                <button class="save-comment" style="display:none;">Save</button>
+                                <button class="delete-igc">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } else {
+                tableHtml += `<tr><td colspan="12">No IGC records found.</td></tr>`;
+            }
+
+            tableHtml += `
+                    </tbody>
+                </table>
+            `;
+
+            document.getElementById('igc-submissions-content').innerHTML = tableHtml;
+
+            // Optionally, initialize DataTables here if needed.
+            // $(document).ready(function() {
+            //     $('#igcTable').DataTable({
+            //         "pageLength": 100,
+            //         "order": [[2, "desc"]]
+            //     });
+            // });
+        })
+        .catch(err => {
+            document.getElementById('igc-submissions-content').innerHTML = `<p>Error loading IGC submissions.</p>`;
+            console.error('Error fetching IGC submissions:', err);
+        });
 }
 
 function addScrollEventListeners() {
