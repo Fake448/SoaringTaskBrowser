@@ -342,7 +342,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                     `;
                 });
             } else {
-                tableHtml += `<tr><td colspan="13">No IGC records found.</td></tr>`;
+                tableHtml += `<tr><td colspan="11">No IGC records found.</td></tr>`;
             }
 
             tableHtml += `
@@ -352,13 +352,12 @@ function loadIGCSubmissionsSection(parentContainer) {
 
             document.getElementById('igc-submissions-content').innerHTML = tableHtml;
 
-            // If you want to initialize DataTables on the table, you can uncomment and adjust the code below:
-            // $(document).ready(function() {
-            //     $('#igcRecordsTable').DataTable({
-            //         "pageLength": 100,
-            //         "order": [[2, "desc"]]
-            //     });
-            // });
+            // Initialize the DataTable for a full datagrid experience (search, sort, pagination, etc.)
+            $('#igcRecordsTable').DataTable({
+                pageLength: 100,
+                order: [[2, "desc"]],
+                dom: '<"top"f>rt<"bottom"lip><"clear">'
+            });
         })
         .catch(err => {
             document.getElementById('igc-submissions-content').innerHTML = `<p>Error loading IGC submissions.</p>`;
