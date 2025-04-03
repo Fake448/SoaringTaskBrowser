@@ -737,7 +737,7 @@ class TaskBrowser {
         }
     }
 
-    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false) {
+    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false, replaceAt = false) {
         const timeFormat = this.userSettings.timeFormat || 'usa';
         const options = includeYear
             ? { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' }
@@ -748,7 +748,11 @@ class TaskBrowser {
             date = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)); // Convert to local time
         }
 
-        const formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
+        let formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
+        if (replaceAt) {
+            // Replace " at " with a single space.
+            formattedDate = formattedDate.replace(' at ', ' ');
+        }
         return appendLocalInMSFS ? formattedDate + ' local in MSFS' : formattedDate;
     }
 

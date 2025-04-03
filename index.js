@@ -294,26 +294,6 @@ function forceDownload(url, filename) {
 }
 
 function loadIGCSubmissionsSection(parentContainer) {
-    // Helper: Convert a UTC date string to a formatted local date/time.
-    function formatUTCToLocal(utcDateString) {
-        // Create a Date object (assumes utcDateString is in a format recognized as UTC)
-        let date = new Date(utcDateString);
-        // Use the user settings to choose 12h (usa) or 24h format.
-        let timeFormat = TB.userSettings.timeFormat; // "usa" means 12-hour clock.
-        // Format the date part.
-        let datePart = date.toLocaleDateString(undefined, {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric'
-        });
-        // Format the time part.
-        let timePart = date.toLocaleTimeString(undefined, {
-            hour: '2-digit',
-            minute: '2-digit',
-            hour12: timeFormat === 'usa'
-        });
-        return datePart + ' - ' + timePart;
-    }
 
     // Create a container for the IGC Submissions section.
     const igcContainer = document.createElement('div');
@@ -335,7 +315,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                 <table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                     <thead>
                         <tr>
-                            <th>UTC Upload</th>
+                            <th>Upload</th>
                             <th>Task</th>
                             <th>Pilot</th>
                             <th>Glider</th>
@@ -357,7 +337,7 @@ function loadIGCSubmissionsSection(parentContainer) {
 
                     tableHtml += `
                         <tr>
-                            <td>${formatUTCToLocal(record.IGCUploadDateTimeUTC)}</td>
+                            <td>${TB.formatSimDateTime(record.IGCUploadDateTimeUTC, true, false, true, true)}</td>
                             <td>
                                 <a href="${TB.wsgRoot}index.html?task=${record.EntrySeqID}" target="_blank">
                                     ${record.EntrySeqID}
@@ -402,7 +382,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                 order: [[0, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
                 columnDefs: [
-                    { targets: 0, width: "150px" },  // UTC Upload: fixed wide
+                    { targets: 0, width: "170px" },  // Upload date
                     { targets: 1, width: "1px" },    // Task: narrow
                     { targets: 2, width: "100px" },  // Pilot: moderate
                     { targets: 3, width: "100px" },  // Glider: moderate
