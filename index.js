@@ -351,16 +351,16 @@ function loadIGCSubmissionsSection(parentContainer) {
                             <td>${simValue}</td>
                             <td>
                                 <input type="text" value="${originalComment}" 
-                                       class="comment-input" data-entry="${record.EntrySeqID}"
+                                       class="comment-input" data-entry="${record.IGCKey}"
                                        data-original="${originalComment}" style="width: 95%;">
                             </td>
                             <td>
-                                <button class="igc-button-style download-igc" data-entry="${record.EntrySeqID}" 
+                                <button class="igc-button-style download-igc" data-entry="${record.IGCKey}" 
                                   onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${record.EntrySeqID}/${encodeURIComponent(record.IGCKey)}.igc', '${record.IGCKey}.igc'); return false;">
                                   Download
                                 </button>
-                                <button class="igc-button-style save-comment" data-entry="${record.EntrySeqID}" disabled>Save</button>
-                                <button class="igc-button-style delete-igc" data-entry="${record.EntrySeqID}">Delete</button>
+                                <button class="igc-button-style save-comment" data-entry="${record.IGCKey}" disabled>Save</button>
+                                <button class="igc-button-style delete-igc" data-entry="${record.IGCKey}">Delete</button>
                             </td>
                         </tr>
                     `;
