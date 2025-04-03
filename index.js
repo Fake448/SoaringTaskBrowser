@@ -374,11 +374,75 @@ function loadIGCSubmissionsSection(parentContainer) {
 
             document.getElementById('igc-submissions-content').innerHTML = tableHtml;
 
-            // Initialize the DataTable for a full datagrid experience (search, sort, pagination, etc.)
-            $('#userIGCRecordsTable').DataTable({
+            // Initialize the DataTable
+            const dt = $('#userIGCRecordsTable').DataTable({
                 pageLength: 100,
                 order: [[2, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">'
+            });
+
+            // Attach event listener for the Save button
+            $('#userIGCRecordsTable').on('click', '.save-comment', function () {
+                const entryKey = $(this).data('entry');
+                // Find the corresponding comment value from the input
+                const newComment = $(this).closest('tr').find('.comment-input').val();
+
+                // Send the update to the server via POST
+                fetch('php/UpdateIGCComment.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        key: entryKey,
+                        comment: newComment
+                        // Optionally include WSGUserID if needed, e.g. from your session info
+                    })
+                })
+                    .then(response => response.json())
+                    .then(result => {
+                        if (result.success) {
+                            alert('Comment updated successfully!');
+                        } else {
+                            alert('Error updating comment: ' + result.error);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Error updating comment.');
+                    });
+            });
+
+            // Attach event listener for the Delete button
+            $('#userIGCRecordsTable').on('click', '.delete-igc', function () {
+                const entryKey = $(this).data('entry');
+                // Confirm deletion with the user
+                if (confirm("Are you sure you want to delete this IGC submission? This action cannot be undone.")) {
+                    fetch('php/DeleteIGCSubmission.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            key: entryKey
+                            // Optionally include WSGUserID if needed
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(result => {
+                            if (result.success) {
+                                alert('Submission deleted successfully!');
+                                // Remove the row from the DataTable
+                                dt.row($(this).closest('tr')).remove().draw();
+                            } else {
+                                alert('Error deleting submission: ' + result.error);
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('Error deleting submission.');
+                        });
+                }
             });
         })
         .catch(err => {
