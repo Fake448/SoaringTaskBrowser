@@ -737,11 +737,13 @@ class TaskBrowser {
         }
     }
 
-    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false, replaceAt = false) {
+    formatSimDateTime(simDateTime, includeYear, appendLocalInMSFS = true, convertToLocal = false, replaceAt = false, abbreviateMonth = false) {
         const timeFormat = this.userSettings.timeFormat || 'usa';
+        // Use "short" for abbreviated months, "long" otherwise.
+        const monthFormat = abbreviateMonth ? 'short' : 'long';
         const options = includeYear
-            ? { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' }
-            : { month: 'long', day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' };
+            ? { year: 'numeric', month: monthFormat, day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' }
+            : { month: monthFormat, day: 'numeric', hour: 'numeric', minute: 'numeric', hour12: timeFormat === 'usa' };
 
         let date = new Date(simDateTime);
         if (convertToLocal) {
@@ -750,9 +752,9 @@ class TaskBrowser {
 
         let formattedDate = new Intl.DateTimeFormat('en-US', options).format(date);
         if (replaceAt) {
-            // Replace " at " with a single space.
             formattedDate = formattedDate.replace(' at ', ' ');
         }
+
         return appendLocalInMSFS ? formattedDate + ' local in MSFS' : formattedDate;
     }
 
@@ -1378,7 +1380,7 @@ class TaskBrowser {
                         title: 'UTC',
                         name: 'IGCRecordDateTimeUTC',
                         render: function (data, type, row) {
-                            return tb.formatSimDateTime(data, true, false, true, true);
+                            return tb.formatSimDateTime(data, true, false, true, true, true);
                         }
                     },
                     { data: 'Pilot', title: 'Pilot', name: 'Pilot' },

@@ -340,7 +340,7 @@ function refreshIGCSubmissionsContent() {
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
                         <tr>
-                            <td>${TB.formatSimDateTime(record.IGCRecordDateTimeUTC, true, false, true, true)}</td>
+                            <td>${TB.formatSimDateTime(record.IGCRecordDateTimeUTC, true, false, true, true, true)}</td>
                             <td>
                                 <a href="#" onclick="switchToMapAndSelectTask(${record.EntrySeqID}); return false;">
                                   ${record.EntrySeqID}
@@ -389,7 +389,7 @@ function refreshIGCSubmissionsContent() {
                 order: [[0, "desc"]],
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
                 columnDefs: [
-                    { targets: 0, width: "170px" },  // UTC Upload: fixed wide
+                    { targets: 0, width: "140px" },  // Created: fixed wide
                     { targets: 1, width: "1px" },    // Task: narrow
                     { targets: 2, width: "100px" },  // Pilot: moderate
                     { targets: 3, width: "100px" },  // Glider: moderate
