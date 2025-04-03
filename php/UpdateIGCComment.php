@@ -4,24 +4,25 @@ require __DIR__ . '/CommonFunctions.php';
 header('Content-Type: application/json');
 
 try {
-    // Check required POST parameters.
-    if (!isset($_POST['IGCKey']) || trim($_POST['IGCKey']) === "") {
+    // Read raw JSON input
+    $jsonData = json_decode(file_get_contents('php://input'), true);
+
+    // Validate required fields
+    if (!isset($jsonData['IGCKey']) || trim($jsonData['IGCKey']) === "") {
         throw new Exception("Missing required field: IGCKey");
     }
-    if (!isset($_POST['Comment'])) {
+    if (!isset($jsonData['Comment'])) {
         throw new Exception("Missing required field: Comment");
     }
     
-    $IGCKey = trim($_POST['IGCKey']);
-    $newComment = trim($_POST['Comment']);
+    $IGCKey = trim($jsonData['IGCKey']);
+    $newComment = trim($jsonData['Comment']);
     
     // Open the database connection.
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
     
-    // Optionally, you could check here if a record with the given IGCKey exists.
-    // For brevity, we proceed directly to update.
-    
+    // Update the comment for the given IGCKey.
     $updateQuery = "UPDATE IGCRecords SET Comment = :comment WHERE IGCKey = :igcKey";
     $stmt = $pdo->prepare($updateQuery);
     $stmt->bindParam(':comment', $newComment, PDO::PARAM_STR);
