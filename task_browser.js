@@ -1402,7 +1402,6 @@ class TaskBrowser {
                 },
                 initComplete: function () {
                     // Move the search box, then prepend our custom button
-                    // DataTables places the filter box in a container with an ID like "#igcRecordsTable_filter"
                     const tableWrapper = $(this.api().table().container());
                     const filterDiv = tableWrapper.find('div.dataTables_filter');  // The "Search" container
 
