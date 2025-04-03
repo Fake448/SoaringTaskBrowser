@@ -336,8 +336,6 @@ function refreshIGCSubmissionsContent() {
 
             if (data.length > 0) {
                 data.forEach(record => {
-                    // Remove "MSFS " from the Sim value if present.
-                    const simValue = record.Sim.replace("MSFS ", "MS");
                     // Save original comment value
                     const originalComment = record.Comment ? record.Comment : '';
                     tableHtml += `
@@ -353,7 +351,7 @@ function refreshIGCSubmissionsContent() {
                             <td>${record.CompetitionID}</td>
                             <td>${record.CompetitionClass}</td>
                             <td>${record.NB21Version}</td>
-                            <td>${simValue}</td>
+                            <td>${record.Sim}</td>
                             <td>
                                 <input type="text" value="${originalComment}" 
                                        class="comment-input" data-entry="${record.IGCKey}"
