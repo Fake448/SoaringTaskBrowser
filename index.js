@@ -447,7 +447,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                     const formData = new URLSearchParams();
                     formData.append('IGCKey', entryKey);
 
-                    fetch('php/DeleteIGCSubmission.php', {
+                    fetch('php/DeleteIGCRecord.php', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/x-www-form-urlencoded'
