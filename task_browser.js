@@ -1377,10 +1377,15 @@ class TaskBrowser {
                     },
                     {
                         data: 'IGCRecordDateTimeUTC',
-                        title: 'Created on',
+                        title: 'UTC',
                         name: 'IGCRecordDateTimeUTC',
-                        render: function (data, type, row) {
-                            return tb.formatSimDateTime(data, true, false, true, true, true);
+                        render: function (data, type, row, meta) {
+                            if (type === 'display') {
+                                // Return the formatted date (you can pass your optional parameters as needed)
+                                return TB.formatSimDateTime(data, true, false, true, true, true);
+                            }
+                            // For sorting and filtering, return the raw data.
+                            return data;
                         }
                     },
                     { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
