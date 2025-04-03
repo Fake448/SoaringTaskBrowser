@@ -400,7 +400,7 @@ function refreshIGCSubmissionsContent() {
                     { targets: 6, width: "1px" },    // Version: narrow
                     { targets: 7, width: "40px" },   // Sim: narrow
                     // Column 8 (Comment) is left flexible.
-                    { targets: 9, width: "170px" }   // Actions: fixed width for buttons
+                    { targets: 9, width: "110px" }   // Actions: fixed width for buttons
                 ],
                 initComplete: function () {
                     // Locate the filter container (which holds the search box)
