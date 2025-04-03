@@ -394,17 +394,16 @@ function loadIGCSubmissionsSection(parentContainer) {
                         'Content-Type': 'application/json'
                     },
                     body: JSON.stringify({
-                        key: entryKey,
-                        comment: newComment
-                        // Optionally include WSGUserID if needed, e.g. from your session info
+                        IGCKey: entryKey,
+                        Comment: newComment
                     })
                 })
                     .then(response => response.json())
                     .then(result => {
-                        if (result.success) {
+                        if (result.status === 'success') {
                             alert('Comment updated successfully!');
                         } else {
-                            alert('Error updating comment: ' + result.error);
+                            alert('Error updating comment: ' + (result.message || result.error));
                         }
                     })
                     .catch(error => {
@@ -416,26 +415,26 @@ function loadIGCSubmissionsSection(parentContainer) {
             // Attach event listener for the Delete button
             $('#userIGCRecordsTable').on('click', '.delete-igc', function () {
                 const entryKey = $(this).data('entry');
-                // Confirm deletion with the user
                 if (confirm("Are you sure you want to delete this IGC submission? This action cannot be undone.")) {
+                    // Prepare URL-encoded form data
+                    const formData = new URLSearchParams();
+                    formData.append('IGCKey', entryKey);
+
                     fetch('php/DeleteIGCSubmission.php', {
                         method: 'POST',
                         headers: {
-                            'Content-Type': 'application/json'
+                            'Content-Type': 'application/x-www-form-urlencoded'
                         },
-                        body: JSON.stringify({
-                            key: entryKey
-                            // Optionally include WSGUserID if needed
-                        })
+                        body: formData.toString()
                     })
                         .then(response => response.json())
                         .then(result => {
-                            if (result.success) {
-                                alert('Submission deleted successfully!');
+                            if (result.status === 'success') {
+                                alert(result.message);
                                 // Remove the row from the DataTable
                                 dt.row($(this).closest('tr')).remove().draw();
                             } else {
-                                alert('Error deleting submission: ' + result.error);
+                                alert('Error deleting submission: ' + (result.message || result.error));
                             }
                         })
                         .catch(error => {
