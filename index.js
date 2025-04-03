@@ -401,7 +401,6 @@ function loadIGCSubmissionsSection(parentContainer) {
                     .then(response => response.json())
                     .then(result => {
                         if (result.status === 'success') {
-                            alert('Comment updated successfully!');
                         } else {
                             alert('Error updating comment: ' + (result.message || result.error));
                         }
@@ -416,7 +415,7 @@ function loadIGCSubmissionsSection(parentContainer) {
             $('#userIGCRecordsTable').on('click', '.delete-igc', function () {
                 const entryKey = $(this).data('entry');
                 if (confirm("Are you sure you want to delete this IGC submission? This action cannot be undone.")) {
-                    // Prepare URL-encoded form data
+                    // Build URL-encoded form data
                     const formData = new URLSearchParams();
                     formData.append('IGCKey', entryKey);
 
@@ -430,11 +429,10 @@ function loadIGCSubmissionsSection(parentContainer) {
                         .then(response => response.json())
                         .then(result => {
                             if (result.status === 'success') {
-                                alert(result.message);
-                                // Remove the row from the DataTable
+                                // Remove the row from the DataTable (assuming dt is your DataTable instance)
                                 dt.row($(this).closest('tr')).remove().draw();
                             } else {
-                                alert('Error deleting submission: ' + (result.message || result.error));
+                                alert('Error deleting submission: ' + (result.error || result.message));
                             }
                         })
                         .catch(error => {
