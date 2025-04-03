@@ -285,12 +285,12 @@ function loadIGCSubmissionsSection(parentContainer) {
         igcContainer
     );
 
-    // Fetch the IGC submissions data from the PHP endpoint.
+    // Fetch IGC submissions data for the logged in user.
     fetch('php/FetchUserIGCSubmissions.php')
         .then(response => response.json())
         .then(data => {
             let tableHtml = `
-                <table id="igcTable">
+                <table id="igcRecordsTable" class="display">
                     <thead>
                         <tr>
                             <th>IGCKey</th>
@@ -305,6 +305,7 @@ function loadIGCSubmissionsSection(parentContainer) {
                             <th>Sim</th>
                             <th>WSGUserID</th>
                             <th>Comment</th>
+                            <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -334,16 +335,18 @@ function loadIGCSubmissionsSection(parentContainer) {
                             <td>${record.Sim}</td>
                             <td>${record.WSGUserID}</td>
                             <td>
-                                <span class="editable-comment" data-entry="${record.EntrySeqID}">${record.Comment}</span>
-                                <button class="edit-comment">Edit</button>
-                                <button class="save-comment" style="display:none;">Save</button>
-                                <button class="delete-igc">Delete</button>
+                                <input type="text" value="${record.Comment ? record.Comment : ''}" 
+                                       class="comment-input" data-entry="${record.EntrySeqID}" style="width: 100%;">
+                            </td>
+                            <td>
+                                <button class="igc-button-style save-comment" data-entry="${record.EntrySeqID}">Save</button>
+                                <button class="igc-button-style delete-igc" data-entry="${record.EntrySeqID}">Delete</button>
                             </td>
                         </tr>
                     `;
                 });
             } else {
-                tableHtml += `<tr><td colspan="12">No IGC records found.</td></tr>`;
+                tableHtml += `<tr><td colspan="13">No IGC records found.</td></tr>`;
             }
 
             tableHtml += `
@@ -353,9 +356,9 @@ function loadIGCSubmissionsSection(parentContainer) {
 
             document.getElementById('igc-submissions-content').innerHTML = tableHtml;
 
-            // Optionally, initialize DataTables here if needed.
+            // If you want to initialize DataTables on the table, you can uncomment and adjust the code below:
             // $(document).ready(function() {
-            //     $('#igcTable').DataTable({
+            //     $('#igcRecordsTable').DataTable({
             //         "pageLength": 100,
             //         "order": [[2, "desc"]]
             //     });
