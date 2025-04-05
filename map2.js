@@ -598,8 +598,6 @@
         // 1. The previous (if any) selected task's normal unselected polyline should be drawn (and the detailed task rendering removed)
         tbm.resetPolylines();
 
-        tbm.clearIGCTracklogs();
-
         // 2. Render the detailed task and remove the regular polyline
         tbm.currentEntrySeqID = entrySeqID; // Track the EntrySeqID
         if (tbm.api_tasks[entrySeqID] == undefined) {
@@ -613,6 +611,7 @@
 
         if (realSelection) {
             // 3. Zoom in on the task if specified or if task bounds outside current map bounds
+            tbm.clearIGCTracklogs();
             let taskBounds = tbm.b21_task.get_bounds();
             let mapBounds = tbm.map.getBounds();
             let containsBounds = mapBounds.contains(taskBounds);
@@ -825,7 +824,6 @@
             const polyline = tbm.igcTrackCache[key];
             if (tbm.map.hasLayer(polyline)) {
                 tbm.map.removeLayer(polyline);
-                console.log(`Removed track for IGCKey ${key} from the map.`);
             }
         });
         tbm.igcTrackCache = {};
