@@ -1805,7 +1805,7 @@ class TaskBrowser {
         let tb = this;
 
         // Construct the file download URL
-        const url = `${tb.discordPostHelperTaskBrowserPath}TaskBrowser/IGCFiles/${EntrySeqID}/${IGCKey}.igc`;
+        const url = `${tb.discordPostHelperTaskBrowserPath}IGCFiles/${EntrySeqID}/${IGCKey}.igc`;
 
         // Fetch the file and handle the download
         fetch(url)
