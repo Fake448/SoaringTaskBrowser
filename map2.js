@@ -776,16 +776,26 @@ class TaskBrowserMap {
     deselectTask() {
         let tbm = this;
 
-        // Reset the style of the current selected polyline
+        // Clear any tracklogs from the map and the cache.
+        Object.keys(tbm.igcTrackCache).forEach(key => {
+            const polyline = tbm.igcTrackCache[key];
+            if (map.hasLayer(polyline)) {
+                map.removeLayer(polyline);
+                console.log(`Removed track for IGCKey ${key} from the map.`);
+            }
+        });
+        tbm.igcTrackCache = {};
+        tbm.currentIGCCacheEntrySeqID = null;
+
+        // Reset the style of the current selected polyline.
         if (tbm.currentPolyline) {
             tbm.currentPolyline.setStyle({ color: '#ff7800', weight: tbm.defWeight });
             tbm.currentPolyline.options.selected = false;
         }
-
         tbm.currentEntrySeqID = null;
         tbm.currentPolyline = null;
 
-        // Hide the detailed task rendering if needed
+        // Hide the detailed task rendering if needed.
         if (tbm.b21_task != null) {
             tbm.b21_task.reset();
             tbm.b21_task = null;
@@ -794,12 +804,11 @@ class TaskBrowserMap {
         tbm.tb.clearTaskDetails();
         tbm.tb.deselectGridTask();
 
-        // Hide the task control panel
+        // Hide the task control panel.
         const taskControlPanel = document.getElementById('taskControlPanel');
         taskControlPanel.style.display = 'none';
 
         tbm.showSelectedOnly();
-
     }
 
     showSelectedOnly() {
