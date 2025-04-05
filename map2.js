@@ -170,7 +170,7 @@
         // Cache properties for IGC track logs
         tbm.currentIGCCacheEntrySeqID = null;
         tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
-        const igcParser = {
+        tbm.igcParser = {
             parse: function (igcText) {
                 const fixes = [];
                 const lines = igcText.split(/\r?\n/);
@@ -922,7 +922,6 @@
          console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
 
          if (isChecked) {
-             // If the track is already cached, ensure it's added to the map.
              if (tbm.igcTrackCache[igcKey]) {
                  if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
                      tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
@@ -931,7 +930,6 @@
                      console.log(`Track for IGCKey ${igcKey} is already visible on the map.`);
                  }
              } else {
-                 // Fetch the IGC file using the PHP script.
                  console.log(`Fetching IGC file for IGCKey ${igcKey} and EntrySeqID ${entrySeqID}.`);
                  fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
                      .then(response => {
@@ -942,15 +940,12 @@
                      })
                      .then(igcText => {
                          console.log(`IGC file for IGCKey ${igcKey} loaded.`);
-                         // Parse the IGC text to get the flight fixes.
-                         const igcData = igcParser.parse(igcText);
+                         // Now use the parser attached to tbm
+                         const igcData = tbm.igcParser.parse(igcText);
                          console.log(`Parsed ${igcData.fixes.length} fixes for IGCKey ${igcKey}.`);
                          if (igcData.fixes.length > 0) {
-                             // Create a polyline from the fixes.
                              const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: 'red' });
-                             // Cache the polyline.
                              tbm.igcTrackCache[igcKey] = polyline;
-                             // Add the polyline to the map.
                              polyline.addTo(tbm.map);
                              console.log(`Added polyline for IGCKey ${igcKey} to the map.`);
                          } else {
@@ -962,7 +957,6 @@
                      });
              }
          } else {
-             // If unchecked, remove the track from the map if it exists.
              if (tbm.igcTrackCache[igcKey]) {
                  tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
                  console.log(`Removed polyline for IGCKey ${igcKey} from the map.`);
