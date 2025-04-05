@@ -171,7 +171,7 @@
         tbm.currentIGCCacheEntrySeqID = null;
         tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
         tbm.igcTrackNormalWeight = 2;
-        tbm.igcTrackNormalColor = 'red';
+        tbm.igcTrackNormalColor = 'black';
         tbm.igcTrackHighlightedWeight = 4;
         tbm.igcTrackHighlightedColor = 'red';
         tbm.igcParser = {
