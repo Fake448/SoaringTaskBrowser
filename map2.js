@@ -167,6 +167,10 @@ class TaskBrowserMap {
 
         tbm.setWindCompassVisibility();
 
+        // Cache properties for IGC track logs
+        tbm.currentIGCCacheEntrySeqID = null;
+        tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
+
     }
 
     // Fetch and filter tasks based on current filter settings
@@ -847,4 +851,43 @@ class TaskBrowserMap {
             tbm.taskCountControl._container.innerHTML = `Tasks fetched: ${count}${filterText}`;
         }
     }
+
+    processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+        let tbm = this;
+        // Check if the cache belongs to the current task.
+        if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
+            console.log(`New task detected. Clearing cache for task ${tbm.currentIGCCacheEntrySeqID}.`);
+
+            // Log removal of any cached track layers from the map.
+            Object.keys(tbm.igcTrackCache).forEach(key => {
+                console.log(`Would remove track for IGCKey: ${key} from the map.`);
+            });
+
+            // Clear the cache and update the current task identifier.
+            tbm.igcTrackCache = {};
+            tbm.currentIGCCacheEntrySeqID = entrySeqID;
+        }
+
+        console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
+
+        if (isChecked) {
+            // If the track is already cached, simply ensure it's added to the map.
+            if (tbm.igcTrackCache[igcKey]) {
+                console.log(`Track for IGCKey ${igcKey} is already cached. Would add it to the map if not present.`);
+            } else {
+                // Instead of fetching and parsing, just log what would be done.
+                console.log(`Track for IGCKey ${igcKey} not cached. Would fetch, parse, create polyline, cache it, and add to the map.`);
+                // Simulate caching the track by assigning a dummy value.
+                tbm.igcTrackCache[igcKey] = { dummyPolyline: true };
+            }
+        } else {
+            // If unchecked, remove the track from the map if it exists.
+            if (tbm.igcTrackCache[igcKey]) {
+                console.log(`Checkbox unchecked. Would remove track for IGCKey ${igcKey} from the map.`);
+            } else {
+                console.log(`Checkbox unchecked, but no cached track found for IGCKey ${igcKey}.`);
+            }
+        }
+    }
+
 }
