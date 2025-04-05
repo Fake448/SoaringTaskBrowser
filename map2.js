@@ -170,6 +170,10 @@
         // Cache properties for IGC track logs
         tbm.currentIGCCacheEntrySeqID = null;
         tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
+        tbm.igcTrackNormalWeight = 2;
+        tbm.igcTrackNormalColor = 'red';
+        tbm.igcTrackHighlightedWeight = 4;
+        tbm.igcTrackHighlightedColor = 'red';
         tbm.igcParser = {
             parse: function (igcText) {
                 const fixes = [];
@@ -594,6 +598,8 @@
         // 1. The previous (if any) selected task's normal unselected polyline should be drawn (and the detailed task rendering removed)
         tbm.resetPolylines();
 
+        tbm.clearIGCTracklogs();
+
         // 2. Render the detailed task and remove the regular polyline
         tbm.currentEntrySeqID = entrySeqID; // Track the EntrySeqID
         if (tbm.api_tasks[entrySeqID] == undefined) {
@@ -812,9 +818,7 @@
         });
     }
 
-    deselectTask() {
-        let tbm = this;
-
+    clearIGCTracklogs() {
         // Clear any tracklogs from the map and the cache.
         Object.keys(tbm.igcTrackCache).forEach(key => {
             const polyline = tbm.igcTrackCache[key];
@@ -825,6 +829,12 @@
         });
         tbm.igcTrackCache = {};
         tbm.currentIGCCacheEntrySeqID = null;
+    }
+
+    deselectTask() {
+        let tbm = this;
+
+        tbm.clearIGCTracklogs();
 
         // Reset the style of the current selected polyline.
         if (tbm.currentPolyline) {
@@ -935,7 +945,7 @@
                          // Now use the parser attached to tbm
                          const igcData = tbm.igcParser.parse(igcText);
                          if (igcData.fixes.length > 0) {
-                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: 'red', weight: 1 });
+                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight});
                              tbm.igcTrackCache[igcKey] = polyline;
                              polyline.addTo(tbm.map);
                          } else {

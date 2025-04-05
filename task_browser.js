@@ -1452,7 +1452,10 @@ class TaskBrowser {
                         if (rowData) {
                             let igcKey = rowData.IGCKey;
                             if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
-                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 3 });
+                                tb.tbm.igcTrackCache[igcKey].setStyle({
+                                    weight: tbm.igcTrackHighlightedWeight,
+                                    color: tbm.igcTrackHighlightedColor
+                                });
                             }
                         }
                     });
@@ -1462,7 +1465,10 @@ class TaskBrowser {
                         if (rowData) {
                             let igcKey = rowData.IGCKey;
                             if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
-                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 1 });
+                                tb.tbm.igcTrackCache[igcKey].setStyle({
+                                    weight: tbm.igcTrackNormalWeight,
+                                    color: tbm.igcTrackNormalColor
+                                });
                             }
                         }
                     });
