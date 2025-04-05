@@ -1452,7 +1452,7 @@ class TaskBrowser {
                         if (rowData) {
                             let igcKey = rowData.IGCKey;
                             if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
-                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 4 });
+                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 3 });
                             }
                         }
                     });
