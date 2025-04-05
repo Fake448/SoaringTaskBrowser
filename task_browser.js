@@ -1300,7 +1300,7 @@ class TaskBrowser {
                 // Ensure each add-on has the required fields
                 if (addOn.Name && addOn.URL) {
                     // Determine the emoji based on the add-on type
-                    const typeEmoji = addOn.Type === 0 ? "🆓" : "💵";
+                    const typeEmoji = addOn.Type === 0 || addOn.Type === "0" || addOn.Type === "Freeware" ? "🆓" : "💵";
 
                     // Add a list item for the add-on
                     content += `<li><a href="${addOn.URL}" target="_blank" rel="noopener noreferrer">${addOn.Name}</a> ${typeEmoji}</li>`;
