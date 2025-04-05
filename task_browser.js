@@ -10,6 +10,9 @@ class TaskBrowser {
         tb.discordTasksChannel = "";
         tb.wsgRoot = "";
         tb.isUserConnected = false;
+        // Cache properties for IGC track logs
+        tb.currentIGCCacheEntrySeqID = null;
+        tb.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
     }
 
     init(igcUpload) {
@@ -1415,7 +1418,7 @@ class TaskBrowser {
                         // For each checkbox, call the new processing function
                         $('.igc-select-checkbox').each(function () {
                             const igcKey = $(this).data('key');
-                            processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, checked);
+                            tb.processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, checked);
                         });
                     });
 
@@ -1423,7 +1426,7 @@ class TaskBrowser {
                     $('.igc-select-checkbox').off('change').on('change', function () {
                         const igcKey = $(this).data('key');
                         const isChecked = $(this).is(':checked');
-                        processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, isChecked);
+                        tb.processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, isChecked);
                     });
                 },
                 initComplete: function () {
@@ -1501,8 +1504,40 @@ class TaskBrowser {
     }
 
     processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+        // Check if the cache belongs to the current task.
+        if (this.currentIGCCacheEntrySeqID !== entrySeqID) {
+            console.log(`New task detected. Clearing cache for task ${this.currentIGCCacheEntrySeqID}.`);
+
+            // Log removal of any cached track layers from the map.
+            Object.keys(this.igcTrackCache).forEach(key => {
+                console.log(`Would remove track for IGCKey: ${key} from the map.`);
+            });
+
+            // Clear the cache and update the current task identifier.
+            this.igcTrackCache = {};
+            this.currentIGCCacheEntrySeqID = entrySeqID;
+        }
+
         console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
-        // Later, you'll use these values to load and display/hide the IGC track.
+
+        if (isChecked) {
+            // If the track is already cached, simply ensure it's added to the map.
+            if (this.igcTrackCache[igcKey]) {
+                console.log(`Track for IGCKey ${igcKey} is already cached. Would add it to the map if not present.`);
+            } else {
+                // Instead of fetching and parsing, just log what would be done.
+                console.log(`Track for IGCKey ${igcKey} not cached. Would fetch, parse, create polyline, cache it, and add to the map.`);
+                // Simulate caching the track by assigning a dummy value.
+                this.igcTrackCache[igcKey] = { dummyPolyline: true };
+            }
+        } else {
+            // If unchecked, remove the track from the map if it exists.
+            if (this.igcTrackCache[igcKey]) {
+                console.log(`Checkbox unchecked. Would remove track for IGCKey ${igcKey} from the map.`);
+            } else {
+                console.log(`Checkbox unchecked, but no cached track found for IGCKey ${igcKey}.`);
+            }
+        }
     }
 
     showTaskDetailsStandalone(task) {
