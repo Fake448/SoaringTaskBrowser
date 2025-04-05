@@ -1,4 +1,4 @@
-class TaskBrowserMap {
+ class TaskBrowserMap {
     constructor(tb) {
         let tbm = this;
         tbm.tb = tb;
@@ -170,7 +170,46 @@ class TaskBrowserMap {
         // Cache properties for IGC track logs
         tbm.currentIGCCacheEntrySeqID = null;
         tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
+        const igcParser = {
+            parse: function (igcText) {
+                const fixes = [];
+                const lines = igcText.split(/\r?\n/);
+                lines.forEach(line => {
+                    // Only process lines starting with 'B' (the fix records)
+                    if (line.charAt(0) === 'B' && line.length >= 24) {
+                        try {
+                            // Latitude: 7 characters (positions 7-13) and hemisphere at position 14
+                            const latStr = line.substr(7, 7); // Format: DDMMmmm
+                            const latHem = line.substr(14, 1);
+                            // Longitude: 8 characters (positions 15-22) and hemisphere at position 23
+                            const lonStr = line.substr(15, 8); // Format: DDDMMmmm
+                            const lonHem = line.substr(23, 1);
 
+                            // Parse latitude: first 2 characters are degrees, next 5 are minutes (in thousandths)
+                            const latDeg = parseInt(latStr.substr(0, 2), 10);
+                            const latMin = parseInt(latStr.substr(2, 5), 10);
+                            let lat = latDeg + (latMin / 60000); // 60000 = 60 * 1000
+                            if (latHem === 'S') {
+                                lat = -lat;
+                            }
+
+                            // Parse longitude: first 3 characters are degrees, next 5 are minutes
+                            const lonDeg = parseInt(lonStr.substr(0, 3), 10);
+                            const lonMin = parseInt(lonStr.substr(3, 5), 10);
+                            let lon = lonDeg + (lonMin / 60000);
+                            if (lonHem === 'W') {
+                                lon = -lon;
+                            }
+
+                            fixes.push({ lat, lon });
+                        } catch (e) {
+                            console.error("Error parsing IGC B record:", line, e);
+                        }
+                    }
+                });
+                return { fixes };
+            }
+        };
     }
 
     // Fetch and filter tasks based on current filter settings
@@ -861,56 +900,76 @@ class TaskBrowserMap {
         }
     }
 
-    processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
-        let tbm = this;
-        // Check if the cache belongs to the current task.
-        if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
-            console.log(`New task detected. Clearing cache for task ${tbm.currentIGCCacheEntrySeqID}.`);
+     processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+         let tbm = this;
+         // Check if the cache belongs to the current task.
+         if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
+             console.log(`New task detected. Clearing cache for task ${tbm.currentIGCCacheEntrySeqID}.`);
 
-            // Log removal of any cached track layers from the map.
-            Object.keys(tbm.igcTrackCache).forEach(key => {
-                console.log(`Would remove track for IGCKey: ${key} from the map.`);
-            });
+             // Remove any cached track layers from the map.
+             Object.keys(tbm.igcTrackCache).forEach(key => {
+                 if (tbm.map.hasLayer(tbm.igcTrackCache[key])) {
+                     tbm.map.removeLayer(tbm.igcTrackCache[key]);
+                     console.log(`Removed cached track for IGCKey ${key} from the map.`);
+                 }
+             });
 
-            // Clear the cache and update the current task identifier.
-            tbm.igcTrackCache = {};
-            tbm.currentIGCCacheEntrySeqID = entrySeqID;
-        }
+             // Clear the cache and update the current task identifier.
+             tbm.igcTrackCache = {};
+             tbm.currentIGCCacheEntrySeqID = entrySeqID;
+         }
 
-        console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
+         console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
 
-        if (isChecked) {
-            // If the track is already cached, simply ensure it's added to the map.
-            if (tbm.igcTrackCache[igcKey]) {
-                console.log(`Track for IGCKey ${igcKey} is already cached. Would add it to the map if not present.`);
-            } else {
-                // Fetch the IGC file using the PHP script.
-                console.log(`Fetching IGC file for IGCKey ${igcKey} and EntrySeqID ${entrySeqID}.`);
-                fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.text();
-                    })
-                    .then(igcText => {
-                        console.log(`IGC file for IGCKey ${igcKey} loaded. (File contents not parsed yet.)`);
-                        // Here you would normally parse the IGC file and create a polyline.
-                        // For now, simulate caching the track by assigning a dummy value.
-                        tbm.igcTrackCache[igcKey] = { dummyPolyline: true };
-                    })
-                    .catch(error => {
-                        console.error(`Error fetching IGC file for IGCKey ${igcKey}:`, error);
-                    });
-            }
-        } else {
-            // If unchecked, remove the track from the map if it exists.
-            if (tbm.igcTrackCache[igcKey]) {
-                console.log(`Checkbox unchecked. Would remove track for IGCKey ${igcKey} from the map.`);
-            } else {
-                console.log(`Checkbox unchecked, but no cached track found for IGCKey ${igcKey}.`);
-            }
-        }
-    }
+         if (isChecked) {
+             // If the track is already cached, ensure it's added to the map.
+             if (tbm.igcTrackCache[igcKey]) {
+                 if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
+                     tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
+                     console.log(`Added cached track for IGCKey ${igcKey} to the map.`);
+                 } else {
+                     console.log(`Track for IGCKey ${igcKey} is already visible on the map.`);
+                 }
+             } else {
+                 // Fetch the IGC file using the PHP script.
+                 console.log(`Fetching IGC file for IGCKey ${igcKey} and EntrySeqID ${entrySeqID}.`);
+                 fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
+                     .then(response => {
+                         if (!response.ok) {
+                             throw new Error(`HTTP error! status: ${response.status}`);
+                         }
+                         return response.text();
+                     })
+                     .then(igcText => {
+                         console.log(`IGC file for IGCKey ${igcKey} loaded.`);
+                         // Parse the IGC text to get the flight fixes.
+                         const igcData = igcParser.parse(igcText);
+                         console.log(`Parsed ${igcData.fixes.length} fixes for IGCKey ${igcKey}.`);
+                         if (igcData.fixes.length > 0) {
+                             // Create a polyline from the fixes.
+                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: 'red' });
+                             // Cache the polyline.
+                             tbm.igcTrackCache[igcKey] = polyline;
+                             // Add the polyline to the map.
+                             polyline.addTo(tbm.map);
+                             console.log(`Added polyline for IGCKey ${igcKey} to the map.`);
+                         } else {
+                             console.warn(`No fixes found for IGCKey ${igcKey}.`);
+                         }
+                     })
+                     .catch(error => {
+                         console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
+                     });
+             }
+         } else {
+             // If unchecked, remove the track from the map if it exists.
+             if (tbm.igcTrackCache[igcKey]) {
+                 tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
+                 console.log(`Removed polyline for IGCKey ${igcKey} from the map.`);
+             } else {
+                 console.log(`Checkbox unchecked, but no cached track found for IGCKey ${igcKey}.`);
+             }
+         }
+     }
 
 }
