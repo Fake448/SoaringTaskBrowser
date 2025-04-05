@@ -1408,10 +1408,22 @@ class TaskBrowser {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
                 },
                 drawCallback: function (settings) {
-                    // Rebind the "select all" event on every draw (after filtering, etc.)
+                    // Bind the "select all" functionality (if needed)
                     $('#select-all').off('click').on('click', function () {
                         const checked = this.checked;
                         $('.igc-select-checkbox').prop('checked', checked);
+                        // For each checkbox, call the new processing function
+                        $('.igc-select-checkbox').each(function () {
+                            const igcKey = $(this).data('key');
+                            processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, checked);
+                        });
+                    });
+
+                    // Bind each individual checkbox change event
+                    $('.igc-select-checkbox').off('change').on('change', function () {
+                        const igcKey = $(this).data('key');
+                        const isChecked = $(this).is(':checked');
+                        processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, isChecked);
                     });
                 },
                 initComplete: function () {
@@ -1486,6 +1498,11 @@ class TaskBrowser {
                 console.error('Error:', error);
                 alert("Error sending IGC keys for planner.");
             });
+    }
+
+    processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+        console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
+        // Later, you'll use these values to load and display/hide the IGC track.
     }
 
     showTaskDetailsStandalone(task) {
