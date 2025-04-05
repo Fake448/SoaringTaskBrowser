@@ -904,13 +904,11 @@
          let tbm = this;
          // Check if the cache belongs to the current task.
          if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
-             console.log(`New task detected. Clearing cache for task ${tbm.currentIGCCacheEntrySeqID}.`);
 
              // Remove any cached track layers from the map.
              Object.keys(tbm.igcTrackCache).forEach(key => {
                  if (tbm.map.hasLayer(tbm.igcTrackCache[key])) {
                      tbm.map.removeLayer(tbm.igcTrackCache[key]);
-                     console.log(`Removed cached track for IGCKey ${key} from the map.`);
                  }
              });
 
@@ -919,18 +917,13 @@
              tbm.currentIGCCacheEntrySeqID = entrySeqID;
          }
 
-         console.log(`Task EntrySeqID: ${entrySeqID} - IGCKey: ${igcKey} - Checked: ${isChecked}`);
-
          if (isChecked) {
              if (tbm.igcTrackCache[igcKey]) {
                  if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
                      tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
-                     console.log(`Added cached track for IGCKey ${igcKey} to the map.`);
                  } else {
-                     console.log(`Track for IGCKey ${igcKey} is already visible on the map.`);
                  }
              } else {
-                 console.log(`Fetching IGC file for IGCKey ${igcKey} and EntrySeqID ${entrySeqID}.`);
                  fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
                      .then(response => {
                          if (!response.ok) {
@@ -939,15 +932,12 @@
                          return response.text();
                      })
                      .then(igcText => {
-                         console.log(`IGC file for IGCKey ${igcKey} loaded.`);
                          // Now use the parser attached to tbm
                          const igcData = tbm.igcParser.parse(igcText);
-                         console.log(`Parsed ${igcData.fixes.length} fixes for IGCKey ${igcKey}.`);
                          if (igcData.fixes.length > 0) {
-                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: 'red' });
+                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: 'red', weight: 1 });
                              tbm.igcTrackCache[igcKey] = polyline;
                              polyline.addTo(tbm.map);
-                             console.log(`Added polyline for IGCKey ${igcKey} to the map.`);
                          } else {
                              console.warn(`No fixes found for IGCKey ${igcKey}.`);
                          }
@@ -959,9 +949,6 @@
          } else {
              if (tbm.igcTrackCache[igcKey]) {
                  tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
-                 console.log(`Removed polyline for IGCKey ${igcKey} from the map.`);
-             } else {
-                 console.log(`Checkbox unchecked, but no cached track found for IGCKey ${igcKey}.`);
              }
          }
      }

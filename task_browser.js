@@ -1381,10 +1381,8 @@ class TaskBrowser {
                         name: 'IGCRecordDateTimeUTC',
                         render: function (data, type, row, meta) {
                             if (type === 'display') {
-                                // Return the formatted date (you can pass your optional parameters as needed)
                                 return TB.formatSimDateTime(data, true, false, true, true, true);
                             }
-                            // For sorting and filtering, return the raw data.
                             return data;
                         }
                     },
@@ -1398,28 +1396,23 @@ class TaskBrowser {
                 ordering: true,
                 info: true,
                 columnDefs: [
-                    {
-                        targets: 0,        // The first column
-                        width: '15px'      // Fixed width
-                    }
+                    { targets: 0, width: '15px' }
                 ],
                 headerCallback: function (thead, data, start, end, display) {
-                    // Replace the first header cell with a checkbox
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
                 },
                 drawCallback: function (settings) {
-                    // Bind the "select all" functionality (if needed)
+                    // Bind "select all" functionality
                     $('#select-all').off('click').on('click', function () {
                         const checked = this.checked;
                         $('.igc-select-checkbox').prop('checked', checked);
-                        // For each checkbox, call the new processing function
                         $('.igc-select-checkbox').each(function () {
                             const igcKey = $(this).data('key');
                             tb.tbm.processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, checked);
                         });
                     });
 
-                    // Bind each individual checkbox change event
+                    // Bind individual checkbox change event
                     $('.igc-select-checkbox').off('change').on('change', function () {
                         const igcKey = $(this).data('key');
                         const isChecked = $(this).is(':checked');
@@ -1427,10 +1420,8 @@ class TaskBrowser {
                     });
                 },
                 initComplete: function () {
-                    // Move the search box, then prepend our custom button
                     const tableWrapper = $(this.api().table().container());
                     const filterDiv = tableWrapper.find('div.dataTables_filter');
-
                     filterDiv.css({
                         display: 'flex',
                         'align-items': 'center',
@@ -1438,7 +1429,6 @@ class TaskBrowser {
                         'width': '100%'
                     });
 
-                    // Create the "Analyze Selected" button
                     const analyzeBtn = $('<button>')
                         .attr('id', 'analyzeIGCBtn')
                         .addClass('igc-button-style')
@@ -1454,8 +1444,28 @@ class TaskBrowser {
                             });
                             tb.sendSelectedIGCRecordsToTaskPlanner(selectedKeys);
                         });
-
                     filterDiv.prepend(analyzeBtn);
+
+                    // **Add hover events to the table rows**
+                    $('#igcRecordsTable tbody').on('mouseenter', 'tr', function () {
+                        let rowData = dt.row(this).data();
+                        if (rowData) {
+                            let igcKey = rowData.IGCKey;
+                            if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
+                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 4 });
+                            }
+                        }
+                    });
+
+                    $('#igcRecordsTable tbody').on('mouseleave', 'tr', function () {
+                        let rowData = dt.row(this).data();
+                        if (rowData) {
+                            let igcKey = rowData.IGCKey;
+                            if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
+                                tb.tbm.igcTrackCache[igcKey].setStyle({ weight: 1 });
+                            }
+                        }
+                    });
                 }
             });
         }
