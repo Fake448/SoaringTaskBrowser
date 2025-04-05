@@ -819,6 +819,7 @@
     }
 
     clearIGCTracklogs() {
+        let tbm = this;
         // Clear any tracklogs from the map and the cache.
         Object.keys(tbm.igcTrackCache).forEach(key => {
             const polyline = tbm.igcTrackCache[key];
