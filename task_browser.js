@@ -1381,7 +1381,12 @@ class TaskBrowser {
                         name: 'IGCRecordDateTimeUTC',
                         render: function (data, type, row, meta) {
                             if (type === 'display') {
-                                return TB.formatSimDateTime(data, true, false, true, true, true);
+                                // Format the date as before.
+                                var formattedDate = TB.formatSimDateTime(data, true, false, true, true, true);
+                                // Get the task EntrySeqID from the closure (assuming tb.currentTask is available).
+                                var entrySeqID = tb.currentTask.EntrySeqID;
+                                // Return a link that carries both EntrySeqID and IGCKey.
+                                return `<a href="#" class="download-igc-link" data-entryseqid="${entrySeqID}" data-igckey="${row.IGCKey}">${formattedDate}</a>`;
                             }
                             return data;
                         }
@@ -1446,7 +1451,15 @@ class TaskBrowser {
                         });
                     filterDiv.prepend(analyzeBtn);
 
-                    // **Add hover events to the table rows**
+                    $('#igcRecordsTable tbody').on('click', '.download-igc-link', function (e) {
+                        e.preventDefault();
+                        // Retrieve the custom data attributes.
+                        var entrySeqID = $(this).data('entryseqid');
+                        var igcKey = $(this).data('igckey');
+                        // Call the TaskBrowser's downloadIGCFile method.
+                        tb.downloadIGCFile(entrySeqID, igcKey);
+                    });
+
                     $('#igcRecordsTable tbody').on('mouseenter', 'tr', function () {
                         let rowData = dt.row(this).data();
                         if (rowData) {
@@ -1786,6 +1799,41 @@ class TaskBrowser {
                 }
             })
             .catch(err => console.error('Error incrementing download count:', err));
+    }
+
+    downloadIGCFile(EntrySeqID, IGCKey) {
+        let tb = this;
+
+        // Construct the file download URL
+        const url = `${tb.discordPostHelperTaskBrowserPath}TaskBrowser/IGCFiles/${EntrySeqID}/${IGCKey}.igc`;
+
+        // Fetch the file and handle the download
+        fetch(url)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Failed to fetch file. HTTP status: ${response.status}`);
+                }
+                return response.blob();
+            })
+            .then(blob => {
+                // Create a temporary link and trigger the download
+                const fileUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = fileUrl;
+                a.download = `${IGCKey}.igc`;
+                document.body.appendChild(a);
+                a.click();
+
+                // Clean up the temporary URL and element
+                window.URL.revokeObjectURL(fileUrl);
+                document.body.removeChild(a);
+
+            })
+            .catch(err => {
+                console.error("Error downloading IGC file:", err);
+                alert("Failed to download the IGC file. Please try again later.");
+            });
     }
 
     downloadExtraFile(filename) {
