@@ -779,8 +779,8 @@ class TaskBrowserMap {
         // Clear any tracklogs from the map and the cache.
         Object.keys(tbm.igcTrackCache).forEach(key => {
             const polyline = tbm.igcTrackCache[key];
-            if (map.hasLayer(polyline)) {
-                map.removeLayer(polyline);
+            if (tbm.map.hasLayer(polyline)) {
+                tbm.map.removeLayer(polyline);
                 console.log(`Removed track for IGCKey ${key} from the map.`);
             }
         });
@@ -884,10 +884,24 @@ class TaskBrowserMap {
             if (tbm.igcTrackCache[igcKey]) {
                 console.log(`Track for IGCKey ${igcKey} is already cached. Would add it to the map if not present.`);
             } else {
-                // Instead of fetching and parsing, just log what would be done.
-                console.log(`Track for IGCKey ${igcKey} not cached. Would fetch, parse, create polyline, cache it, and add to the map.`);
-                // Simulate caching the track by assigning a dummy value.
-                tbm.igcTrackCache[igcKey] = { dummyPolyline: true };
+                // Fetch the IGC file using the PHP script.
+                console.log(`Fetching IGC file for IGCKey ${igcKey} and EntrySeqID ${entrySeqID}.`);
+                fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(igcText => {
+                        console.log(`IGC file for IGCKey ${igcKey} loaded. (File contents not parsed yet.)`);
+                        // Here you would normally parse the IGC file and create a polyline.
+                        // For now, simulate caching the track by assigning a dummy value.
+                        tbm.igcTrackCache[igcKey] = { dummyPolyline: true };
+                    })
+                    .catch(error => {
+                        console.error(`Error fetching IGC file for IGCKey ${igcKey}:`, error);
+                    });
             }
         } else {
             // If unchecked, remove the track from the map if it exists.
