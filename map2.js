@@ -1,4 +1,4 @@
- class TaskBrowserMap {
+class TaskBrowserMap {
     constructor(tb) {
         let tbm = this;
         tbm.tb = tb;
@@ -178,8 +178,19 @@
             parse: function (igcText) {
                 const fixes = [];
                 const lines = igcText.split(/\r?\n/);
-                lines.forEach(line => {
-                    // Only process lines starting with 'B' (the fix records)
+                let startIndex = 0;
+
+                // Find the index of the first LNB21 line that contains "TOFF"
+                for (let i = 0; i < lines.length; i++) {
+                    if (lines[i].startsWith("LNB21") && lines[i].indexOf("TOFF") !== -1) {
+                        startIndex = i + 1; // start processing after this line
+                        break; // break after the first occurrence
+                    }
+                }
+
+                // Process B lines starting from the determined index
+                for (let i = startIndex; i < lines.length; i++) {
+                    const line = lines[i];
                     if (line.charAt(0) === 'B' && line.length >= 24) {
                         try {
                             // Latitude: 7 characters (positions 7-13) and hemisphere at position 14
@@ -210,7 +221,7 @@
                             console.error("Error parsing IGC B record:", line, e);
                         }
                     }
-                });
+                }
                 return { fixes };
             }
         };
@@ -909,57 +920,57 @@
         }
     }
 
-     processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
-         let tbm = this;
-         // Check if the cache belongs to the current task.
-         if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
+    processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+        let tbm = this;
+        // Check if the cache belongs to the current task.
+        if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
 
-             // Remove any cached track layers from the map.
-             Object.keys(tbm.igcTrackCache).forEach(key => {
-                 if (tbm.map.hasLayer(tbm.igcTrackCache[key])) {
-                     tbm.map.removeLayer(tbm.igcTrackCache[key]);
-                 }
-             });
+            // Remove any cached track layers from the map.
+            Object.keys(tbm.igcTrackCache).forEach(key => {
+                if (tbm.map.hasLayer(tbm.igcTrackCache[key])) {
+                    tbm.map.removeLayer(tbm.igcTrackCache[key]);
+                }
+            });
 
-             // Clear the cache and update the current task identifier.
-             tbm.igcTrackCache = {};
-             tbm.currentIGCCacheEntrySeqID = entrySeqID;
-         }
+            // Clear the cache and update the current task identifier.
+            tbm.igcTrackCache = {};
+            tbm.currentIGCCacheEntrySeqID = entrySeqID;
+        }
 
-         if (isChecked) {
-             if (tbm.igcTrackCache[igcKey]) {
-                 if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
-                     tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
-                 } else {
-                 }
-             } else {
-                 fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
-                     .then(response => {
-                         if (!response.ok) {
-                             throw new Error(`HTTP error! status: ${response.status}`);
-                         }
-                         return response.text();
-                     })
-                     .then(igcText => {
-                         // Now use the parser attached to tbm
-                         const igcData = tbm.igcParser.parse(igcText);
-                         if (igcData.fixes.length > 0) {
-                             const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight});
-                             tbm.igcTrackCache[igcKey] = polyline;
-                             polyline.addTo(tbm.map);
-                         } else {
-                             console.warn(`No fixes found for IGCKey ${igcKey}.`);
-                         }
-                     })
-                     .catch(error => {
-                         console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
-                     });
-             }
-         } else {
-             if (tbm.igcTrackCache[igcKey]) {
-                 tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
-             }
-         }
-     }
+        if (isChecked) {
+            if (tbm.igcTrackCache[igcKey]) {
+                if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
+                    tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
+                } else {
+                }
+            } else {
+                fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        return response.text();
+                    })
+                    .then(igcText => {
+                        // Now use the parser attached to tbm
+                        const igcData = tbm.igcParser.parse(igcText);
+                        if (igcData.fixes.length > 0) {
+                            const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight });
+                            tbm.igcTrackCache[igcKey] = polyline;
+                            polyline.addTo(tbm.map);
+                        } else {
+                            console.warn(`No fixes found for IGCKey ${igcKey}.`);
+                        }
+                    })
+                    .catch(error => {
+                        console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
+                    });
+            }
+        } else {
+            if (tbm.igcTrackCache[igcKey]) {
+                tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
+            }
+        }
+    }
 
 }
