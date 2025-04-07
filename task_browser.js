@@ -1789,8 +1789,8 @@ class TaskBrowser {
             const icon = document.createElement('img');
             icon.src = iconImageUrl;
             // Fixed size styling for the icon
-            icon.style.width = '24px';
-            icon.style.height = '24px';
+            icon.style.width = '22px';
+            icon.style.height = '22px';
             icon.style.marginRight = '8px';
             // Prepend the icon image to the title element.
             titleElement.appendChild(icon);
@@ -1799,6 +1799,9 @@ class TaskBrowser {
         // Append title text.
         const titleText = document.createElement('span');
         titleText.innerText = title;
+        titleElement.style.display = 'flex';
+        titleElement.style.alignItems = 'center';
+        titleElement.style.justifyContent = 'flex-start';
         titleElement.appendChild(titleText);
 
         if (highlightClass) {
