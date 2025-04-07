@@ -1579,7 +1579,7 @@ class TaskBrowser {
         }
     }
 
-    showTaskDetailsStandalone(task) {
+    async showTaskDetailsStandalone(task) {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         tb.currentTask = task; // Save the current task for download use
