@@ -1572,10 +1572,30 @@ class TaskBrowser {
             }
 
             // Generate the collapsible section with the retrieved content.
-            tb.generateCollapsibleSection("👤 My Stuff", content, taskDetailContainer);
+            tb.generateCollapsibleSection(
+                "My Stuff",
+                content,
+                taskDetailContainer,
+                null, // id
+                null, // highlightClass
+                null, // resetCallback
+                null, // countdownSection
+                null, // backgroundImageUrl
+                "images/user_account_connected.png" // iconImageUrl
+            );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
-            tb.generateCollapsibleSection("👤 My Stuff", "<p>Error retrieving your user data.</p>", taskDetailContainer);
+            tb.generateCollapsibleSection(
+                "My Stuff",
+                "<p>Error retrieving your user data.</p>",
+                taskDetailContainer,
+                null, // id
+                null, // highlightClass
+                null, // resetCallback
+                null, // countdownSection
+                null, // backgroundImageUrl
+                "images/user_account_connected.png" // iconImageUrl
+            );
         }
     }
 
@@ -1750,7 +1770,8 @@ class TaskBrowser {
         highlightClass = null,
         resetCallback = null,
         countdownSection = null,
-        backgroundImageUrl = null
+        backgroundImageUrl = null,
+        iconImageUrl = null
     ) {
         let tb = this;
         const section = document.createElement('div');
@@ -1762,7 +1783,23 @@ class TaskBrowser {
         // Title element
         const titleElement = document.createElement('div');
         titleElement.className = 'title';
-        titleElement.innerText = title;
+
+        // If an icon image is provided, create and prepend an image element.
+        if (iconImageUrl) {
+            const icon = document.createElement('img');
+            icon.src = iconImageUrl;
+            // Fixed size styling for the icon
+            icon.style.width = '24px';
+            icon.style.height = '24px';
+            icon.style.marginRight = '8px';
+            // Prepend the icon image to the title element.
+            titleElement.appendChild(icon);
+        }
+
+        // Append title text.
+        const titleText = document.createElement('span');
+        titleText.innerText = title;
+        titleElement.appendChild(titleText);
 
         if (highlightClass) {
             titleElement.classList.add(highlightClass);
