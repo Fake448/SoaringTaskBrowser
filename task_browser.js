@@ -1573,7 +1573,7 @@ class TaskBrowser {
                 { value: 5, label: "5. Champion" }
             ];
             content += `<div class="user-difficulty" style="margin-top:10px;">`;
-            content += `<label for="difficultyRatingSelect">Difficulty Rating:</label><br>
+            content += `<label for="difficultyRatingSelect">Difficulty:</label><br>
                   <select id="difficultyRatingSelect" onchange="TB.handleDifficultyChange(${task.EntrySeqID}, this.value)">`;
             difficultyOptions.forEach(opt => {
                 let selected = (ut.DifficultyRating !== undefined && parseInt(ut.DifficultyRating, 10) === opt.value) ? "selected" : "";
@@ -1585,7 +1585,7 @@ class TaskBrowser {
             // --- Quality Rating Section (Stars + Reset Button) ---
             let currentQuality = ut.QualityRating || 0;
             content += `<div id="qualityRatingWrapper" class="user-quality" style="margin-top:10px;">`;
-            content += `<span>Quality Rating:</span> `;
+            content += `<span>Quality:</span> `;
             for (let i = 1; i <= 5; i++) {
                 let starColor = (i <= currentQuality) ? "gold" : "gray";
                 content += `<span class="star" data-value="${i}" style="cursor:pointer; color:${starColor}; font-size: 1.2em;"
@@ -1597,11 +1597,11 @@ class TaskBrowser {
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
             content += `<div class="user-textdata" style="margin-top: 10px;">`;
             content += `<label for="publicFeedbackTextarea">Public Feedback:</label><br>
-      <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PublicFeedback || ""}</textarea><br>`;
+  <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PublicFeedback || ""}</textarea><br>`;
             content += `<label for="privateNotesTextarea">Private Notes:</label><br>
-      <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
-            content += `<label for="tagsInput">Tags:</label><br>
-      <input type="text" id="tagsInput" maxlength="200" value="${ut.Tags || ""}" style="width:100%; font-family: inherit;"><br>`;
+  <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
+            content += `<label for="tagsInput">Private Tags:</label><br>
+  <textarea id="tagsInput" rows="1" maxlength="200" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
             content += `<button type="button" class="igc-button-style" style="margin-top:10px;" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
             content += `</div>`;
 
