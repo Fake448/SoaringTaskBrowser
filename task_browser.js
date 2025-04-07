@@ -1547,34 +1547,33 @@ class TaskBrowser {
             }
             let data = await response.json();
 
+            // Use an empty object if no userTask record exists.
+            let ut = data.userTask || {};
+
             let content = "";
 
-            // Process the UsersTasks record.
-            if (data.userTask) {
-                content += "<h3>Your Task Data</h3>";
-                content += `<p>Notes: ${data.userTask.PrivateNotes || "No notes available"}</p>`;
-                content += `<p>Tags: ${data.userTask.Tags || "No tags available"}</p>`;
-                content += `<p>Feedback: ${data.userTask.PublicFeedback || "No feedback available"}</p>`;
+            // Display user task data (notes, tags, feedback) even if empty.
+            content += "<h3>Your Task Data</h3>";
+            content += `<p>Notes: ${ut.PrivateNotes || ""}</p>`;
+            content += `<p>Tags: ${ut.Tags || ""}</p>`;
+            content += `<p>Feedback: ${ut.PublicFeedback || ""}</p>`;
 
-                // Add the new Markings section with three checkboxes.
-                content += `<h3>Markings</h3>`;
-                content += `<div class="user-markings">`;
-                content += `<label>
-                <input type="checkbox" id="flownCheckbox" ${data.userTask.MarkedFlownDateUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flown', this.checked)">
-                Flown <span id="flownDate">${data.userTask.MarkedFlownDateUTC ? tb.formatSimDateTime(data.userTask.MarkedFlownDateUTC, true, false, true, true, true) : ""}</span>
-            </label><br>`;
-                content += `<label>
-                <input type="checkbox" id="flyNextCheckbox" ${data.userTask.MarkedFlyNextUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flyNext', this.checked)">
-                Fly Next <span id="flyNextDate">${data.userTask.MarkedFlyNextUTC ? tb.formatSimDateTime(data.userTask.MarkedFlyNextUTC, true, false, true, true, true) : ""}</span>
-            </label><br>`;
-                content += `<label>
-                <input type="checkbox" id="favoritesCheckbox" ${data.userTask.MarkedFavoritesUTC ? "checked" : ""} onchange="tb.handleMarkingChange('favorites', this.checked)">
-                Favorites <span id="favoritesDate">${data.userTask.MarkedFavoritesUTC ? tb.formatSimDateTime(data.userTask.MarkedFavoritesUTC, true, false, true, true, true) : ""}</span>
-            </label>`;
-                content += `</div>`;
-            } else {
-                content += "<p>No user-specific task data found.</p>";
-            }
+            // Add the new Markings section with three checkboxes.
+            content += `<h3>Markings</h3>`;
+            content += `<div class="user-markings">`;
+            content += `<label>
+            <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flown', this.checked)">
+            Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? tb.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) : ""}</span>
+        </label><br>`;
+            content += `<label>
+            <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flyNext', this.checked)">
+            Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? tb.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) : ""}</span>
+        </label><br>`;
+            content += `<label>
+            <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="tb.handleMarkingChange('favorites', this.checked)">
+            Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? tb.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) : ""}</span>
+        </label>`;
+            content += `</div>`;
 
             // Process the IGCRecords.
             if (data.igcRecords && data.igcRecords.length > 0) {
