@@ -1536,12 +1536,50 @@ class TaskBrowser {
         // If user is not logged in, then exit
         if (!tb.isUserConnected) return;
 
-        // User Stuff
-        let userStuffContent = `
-            <p>This section will soon contain your stuff for this task.</p>
-        `;
+        // Prepare query parameters with the task's EntrySeqID.
+        let params = new URLSearchParams({ entrySeqID: task.EntrySeqID });
 
-        tb.generateCollapsibleSection("👤 My Stuff", userStuffContent, taskDetailContainer);
+        // Call the PHP script, including credentials so the session is used.
+        fetch("php/FetchUserStuffForTask.php?" + params.toString(), { credentials: "include" })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error("Network response was not ok: " + response.statusText);
+                }
+                return response.json();
+            })
+            .then(data => {
+                let content = "";
+
+                // Process the UsersTasks record.
+                if (data.userTask) {
+                    content += "<h3>Your Task Data</h3>";
+                    content += `<p>Notes: ${data.userTask.PrivateNotes || "No notes available"}</p>`;
+                    content += `<p>Tags: ${data.userTask.Tags || "No tags available"}</p>`;
+                    content += `<p>Feedback: ${data.userTask.PublicFeedback || "No feedback available"}</p>`;
+                    // Additional fields can be added here as needed.
+                } else {
+                    content += "<p>No user-specific task data found.</p>";
+                }
+
+                // Process the IGCRecords.
+                if (data.igcRecords && data.igcRecords.length > 0) {
+                    content += "<h3>Your IGC Records</h3>";
+                    content += "<ul>";
+                    data.igcRecords.forEach(record => {
+                        content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
+                    });
+                    content += "</ul>";
+                } else {
+                    content += "<p>No IGC records found for this task.</p>";
+                }
+
+                // Generate the collapsible section with the retrieved content.
+                tb.generateCollapsibleSection("👤 My Stuff", content, taskDetailContainer);
+            })
+            .catch(error => {
+                console.error("Error fetching user stuff:", error);
+                tb.generateCollapsibleSection("👤 My Stuff", "<p>Error retrieving your user data.</p>", taskDetailContainer);
+            });
     }
 
     showTaskDetailsStandalone(task) {
