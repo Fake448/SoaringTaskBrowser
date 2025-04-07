@@ -133,14 +133,18 @@ try {
     $existingTask = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingTask) {
-        // Update the MarkedFlownDateUTC field unconditionally.
-        $updateTaskQuery = "UPDATE UsersTasks SET MarkedFlownDateUTC = :markedDate 
-            WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
-        $stmt = $pdo->prepare($updateTaskQuery);
-        $stmt->bindParam(':markedDate', $formattedDate, PDO::PARAM_STR);
-        $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
-        $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
-        $stmt->execute();
+        // Determine if we should update: update if MarkedFlownDateUTC is empty or
+        // if the new formatted date is more recent.
+        $currentMarked = $existingTask['MarkedFlownDateUTC'];
+        if (empty($currentMarked) || strtotime($formattedDate) > strtotime($currentMarked)) {
+            $updateTaskQuery = "UPDATE UsersTasks SET MarkedFlownDateUTC = :markedDate 
+                WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
+            $stmt = $pdo->prepare($updateTaskQuery);
+            $stmt->bindParam(':markedDate', $formattedDate, PDO::PARAM_STR);
+            $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+            $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
+            $stmt->execute();
+        }
     } else {
         // Insert a new record with the formatted MarkedFlownDateUTC value.
         $insertTaskQuery = "INSERT INTO UsersTasks (WSGUserID, EntrySeqID, MarkedFlownDateUTC)
