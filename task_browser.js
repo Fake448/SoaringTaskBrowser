@@ -1530,58 +1530,42 @@ class TaskBrowser {
             });
     }
 
-    // Main function to generate the user data section for a task.
     async generateTaskDetailsUserStuff(task) {
-        let tb = this;
-        if (!tb.isUserConnected) return;
+        if (!this.isUserConnected) return;
 
         // Prepare query parameters with the task's EntrySeqID.
         let params = new URLSearchParams({ entrySeqID: task.EntrySeqID });
 
         try {
-            // Fetch the user stuff data.
             let response = await fetch("php/FetchUserStuffForTask.php?" + params.toString(), { credentials: "include" });
             if (!response.ok) {
                 throw new Error("Network response was not ok: " + response.statusText);
             }
             let data = await response.json();
-
             // Use an empty object if no userTask record exists.
             let ut = data.userTask || {};
 
-            // Start building the content.
             let content = "";
 
             // --- Markings Section (Checkboxes) ---
             content += `<div class="user-markings">`;
             content += `<label>
-      <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flown', this.checked, ${task.EntrySeqID})">
-      ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
-    </label><br>`;
+          <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flown', this.checked, ${task.EntrySeqID})">
+          ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + this.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
+      </label><br>`;
             content += `<label>
-      <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flyNext', this.checked, ${task.EntrySeqID})">
-      🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
-    </label><br>`;
+          <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flyNext', this.checked, ${task.EntrySeqID})">
+          🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + this.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
+      </label><br>`;
             content += `<label>
-      <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingChange('favorites', this.checked, ${task.EntrySeqID})">
-      🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + tb.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
-    </label>`;
-            content += `</div>`;
-
-            // --- Text Data Section (Editable; saved via Save button) ---
-            content += `<div class="user-textdata" style="margin-top: 10px;">`;
-            content += `<label for="privateNotesTextarea">Private Notes:</label><br>
-                <textarea id="privateNotesTextarea" rows="3" cols="30">${ut.PrivateNotes || ""}</textarea><br>`;
-            content += `<label for="tagsInput">Tags:</label><br>
-                <input type="text" id="tagsInput" value="${ut.Tags || ""}"><br>`;
-            content += `<label for="publicFeedbackTextarea">Public Feedback:</label><br>
-                <textarea id="publicFeedbackTextarea" rows="3" cols="30">${ut.PublicFeedback || ""}</textarea><br>`;
-            content += `<button type="button" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
+          <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingChange('favorites', this.checked, ${task.EntrySeqID})">
+          🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + this.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
+      </label>`;
             content += `</div>`;
 
             // --- Difficulty Rating Section (Dropdown) ---
             let difficultyOptions = [
-                { value: 0, label: "0. None / Custom" },
+                { value: 0, label: "0. Not set" },
                 { value: 1, label: "1. Beginner" },
                 { value: 2, label: "2. Student" },
                 { value: 3, label: "3. Experienced" },
@@ -1590,9 +1574,8 @@ class TaskBrowser {
             ];
             content += `<div class="user-difficulty" style="margin-top:10px;">`;
             content += `<label for="difficultyRatingSelect">Difficulty Rating:</label><br>
-                <select id="difficultyRatingSelect" onchange="TB.handleDifficultyChange(${task.EntrySeqID}, this.value)">`;
+                  <select id="difficultyRatingSelect" onchange="TB.handleDifficultyChange(${task.EntrySeqID}, this.value)">`;
             difficultyOptions.forEach(opt => {
-                // Compare values numerically
                 let selected = (ut.DifficultyRating !== undefined && parseInt(ut.DifficultyRating, 10) === opt.value) ? "selected" : "";
                 content += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
             });
@@ -1600,15 +1583,26 @@ class TaskBrowser {
             content += `</div>`;
 
             // --- Quality Rating Section (Stars + Reset Button) ---
-            let currentQuality = ut.QualityRating || 0; // 0 means no rating
-            content += `<div id="qualityRatingWrapper" class="user-quality" style="margin-top:10px;">
-                  <span>Quality Rating:</span> `;
+            let currentQuality = ut.QualityRating || 0;
+            content += `<div id="qualityRatingWrapper" class="user-quality" style="margin-top:10px;">`;
+            content += `<span>Quality Rating:</span> `;
             for (let i = 1; i <= 5; i++) {
                 let starColor = (i <= currentQuality) ? "gold" : "gray";
                 content += `<span class="star" data-value="${i}" style="cursor:pointer; color:${starColor}; font-size: 1.2em;"
-                          onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
+                             onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
             }
-            content += `<button type="button" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
+            content += `<button type="button" class="igc-button-style" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
+            content += `</div>`;
+
+            // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
+            content += `<div class="user-textdata" style="margin-top: 10px;">`;
+            content += `<label for="publicFeedbackTextarea">Public Feedback:</label><br>
+                  <textarea id="publicFeedbackTextarea" rows="2" style="width:100%;">${ut.PublicFeedback || ""}</textarea><br>`;
+            content += `<label for="privateNotesTextarea">Private Notes:</label><br>
+                  <textarea id="privateNotesTextarea" rows="2" style="width:100%;">${ut.PrivateNotes || ""}</textarea><br>`;
+            content += `<label for="tagsInput">Tags:</label><br>
+                  <input type="text" id="tagsInput" value="${ut.Tags || ""}" style="width:100%;"><br>`;
+            content += `<button type="button" class="igc-button-style" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
@@ -1623,10 +1617,10 @@ class TaskBrowser {
             }
 
             // --- Generate the collapsible section ---
-            tb.generateCollapsibleSection(
+            this.generateCollapsibleSection(
                 "My Stuff",
                 content,
-                taskDetailContainer,  // Make sure taskDetailContainer is in your scope.
+                taskDetailContainer, // Ensure taskDetailContainer is available in your scope.
                 null, // id
                 null, // highlightClass
                 null, // resetCallback
@@ -1636,7 +1630,7 @@ class TaskBrowser {
             );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
-            tb.generateCollapsibleSection(
+            this.generateCollapsibleSection(
                 "My Stuff",
                 "<p>Error retrieving your user data.</p>",
                 taskDetailContainer,
@@ -1648,121 +1642,108 @@ class TaskBrowser {
                 "images/user_account_connected.png"
             );
         }
-    };
+    }
 
-    // Helper: Save text-based data (Private Notes, Tags, Public Feedback)
-    saveUserTaskTextData(entrySeqID) {
-        let tb = this;
-        let privateNotes = document.getElementById("privateNotesTextarea").value;
-        let tags = document.getElementById("tagsInput").value;
-        let publicFeedback = document.getElementById("publicFeedbackTextarea").value;
+    async saveUserTaskTextData(entrySeqID) {
+        const privateNotes = document.getElementById("privateNotesTextarea").value;
+        const tags = document.getElementById("tagsInput").value;
+        const publicFeedback = document.getElementById("publicFeedbackTextarea").value;
 
-        // Construct the POST data.
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("PrivateNotes", privateNotes);
         postData.append("Tags", tags);
         postData.append("PublicFeedback", publicFeedback);
 
-        // Use fetch to send the update.
-        fetch("php/UpdateUserTaskTextData.php", {
-            method: "POST",
-            credentials: "include",
-            body: postData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error saving text data: " + data.error);
-                } else {
-                    alert("Changes saved successfully.");
-                }
-            })
-            .catch(error => {
-                console.error("Error saving user text data:", error);
-                alert("Error saving text data.");
+        try {
+            let response = await fetch("php/UpdateUserTaskTextData.php", {
+                method: "POST",
+                credentials: "include",
+                body: postData
             });
-    };
+            const data = await response.json();
+            if (data.error) {
+                alert("Error saving text data: " + data.error);
+            } else {
+                alert("Changes saved successfully.");
+            }
+        } catch (error) {
+            console.error("Error saving user text data:", error);
+            alert("Error saving text data.");
+        }
+    }
 
-    // Helper: Update markings (checkbox changes)
-    handleMarkingChange(type, checked, entrySeqID) {
-        // Build the POST payload. Here, type can be 'flown', 'flyNext', or 'favorites'.
+    async handleMarkingChange(type, checked, entrySeqID) {
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("markingType", type);
         postData.append("checked", checked ? 1 : 0);
 
-        fetch("php/UpdateUserMarkings.php", {
-            method: "POST",
-            credentials: "include",
-            body: postData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error updating marking: " + data.error);
-                }
-                // Optionally update the date display if the server returns the new timestamp.
-            })
-            .catch(error => {
-                console.error("Error updating marking:", error);
-                alert("Error updating marking.");
+        try {
+            let response = await fetch("php/UpdateUserMarkings.php", {
+                method: "POST",
+                credentials: "include",
+                body: postData
             });
-    };
+            const data = await response.json();
+            if (data.error) {
+                alert("Error updating marking: " + data.error);
+            }
+            // Optionally update the displayed date if returned by the server.
+        } catch (error) {
+            console.error("Error updating marking:", error);
+            alert("Error updating marking.");
+        }
+    }
 
-    // Helper: Update Difficulty Rating when dropdown value changes.
-    handleDifficultyChange(entrySeqID, newValue) {
+    async handleDifficultyChange(entrySeqID, newValue) {
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("DifficultyRating", newValue);
 
-        fetch("php/UpdateUserDifficulty.php", {
-            method: "POST",
-            credentials: "include",
-            body: postData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error updating difficulty rating: " + data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error updating difficulty rating:", error);
-                alert("Error updating difficulty rating.");
+        try {
+            let response = await fetch("php/UpdateUserDifficulty.php", {
+                method: "POST",
+                credentials: "include",
+                body: postData
             });
-    };
+            const data = await response.json();
+            if (data.error) {
+                alert("Error updating difficulty rating: " + data.error);
+            }
+        } catch (error) {
+            console.error("Error updating difficulty rating:", error);
+            alert("Error updating difficulty rating.");
+        }
+    }
 
-    // Helper: Update Quality Rating (star rating). This function also updates the UI.
-    setQualityRating(entrySeqID, rating) {
-        // Update the UI stars.
-        let stars = document.querySelectorAll("#qualityRatingWrapper .star");
+    async setQualityRating(entrySeqID, rating) {
+        // Update the UI for the star rating.
+        const stars = document.querySelectorAll("#qualityRatingWrapper .star");
         stars.forEach(star => {
-            let starValue = parseInt(star.getAttribute("data-value"), 10);
+            const starValue = parseInt(star.getAttribute("data-value"), 10);
             star.style.color = (starValue <= rating) ? "gold" : "gray";
         });
 
-        // Build the POST data.
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("QualityRating", rating);
 
-        fetch("php/UpdateUserQuality.php", {
-            method: "POST",
-            credentials: "include",
-            body: postData
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert("Error updating quality rating: " + data.error);
-                }
-            })
-            .catch(error => {
-                console.error("Error updating quality rating:", error);
-                alert("Error updating quality rating.");
+        try {
+            let response = await fetch("php/UpdateUserQuality.php", {
+                method: "POST",
+                credentials: "include",
+                body: postData
             });
-    };
+            const data = await response.json();
+            if (data.error) {
+                alert("Error updating quality rating: " + data.error);
+            }
+        } catch (error) {
+            console.error("Error updating quality rating:", error);
+            alert("Error updating quality rating.");
+        }
+    }
 
     async showTaskDetailsStandalone(task) {
         let tb = this;
