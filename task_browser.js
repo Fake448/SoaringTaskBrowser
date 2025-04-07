@@ -1533,7 +1533,7 @@ class TaskBrowser {
     async generateTaskDetailsUserStuff(task) {
         let tb = this;
 
-        // If user is not logged in, then exit
+        // If user is not logged in, then exit.
         if (!tb.isUserConnected) return;
 
         // Prepare query parameters with the task's EntrySeqID.
@@ -1555,6 +1555,23 @@ class TaskBrowser {
                 content += `<p>Notes: ${data.userTask.PrivateNotes || "No notes available"}</p>`;
                 content += `<p>Tags: ${data.userTask.Tags || "No tags available"}</p>`;
                 content += `<p>Feedback: ${data.userTask.PublicFeedback || "No feedback available"}</p>`;
+
+                // Add the new Markings section with three checkboxes.
+                content += `<h3>Markings</h3>`;
+                content += `<div class="user-markings">`;
+                content += `<label>
+                <input type="checkbox" id="flownCheckbox" ${data.userTask.MarkedFlownDateUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flown', this.checked)">
+                Flown <span id="flownDate">${data.userTask.MarkedFlownDateUTC ? tb.formatSimDateTime(data.userTask.MarkedFlownDateUTC, true, false, true, true, true) : ""}</span>
+            </label><br>`;
+                content += `<label>
+                <input type="checkbox" id="flyNextCheckbox" ${data.userTask.MarkedFlyNextUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flyNext', this.checked)">
+                Fly Next <span id="flyNextDate">${data.userTask.MarkedFlyNextUTC ? tb.formatSimDateTime(data.userTask.MarkedFlyNextUTC, true, false, true, true, true) : ""}</span>
+            </label><br>`;
+                content += `<label>
+                <input type="checkbox" id="favoritesCheckbox" ${data.userTask.MarkedFavoritesUTC ? "checked" : ""} onchange="tb.handleMarkingChange('favorites', this.checked)">
+                Favorites <span id="favoritesDate">${data.userTask.MarkedFavoritesUTC ? tb.formatSimDateTime(data.userTask.MarkedFavoritesUTC, true, false, true, true, true) : ""}</span>
+            </label>`;
+                content += `</div>`;
             } else {
                 content += "<p>No user-specific task data found.</p>";
             }
