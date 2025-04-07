@@ -1530,6 +1530,20 @@ class TaskBrowser {
             });
     }
 
+    generateTaskDetailsUserStuff(task) {
+        let tb = this;
+
+        // If user is not logged in, then exit
+        if (!tb.isUserConnected) return;
+
+        // User Stuff
+        let userStuffContent = `
+            <p>This section will soon contain your stuff for this task.</p>
+        `;
+
+        tb.generateCollapsibleSection("👤 My Stuff", userStuffContent, taskDetailContainer);
+    }
+
     showTaskDetailsStandalone(task) {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
@@ -1554,6 +1568,7 @@ class TaskBrowser {
             tb.userSettings.coverImageOpacity / 100 // Convert to decimal (e.g., 25 -> 0.25)
         );
 
+        tb.generateTaskDetailsUserStuff(task);
         tb.generateTaskDetailsFullDescription(task);
         tb.generateTaskDetailsFiles(task);
         tb.generateTaskDetailsExtraFiles(task);
