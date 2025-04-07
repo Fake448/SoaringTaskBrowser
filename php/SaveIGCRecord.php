@@ -110,6 +110,39 @@ try {
     
     $stmt->execute();
     
+    // Now, create or update the corresponding record in the UsersTasks table.
+    // Check if a record already exists for this WSGUserID and EntrySeqID.
+    $checkTaskQuery = "SELECT * FROM UsersTasks WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
+    $stmt = $pdo->prepare($checkTaskQuery);
+    $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+    $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
+    $stmt->execute();
+    $existingTask = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($existingTask) {
+        // Determine if we should update: update if MarkedFlownDateUTC is empty or
+        // if the new IGCRecordDateTimeUTC is more recent.
+        $currentMarked = $existingTask['MarkedFlownDateUTC'];
+        if (empty($currentMarked) || strtotime($IGCRecordDateTimeUTC) > strtotime($currentMarked)) {
+            $updateTaskQuery = "UPDATE UsersTasks SET MarkedFlownDateUTC = :IGCRecordDateTimeUTC 
+                WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
+            $stmt = $pdo->prepare($updateTaskQuery);
+            $stmt->bindParam(':IGCRecordDateTimeUTC', $IGCRecordDateTimeUTC, PDO::PARAM_STR);
+            $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+            $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
+            $stmt->execute();
+        }
+    } else {
+        // Insert a new record with the MarkedFlownDateUTC value.
+        $insertTaskQuery = "INSERT INTO UsersTasks (WSGUserID, EntrySeqID, MarkedFlownDateUTC)
+            VALUES (:WSGUserID, :EntrySeqID, :IGCRecordDateTimeUTC)";
+        $stmt = $pdo->prepare($insertTaskQuery);
+        $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+        $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
+        $stmt->bindParam(':IGCRecordDateTimeUTC', $IGCRecordDateTimeUTC, PDO::PARAM_STR);
+        $stmt->execute();
+    }
+    
     echo json_encode([
         'status' => 'success',
         'message' => 'IGC record saved successfully.',
