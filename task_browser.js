@@ -1591,18 +1591,18 @@ class TaskBrowser {
                 content += `<span class="star" data-value="${i}" style="cursor:pointer; color:${starColor}; font-size: 1.2em;"
                              onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
             }
-            content += `<button type="button" class="igc-button-style" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-left:10px;" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
             content += `</div>`;
 
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
             content += `<div class="user-textdata" style="margin-top: 10px;">`;
             content += `<label for="publicFeedbackTextarea">Public Feedback:</label><br>
-                  <textarea id="publicFeedbackTextarea" rows="2" style="width:100%;">${ut.PublicFeedback || ""}</textarea><br>`;
+                  <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em;">${ut.PublicFeedback || ""}</textarea><br>`;
             content += `<label for="privateNotesTextarea">Private Notes:</label><br>
-                  <textarea id="privateNotesTextarea" rows="2" style="width:100%;">${ut.PrivateNotes || ""}</textarea><br>`;
+                  <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em;">${ut.PrivateNotes || ""}</textarea><br>`;
             content += `<label for="tagsInput">Tags:</label><br>
-                  <input type="text" id="tagsInput" value="${ut.Tags || ""}" style="width:100%;"><br>`;
-            content += `<button type="button" class="igc-button-style" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
+                  <input type="text" id="tagsInput" maxlength="200" value="${ut.Tags || ""}" style="width:100%;"><br>`;
+            content += `<button type="button" class="igc-button-style" style="margin-top:10px;" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
