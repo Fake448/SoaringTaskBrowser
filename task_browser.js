@@ -1552,28 +1552,26 @@ class TaskBrowser {
 
             let content = "";
 
-            // Display user task data (notes, tags, feedback) even if empty.
-            content += "<h3>Your Task Data</h3>";
-            content += `<p>Notes: ${ut.PrivateNotes || ""}</p>`;
-            content += `<p>Tags: ${ut.Tags || ""}</p>`;
-            content += `<p>Feedback: ${ut.PublicFeedback || ""}</p>`;
-
             // Add the new Markings section with three checkboxes.
-            content += `<h3>Markings</h3>`;
             content += `<div class="user-markings">`;
             content += `<label>
-            <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flown', this.checked)">
+            <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flown', this.checked)">
             Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? tb.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) : ""}</span>
         </label><br>`;
             content += `<label>
-            <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="tb.handleMarkingChange('flyNext', this.checked)">
+            <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flyNext', this.checked)">
             Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? tb.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) : ""}</span>
         </label><br>`;
             content += `<label>
-            <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="tb.handleMarkingChange('favorites', this.checked)">
+            <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingChange('favorites', this.checked)">
             Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? tb.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) : ""}</span>
         </label>`;
             content += `</div>`;
+
+            // Display user task data (notes, tags, feedback) even if empty.
+            content += `<p>Private notes: ${ut.PrivateNotes || ""}</p>`;
+            content += `<p>Tags: ${ut.Tags || ""}</p>`;
+            content += `<p>Public feedback: ${ut.PublicFeedback || ""}</p>`;
 
             // Process the IGCRecords.
             if (data.igcRecords && data.igcRecords.length > 0) {
