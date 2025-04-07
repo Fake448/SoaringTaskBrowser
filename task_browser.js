@@ -1469,6 +1469,7 @@ class TaskBrowser {
                                     weight: tb.tbm.igcTrackHighlightedWeight,
                                     color: tb.tbm.igcTrackHighlightedColor
                                 });
+                                tb.tbm.igcTrackCache[igcKey].bringToFront();
                             }
                         }
                     });
