@@ -110,6 +110,19 @@ try {
     
     $stmt->execute();
     
+    // Transform IGCRecordDateTimeUTC to the desired format for saving in MarkedFlownDateUTC.
+    if (!empty($IGCRecordDateTimeUTC) && strlen($IGCRecordDateTimeUTC) === 12) {
+        $yy = (int) substr($IGCRecordDateTimeUTC, 0, 2);
+        $mm = (int) substr($IGCRecordDateTimeUTC, 2, 2);
+        $dd = (int) substr($IGCRecordDateTimeUTC, 4, 2);
+        $HH = (int) substr($IGCRecordDateTimeUTC, 6, 2);
+        $mi = (int) substr($IGCRecordDateTimeUTC, 8, 2);
+        $fullYear = $yy + 2000;
+        $formattedDate = sprintf("%04d-%02d-%02d %02d:%02d", $fullYear, $mm, $dd, $HH, $mi);
+    } else {
+        $formattedDate = $IGCRecordDateTimeUTC;
+    }
+
     // Now, create or update the corresponding record in the UsersTasks table.
     // Check if a record already exists for this WSGUserID and EntrySeqID.
     $checkTaskQuery = "SELECT * FROM UsersTasks WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
@@ -120,29 +133,25 @@ try {
     $existingTask = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($existingTask) {
-        // Determine if we should update: update if MarkedFlownDateUTC is empty or
-        // if the new IGCRecordDateTimeUTC is more recent.
-        $currentMarked = $existingTask['MarkedFlownDateUTC'];
-        if (empty($currentMarked) || strtotime($IGCRecordDateTimeUTC) > strtotime($currentMarked)) {
-            $updateTaskQuery = "UPDATE UsersTasks SET MarkedFlownDateUTC = :IGCRecordDateTimeUTC 
-                WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
-            $stmt = $pdo->prepare($updateTaskQuery);
-            $stmt->bindParam(':IGCRecordDateTimeUTC', $IGCRecordDateTimeUTC, PDO::PARAM_STR);
-            $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
-            $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
-            $stmt->execute();
-        }
+        // Update the MarkedFlownDateUTC field unconditionally.
+        $updateTaskQuery = "UPDATE UsersTasks SET MarkedFlownDateUTC = :markedDate 
+            WHERE WSGUserID = :WSGUserID AND EntrySeqID = :EntrySeqID";
+        $stmt = $pdo->prepare($updateTaskQuery);
+        $stmt->bindParam(':markedDate', $formattedDate, PDO::PARAM_STR);
+        $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
+        $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
+        $stmt->execute();
     } else {
-        // Insert a new record with the MarkedFlownDateUTC value.
+        // Insert a new record with the formatted MarkedFlownDateUTC value.
         $insertTaskQuery = "INSERT INTO UsersTasks (WSGUserID, EntrySeqID, MarkedFlownDateUTC)
-            VALUES (:WSGUserID, :EntrySeqID, :IGCRecordDateTimeUTC)";
+            VALUES (:WSGUserID, :EntrySeqID, :markedDate)";
         $stmt = $pdo->prepare($insertTaskQuery);
         $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
         $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
-        $stmt->bindParam(':IGCRecordDateTimeUTC', $IGCRecordDateTimeUTC, PDO::PARAM_STR);
+        $stmt->bindParam(':markedDate', $formattedDate, PDO::PARAM_STR);
         $stmt->execute();
     }
-    
+
     echo json_encode([
         'status' => 'success',
         'message' => 'IGC record saved successfully.',
