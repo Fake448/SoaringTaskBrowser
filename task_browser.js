@@ -1647,6 +1647,46 @@ class TaskBrowser {
         }
     }
 
+    // Function to update the "Lists" column in the DataTable for the currently selected task.
+    updateDataTableMarkings() {
+        let tb = this;
+        // Check if the DataTable is initialized
+        if (!$.fn.DataTable.isDataTable('#taskGridTable')) return;
+
+        const table = $('#taskGridTable').DataTable();
+        const currentTaskId = tb.currentTask.EntrySeqID;
+
+        // Find the row index where the task's EntrySeqID matches currentTaskId.
+        // 'row().data()' returns an object; we assume tasks are stored with EntrySeqID property.
+        let rowIndex = table.rows().indexes().filter((index) => {
+            let rowData = table.row(index).data();
+            return rowData.EntrySeqID === currentTaskId;
+        })[0];
+
+        if (rowIndex !== undefined) {
+            // Build the markings string based on the stored values in currentUserTaskEntry.
+            // If there is a valid timestamp, it's considered checked.
+            let markings = "";
+            if (tb.currentUserTaskEntry.MarkedFlownDateUTC) {
+                markings += "✅";
+            }
+            if (tb.currentUserTaskEntry.MarkedFlyNextUTC) {
+                markings += "🔜";
+            }
+            if (tb.currentUserTaskEntry.MarkedFavoritesUTC) {
+                markings += "🌟";
+            }
+
+            // Update the cell in the "Lists" column (which is the second column at index 1).
+            table.cell(rowIndex, 1).data(markings);
+            // Invalidate the row and redraw it.
+            table.row(rowIndex).invalidate().draw(false);
+        } else {
+            console.warn(`Task with EntrySeqID ${currentTaskId} not found in the DataTable.`);
+        }
+    }
+
+
     async handleMarkingAndDisplay(type, checked) {
         let tb = this;
         // Get the current timestamp in ISO format (customize if needed)
@@ -1666,6 +1706,20 @@ class TaskBrowser {
 
         // Finally, call the unified update function to push the changes to the server.
         tb.updateUserTaskRecord();
+
+        // Update the corresponding task in the tb.tbm.allTasks array.
+        const currentTaskId = tb.currentTask.EntrySeqID;
+        let taskObj = tb.tbm.allTasks.find(task => task.EntrySeqID === currentTaskId);
+        if (taskObj) {
+            if (type === 'flown') {
+                taskObj.MarkedFlown = checked ? 1 : 0;
+            } else if (type === 'flyNext') {
+                taskObj.MarkedFlyNext = checked ? 1 : 0;
+            } else if (type === 'favorites') {
+                taskObj.MarkedFavorites = checked ? 1 : 0;
+            }
+        }
+        tb.updateDataTableMarkings();
     }
 
     async setQualityRating(entrySeqID, rating) {
