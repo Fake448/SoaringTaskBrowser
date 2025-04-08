@@ -1591,7 +1591,7 @@ class TaskBrowser {
                 content += `<span class="star" data-value="${i}" style="cursor:pointer; color:${starColor}; font-size: 1.2em;"
                              onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
             }
-            content += `<button type="button" class="igc-button-style" style="margin-left:7px;" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-left:4px;" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
             content += `</div>`;
 
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
@@ -1602,7 +1602,7 @@ class TaskBrowser {
   <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
             content += `<label for="tagsInput">Private Tags:</label><br>
   <textarea id="tagsInput" rows="1" maxlength="200" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
-            content += `<button type="button" class="igc-button-style" style="margin-top:10px;" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
