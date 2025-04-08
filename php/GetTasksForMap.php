@@ -1,6 +1,6 @@
 <?php
-require __DIR__ . '/session_restore.php';
-require __DIR__ . '/CommonFunctions.php';
+require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/CommonFunctions.php';
 
 try {
     $pdo = new PDO("sqlite:$databasePath");
