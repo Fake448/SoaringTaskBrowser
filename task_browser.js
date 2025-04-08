@@ -1769,15 +1769,15 @@ class TaskBrowser {
         }
 
         // Build the new text string.
-        let newText = `#${tb.currentTask.EntrySeqID}`;
+        let newText = `#${tb.currentTask.EntrySeqID} `;
         if (flownCheckbox && flownCheckbox.checked) {
-            newText += " ✅";
+            newText += "✅";
         }
         if (flyNextCheckbox && flyNextCheckbox.checked) {
-            newText += " 🔜";
+            newText += "🔜";
         }
         if (favoritesCheckbox && favoritesCheckbox.checked) {
-            newText += " 🌟";
+            newText += "🌟";
         }
 
         // Update the text content of the task header element.
