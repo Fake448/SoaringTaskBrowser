@@ -1676,6 +1676,7 @@ class TaskBrowser {
             const starValue = parseInt(star.getAttribute("data-value"), 10);
             star.style.color = (starValue <= rating) ? "gold" : "gray";
         });
+        tb.currentUserTaskEntry.QualityRating = rating;
 
         tb.updateUserTaskRecord();
     }
@@ -1719,7 +1720,7 @@ class TaskBrowser {
 
         // Retrieve the rest of the values from the DOM.
         const difficultyRating = document.getElementById("difficultyRatingSelect")?.value || "";
-        const qualityRating = tb.currentQualityRating || 0;
+        const qualityRating = tb.currentUserTaskEntry.QualityRating || 0;
         const publicFeedback = document.getElementById("publicFeedbackTextarea")?.value || "";
         const privateNotes = document.getElementById("privateNotesTextarea")?.value || "";
         const tags = document.getElementById("tagsInput")?.value || "";
