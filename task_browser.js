@@ -1745,6 +1745,40 @@ class TaskBrowser {
         }
     }
 
+    updateTaskHeaderMarkings() {
+        // Retrieve the checkboxes.
+        let tb = this;
+
+        const flownCheckbox = document.getElementById("flownCheckbox");
+        const flyNextCheckbox = document.getElementById("flyNextCheckbox");
+        const favoritesCheckbox = document.getElementById("favoritesCheckbox");
+
+        // Retrieve the element that displays the task number.
+        // This assumes there's only one such element on the page.
+        // If there are multiple tasks, you'll need a more specific selector, 
+        // for example by using a container element with a data attribute.
+        const numberSpan = document.querySelector('.task-number');
+        if (!numberSpan) {
+            console.warn(`Could not find an element with the class "task-number" for EntrySeqID ${tb.currentTask.entrySeqID}`);
+            return;
+        }
+
+        // Build the new text string.
+        let newText = `#${tb.currentTask.entrySeqID}`;
+        if (flownCheckbox && flownCheckbox.checked) {
+            newText += " ✅";
+        }
+        if (flyNextCheckbox && flyNextCheckbox.checked) {
+            newText += " 🔜";
+        }
+        if (favoritesCheckbox && favoritesCheckbox.checked) {
+            newText += " 🌟";
+        }
+
+        // Update the text content of the task header element.
+        numberSpan.textContent = newText;
+    }
+
     async showTaskDetailsStandalone(task) {
         let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
@@ -1841,6 +1875,8 @@ class TaskBrowser {
                 tb.enableMapInteractions();
             });
         }
+
+        tb.updateTaskHeaderMarkings();
 
         if (tb.fromURL) {
             this.expandAllCollapsibleSections();
