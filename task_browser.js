@@ -1645,6 +1645,7 @@ class TaskBrowser {
     }
 
     async saveUserTaskTextData(entrySeqID) {
+        let tb = this;
         const privateNotes = document.getElementById("privateNotesTextarea").value;
         const tags = document.getElementById("tagsInput").value;
         const publicFeedback = document.getElementById("publicFeedbackTextarea").value;
@@ -1674,6 +1675,7 @@ class TaskBrowser {
     }
 
     async handleMarkingChange(type, checked, entrySeqID) {
+        let tb = this;
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("markingType", type);
@@ -1698,6 +1700,7 @@ class TaskBrowser {
     }
 
     async handleDifficultyChange(entrySeqID, newValue) {
+        let tb = this;
         let postData = new URLSearchParams();
         postData.append("entrySeqID", entrySeqID);
         postData.append("DifficultyRating", newValue);
@@ -1720,6 +1723,7 @@ class TaskBrowser {
 
     async setQualityRating(entrySeqID, rating) {
         // Update the UI for the star rating.
+        let tb = this;
         const stars = document.querySelectorAll("#qualityRatingWrapper .star");
         stars.forEach(star => {
             const starValue = parseInt(star.getAttribute("data-value"), 10);
