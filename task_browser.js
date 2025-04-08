@@ -1603,21 +1603,21 @@ class TaskBrowser {
   <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PublicFeedback || ""}</textarea><br>`;
             content += `<label for="privateNotesTextarea">Private Notes:</label><br>
   <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
-            content += `<label for="tagsInput">Private Tags:</label><br>
-  <textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
+            //content += `<label for="tagsInput">Private Tags:</label><br>
+  //<textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
             content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.updateUserTaskRecord()">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
-            if (data.igcRecords && data.igcRecords.length > 0) {
-                content += `<h3>Your IGC Records</h3><ul>`;
-                data.igcRecords.forEach(record => {
-                    content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
-                });
-                content += `</ul>`;
-            } else {
-                content += `<p>No IGC records found for this task.</p>`;
-            }
+            //if (data.igcRecords && data.igcRecords.length > 0) {
+            //    content += `<h3>Your IGC Records</h3><ul>`;
+            //    data.igcRecords.forEach(record => {
+            //        content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
+            //    });
+            //    content += `</ul>`;
+            //} else {
+            //    content += `<p>No IGC records found for this task.</p>`;
+            //}
 
             // --- Generate the collapsible section ---
             this.generateCollapsibleSection(
