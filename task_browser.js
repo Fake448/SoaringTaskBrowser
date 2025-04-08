@@ -1604,7 +1604,7 @@ class TaskBrowser {
             content += `<label for="privateNotesTextarea">Private Notes:</label><br>
   <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
             //content += `<label for="tagsInput">Private Tags:</label><br>
-  //<textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
+            //<textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
             content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.updateUserTaskRecord()">Save Changes</button>`;
             content += `</div>`;
 
@@ -3043,6 +3043,25 @@ class TaskBrowser {
                 data: processedTasks,
                 columns: [
                     { data: 'EntrySeqID', title: 'ID', name: 'EntrySeqID' },
+                    {
+                        data: null,
+                        title: 'Lists',
+                        name: 'Markings',
+                        render: function (data, type, row) {
+                            let markings = "";
+                            if (row.MarkedFlown) {
+                                markings += "✅";
+                            }
+                            if (row.MarkedFlyNext) {
+                                markings += "🔜";
+                            }
+                            if (row.MarkedFavorites) {
+                                markings += "🌟";
+                            }
+                            return type === 'display' || type === 'filter' ? markings : markings;
+                        },
+                        orderable: false // Optional: disable ordering by this computed column
+                    },
                     { data: 'Title', title: 'Title', name: 'Title' },
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
