@@ -24,7 +24,15 @@ $entrySeqID = (int) $_POST['entrySeqID'];
 
 // Helper function to check if a POST field is empty and return null if so.
 function getPostValueOrNull($key) {
-    return (isset($_POST[$key]) && trim($_POST[$key]) !== "") ? $_POST[$key] : null;
+    if (!isset($_POST[$key])) {
+        return null;
+    }
+    $val = trim($_POST[$key]);
+    // If it's an empty string or literally "null" (case-insensitive), return PHP null.
+    if ($val === "" || strtolower($val) === "null") {
+        return null;
+    }
+    return $val;
 }
 
 // Build an array of fields to update based on provided POST values.
