@@ -1620,7 +1620,7 @@ class TaskBrowser {
             //}
 
             // --- Generate the collapsible section ---
-            this.generateCollapsibleSection(
+            tb.generateCollapsibleSection(
                 "My Stuff",
                 content,
                 taskDetailContainer, // Ensure taskDetailContainer is available in your scope.
@@ -1633,7 +1633,7 @@ class TaskBrowser {
             );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
-            this.generateCollapsibleSection(
+            tb.generateCollapsibleSection(
                 "My Stuff",
                 "<p>Error retrieving your user data.</p>",
                 taskDetailContainer,
@@ -1968,9 +1968,11 @@ class TaskBrowser {
 
         // Add reset button if callback is provided
         if (resetCallback) {
+            titleElement.style.justifyContent = 'space-between';
             const resetButton = document.createElement('button');
             resetButton.className = 'collapsible-reset-button';
             resetButton.innerText = 'Reset';
+            resetButton.style.marginLeft = 'auto';
             resetButton.addEventListener('click', (event) => {
                 event.stopPropagation();
                 resetCallback();
