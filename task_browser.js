@@ -10,6 +10,7 @@ class TaskBrowser {
         tb.discordTasksChannel = "";
         tb.wsgRoot = "";
         tb.isUserConnected = false;
+        tb.currentUserTaskEntry = {};
     }
 
     init(igcUpload) {
@@ -1531,7 +1532,8 @@ class TaskBrowser {
     }
 
     async generateTaskDetailsUserStuff(task) {
-        if (!this.isUserConnected) return;
+        let tb = this;
+        if (!tb.isUserConnected) return;
 
         // Prepare query parameters with the task's EntrySeqID.
         let params = new URLSearchParams({ entrySeqID: task.EntrySeqID });
@@ -1544,21 +1546,22 @@ class TaskBrowser {
             let data = await response.json();
             // Use an empty object if no userTask record exists.
             let ut = data.userTask || {};
+            tb.currentUserTaskEntry = ut;
 
             let content = "";
 
             // --- Markings Section (Checkboxes) ---
             content += `<div class="user-markings">`;
             content += `<label>
-          <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flown', this.checked, ${task.EntrySeqID})">
+          <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flown', this.checked)">
           ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + this.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
-          <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingChange('flyNext', this.checked, ${task.EntrySeqID})">
+          <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flyNext', this.checked)">
           🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + this.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
-          <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingChange('favorites', this.checked, ${task.EntrySeqID})">
+          <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('favorites', this.checked)">
           🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + this.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
       </label>`;
             content += `</div>`;
@@ -1574,7 +1577,7 @@ class TaskBrowser {
             ];
             content += `<div class="user-difficulty" style="margin-top:10px;">`;
             content += `<label for="difficultyRatingSelect">Difficulty:</label><br>
-                  <select id="difficultyRatingSelect" onchange="TB.handleDifficultyChange(${task.EntrySeqID}, this.value)">`;
+                  <select id="difficultyRatingSelect" onchange="TB.updateUserTaskRecord()">`;
             difficultyOptions.forEach(opt => {
                 let selected = (ut.DifficultyRating !== undefined && parseInt(ut.DifficultyRating, 10) === opt.value) ? "selected" : "";
                 content += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
@@ -1602,7 +1605,7 @@ class TaskBrowser {
   <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
             content += `<label for="tagsInput">Private Tags:</label><br>
   <textarea id="tagsInput" rows="1" maxlength="200" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
-            content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.saveUserTaskTextData(${task.EntrySeqID})">Save Changes</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.updateUserTaskRecord()">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
@@ -1644,81 +1647,25 @@ class TaskBrowser {
         }
     }
 
-    async saveUserTaskTextData(entrySeqID) {
+    async handleMarkingAndDisplay(type, checked) {
         let tb = this;
-        const privateNotes = document.getElementById("privateNotesTextarea").value;
-        const tags = document.getElementById("tagsInput").value;
-        const publicFeedback = document.getElementById("publicFeedbackTextarea").value;
+        // Get the current timestamp in ISO format (customize if needed)
+        let nowTimestamp = new Date().toISOString().replace('T', ' ').split('.')[0];
 
-        let postData = new URLSearchParams();
-        postData.append("entrySeqID", entrySeqID);
-        postData.append("PrivateNotes", privateNotes);
-        postData.append("Tags", tags);
-        postData.append("PublicFeedback", publicFeedback);
-
-        try {
-            let response = await fetch("php/UpdateUserTaskTextData.php", {
-                method: "POST",
-                credentials: "include",
-                body: postData
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert("Error saving text data: " + data.error);
-            } else {
-                alert("Changes saved successfully.");
-            }
-        } catch (error) {
-            console.error("Error saving user text data:", error);
-            alert("Error saving text data.");
+        // Update only the relevant field on the stored currentUserTaskEntry.
+        if (type === 'flown') {
+            tb.currentUserTaskEntry.MarkedFlownDateUTC = checked ? nowTimestamp : "";
+            document.getElementById("flownDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
+        } else if (type === 'flyNext') {
+            tb.currentUserTaskEntry.MarkedFlyNextUTC = checked ? nowTimestamp : "";
+            document.getElementById("flyNextDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
+        } else if (type === 'favorites') {
+            tb.currentUserTaskEntry.MarkedFavoritesUTC = checked ? nowTimestamp : "";
+            document.getElementById("favoritesDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
         }
-    }
 
-    async handleMarkingChange(type, checked, entrySeqID) {
-        let tb = this;
-        let postData = new URLSearchParams();
-        postData.append("entrySeqID", entrySeqID);
-        postData.append("markingType", type);
-        postData.append("checked", checked ? 1 : 0);
-
-        try {
-            let response = await fetch("php/UpdateUserMarkings.php", {
-                method: "POST",
-                credentials: "include",
-                body: postData
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert("Error updating marking: " + data.error);
-            }
-            // Optionally update the displayed date if returned by the server.
-        } catch (error) {
-            console.error("Error updating marking:", error);
-            alert("Error updating marking.");
-        }
-        tb.updateTaskHeaderMarkings();
-    }
-
-    async handleDifficultyChange(entrySeqID, newValue) {
-        let tb = this;
-        let postData = new URLSearchParams();
-        postData.append("entrySeqID", entrySeqID);
-        postData.append("DifficultyRating", newValue);
-
-        try {
-            let response = await fetch("php/UpdateUserDifficulty.php", {
-                method: "POST",
-                credentials: "include",
-                body: postData
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert("Error updating difficulty rating: " + data.error);
-            }
-        } catch (error) {
-            console.error("Error updating difficulty rating:", error);
-            alert("Error updating difficulty rating.");
-        }
+        // Finally, call the unified update function to push the changes to the server.
+        tb.updateUserTaskRecord();
     }
 
     async setQualityRating(entrySeqID, rating) {
@@ -1730,27 +1677,10 @@ class TaskBrowser {
             star.style.color = (starValue <= rating) ? "gold" : "gray";
         });
 
-        let postData = new URLSearchParams();
-        postData.append("entrySeqID", entrySeqID);
-        postData.append("QualityRating", rating);
-
-        try {
-            let response = await fetch("php/UpdateUserQuality.php", {
-                method: "POST",
-                credentials: "include",
-                body: postData
-            });
-            const data = await response.json();
-            if (data.error) {
-                alert("Error updating quality rating: " + data.error);
-            }
-        } catch (error) {
-            console.error("Error updating quality rating:", error);
-            alert("Error updating quality rating.");
-        }
+        tb.updateUserTaskRecord();
     }
 
-    updateTaskHeaderMarkings() {
+    async updateTaskHeaderMarkings() {
         // Retrieve the checkboxes.
         let tb = this;
 
@@ -1782,6 +1712,46 @@ class TaskBrowser {
 
         // Update the text content of the task header element.
         numberSpan.textContent = newText;
+    }
+
+    async updateUserTaskRecord() {
+        let tb = this;
+
+        // Retrieve the rest of the values from the DOM.
+        const difficultyRating = document.getElementById("difficultyRatingSelect")?.value || "";
+        const qualityRating = tb.currentQualityRating || 0;
+        const publicFeedback = document.getElementById("publicFeedbackTextarea")?.value || "";
+        const privateNotes = document.getElementById("privateNotesTextarea")?.value || "";
+        const tags = document.getElementById("tagsInput")?.value || "";
+
+        let postData = new URLSearchParams();
+        postData.append("entrySeqID", tb.currentTask.EntrySeqID);
+        // Use the stored date/time stamps instead of converting the checkbox values.
+        postData.append("MarkedFlown", tb.currentUserTaskEntry.MarkedFlownDateUTC);
+        postData.append("MarkedFlyNext", tb.currentUserTaskEntry.MarkedFlyNextUTC);
+        postData.append("MarkedFavorites", tb.currentUserTaskEntry.MarkedFavoritesUTC);
+        postData.append("DifficultyRating", difficultyRating);
+        postData.append("QualityRating", qualityRating);
+        postData.append("PublicFeedback", publicFeedback);
+        postData.append("PrivateNotes", privateNotes);
+        postData.append("Tags", tags);
+
+        try {
+            let response = await fetch("php/UpdateUserTaskRecord.php", {
+                method: "POST",
+                credentials: "include",
+                body: postData
+            });
+            const data = await response.json();
+            if (data.error) {
+                alert("Error updating task record: " + data.error);
+            } else {
+                this.updateTaskHeaderMarkings();
+            }
+        } catch (error) {
+            console.error("Error updating task record:", error);
+            alert("Error updating task record.");
+        }
     }
 
     async showTaskDetailsStandalone(task) {
