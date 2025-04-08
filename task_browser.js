@@ -1759,12 +1759,12 @@ class TaskBrowser {
         // for example by using a container element with a data attribute.
         const numberSpan = document.querySelector('.task-number');
         if (!numberSpan) {
-            console.warn(`Could not find an element with the class "task-number" for EntrySeqID ${tb.currentTask.entrySeqID}`);
+            console.warn(`Could not find an element with the class "task-number" for EntrySeqID ${tb.currentTask.EntrySeqID}`);
             return;
         }
 
         // Build the new text string.
-        let newText = `#${tb.currentTask.entrySeqID}`;
+        let newText = `#${tb.currentTask.EntrySeqID}`;
         if (flownCheckbox && flownCheckbox.checked) {
             newText += " ✅";
         }
