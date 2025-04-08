@@ -22,46 +22,62 @@ if (!isset($_POST['entrySeqID'])) {
 
 $entrySeqID = (int) $_POST['entrySeqID'];
 
+// Helper function to check if a POST field is empty and return null if so.
+function getPostValueOrNull($key) {
+    return (isset($_POST[$key]) && trim($_POST[$key]) !== "") ? $_POST[$key] : null;
+}
+
 // Build an array of fields to update based on provided POST values.
 $updates = [];
-$params = [':wsgUserID' => $wsgUserID, ':entrySeqID' => $entrySeqID];
+$params = [
+    ':wsgUserID' => $wsgUserID,
+    ':entrySeqID' => $entrySeqID
+];
 
-// Markings - these are date/time strings or an empty string.
+// Markings - these are date/time strings or empty (to be set as NULL).
 if (isset($_POST['MarkedFlown'])) {
+    $value = getPostValueOrNull('MarkedFlown');
     $updates[] = "MarkedFlownDateUTC = :markedFlown";
-    $params[':markedFlown'] = $_POST['MarkedFlown'];
+    $params[':markedFlown'] = $value;
 }
 if (isset($_POST['MarkedFlyNext'])) {
+    $value = getPostValueOrNull('MarkedFlyNext');
     $updates[] = "MarkedFlyNextUTC = :markedFlyNext";
-    $params[':markedFlyNext'] = $_POST['MarkedFlyNext'];
+    $params[':markedFlyNext'] = $value;
 }
 if (isset($_POST['MarkedFavorites'])) {
+    $value = getPostValueOrNull('MarkedFavorites');
     $updates[] = "MarkedFavoritesUTC = :markedFavorites";
-    $params[':markedFavorites'] = $_POST['MarkedFavorites'];
+    $params[':markedFavorites'] = $value;
 }
 
 // Ratings.
 if (isset($_POST['DifficultyRating'])) {
+    $value = getPostValueOrNull('DifficultyRating');
     $updates[] = "DifficultyRating = :difficultyRating";
-    $params[':difficultyRating'] = $_POST['DifficultyRating'];
+    $params[':difficultyRating'] = $value;
 }
 if (isset($_POST['QualityRating'])) {
+    $value = getPostValueOrNull('QualityRating');
     $updates[] = "QualityRating = :qualityRating";
-    $params[':qualityRating'] = $_POST['QualityRating'];
+    $params[':qualityRating'] = $value;
 }
 
 // Text fields.
 if (isset($_POST['PublicFeedback'])) {
+    $value = getPostValueOrNull('PublicFeedback');
     $updates[] = "PublicFeedback = :publicFeedback";
-    $params[':publicFeedback'] = $_POST['PublicFeedback'];
+    $params[':publicFeedback'] = $value;
 }
 if (isset($_POST['PrivateNotes'])) {
+    $value = getPostValueOrNull('PrivateNotes');
     $updates[] = "PrivateNotes = :privateNotes";
-    $params[':privateNotes'] = $_POST['PrivateNotes'];
+    $params[':privateNotes'] = $value;
 }
 if (isset($_POST['Tags'])) {
+    $value = getPostValueOrNull('Tags');
     $updates[] = "Tags = :tags";
-    $params[':tags'] = $_POST['Tags'];
+    $params[':tags'] = $value;
 }
 
 if (empty($updates)) {
@@ -77,7 +93,13 @@ try {
     // Build the UPDATE SQL statement dynamically.
     $sql = "UPDATE UsersTasks SET " . implode(", ", $updates) . " WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
     $stmt = $pdo->prepare($sql);
-    $stmt->execute($params);
+    
+    // Bind parameters. PDO will convert PHP nulls to SQL NULL.
+    foreach ($params as $key => $value) {
+        $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+    }
+    
+    $stmt->execute();
 
     echo json_encode(["success" => true]);
 } catch (Exception $e) {
