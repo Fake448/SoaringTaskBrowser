@@ -1595,7 +1595,7 @@ class TaskBrowser {
                              onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
             }
             content += `<button type="button" class="igc-button-style" style="margin-left:4px;" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
-            content += `</div>`;
+            content += `</div><hr>`;
 
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
             content += `<div class="user-textdata" style="margin-top: 10px;">`;
