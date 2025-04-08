@@ -1,9 +1,15 @@
 <?php
+require __DIR__ . '/session_restore.php';
 require __DIR__ . '/CommonFunctions.php';
 
 try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+    // Check user session; if active, get the user's ID, otherwise 0.
+    $wsgUserID = (isset($_SESSION['user']) && isset($_SESSION['user']['id']))
+        ? (int)$_SESSION['user']['id']
+        : 0;
 
     // Get the filter values from query parameters
     $taskCount = isset($_GET['taskCount']) ? (int)$_GET['taskCount'] : PHP_INT_MAX;
@@ -93,16 +99,47 @@ try {
     // Final query
     $query = "
         SELECT 
-            EntrySeqID, TaskID, Title, LatMin, LatMax, LongMin, LongMax, PLNXML,
-            MainAreaPOI, DepartureName, DepartureICAO, ArrivalName, ArrivalICAO,
-            SoaringRidge, SoaringThermals, SoaringWaves, SoaringDynamic, SoaringExtraInfo,
-            DurationMin, DurationMax, TaskDistance, TotalDistance, RecommendedGliders,
-            DifficultyRating, DifficultyExtraInfo, Credits, Countries, LastUpdate
-        FROM Tasks
+            T.EntrySeqID, 
+            T.TaskID, 
+            T.Title, 
+            T.LatMin, 
+            T.LatMax, 
+            T.LongMin, 
+            T.LongMax, 
+            T.PLNXML,
+            T.MainAreaPOI, 
+            T.DepartureName, 
+            T.DepartureICAO, 
+            T.ArrivalName, 
+            T.ArrivalICAO,
+            T.SoaringRidge, 
+            T.SoaringThermals, 
+            T.SoaringWaves, 
+            T.SoaringDynamic, 
+            T.SoaringExtraInfo,
+            T.DurationMin, 
+            T.DurationMax, 
+            T.TaskDistance, 
+            T.TotalDistance, 
+            T.RecommendedGliders,
+            T.DifficultyRating, 
+            T.DifficultyExtraInfo, 
+            T.Credits, 
+            T.Countries, 
+            T.LastUpdate,
+            CASE WHEN UT.MarkedFlownDateUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFlown,
+            CASE WHEN UT.MarkedFlyNextUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFlyNext,
+            CASE WHEN UT.MarkedFavoritesUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFavorites
+        FROM Tasks T
+        LEFT JOIN UsersTasks UT
+            ON UT.EntrySeqID = T.EntrySeqID 
+            AND UT.WSGUserID = :wsgUserID
         WHERE " . implode(' AND ', $whereClauses) . "
-        ORDER BY LastUpdate DESC
+        ORDER BY T.LastUpdate DESC
         LIMIT :taskCount
     ";
+    // Bind the user ID for the join
+    $params[':wsgUserID'] = $wsgUserID;
 
     // Execute query with parameters
     $stmt = $pdo->prepare($query);
