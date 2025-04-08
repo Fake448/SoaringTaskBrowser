@@ -1694,6 +1694,7 @@ class TaskBrowser {
             console.error("Error updating marking:", error);
             alert("Error updating marking.");
         }
+        tb.updateTaskHeaderMarkings();
     }
 
     async handleDifficultyChange(entrySeqID, newValue) {
