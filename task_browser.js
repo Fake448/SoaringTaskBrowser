@@ -3042,11 +3042,21 @@ class TaskBrowser {
             const table = $('#taskGridTable').DataTable({
                 data: processedTasks,
                 columns: [
-                    { data: 'EntrySeqID', title: 'ID', name: 'EntrySeqID' },
+                    {
+                        data: 'EntrySeqID',
+                        title: 'ID',
+                        name: 'EntrySeqID',
+                        width: '30px'
+                    },
                     {
                         data: null,
                         title: 'Lists',
                         name: 'Markings',
+                        width: '40px',
+                        className: 'dt-left',
+                        createdCell: function (td, cellData, rowData, row, col) {
+                            $(td).css('text-align', 'left');
+                        },
                         render: function (data, type, row) {
                             let markings = "";
                             if (row.MarkedFlown) {
@@ -3059,8 +3069,7 @@ class TaskBrowser {
                                 markings += "🌟";
                             }
                             return type === 'display' || type === 'filter' ? markings : markings;
-                        },
-                        orderable: false // Optional: disable ordering by this computed column
+                        }
                     },
                     { data: 'Title', title: 'Title', name: 'Title' },
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
