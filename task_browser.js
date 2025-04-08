@@ -1600,11 +1600,11 @@ class TaskBrowser {
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
             content += `<div class="user-textdata" style="margin-top: 10px;">`;
             content += `<label for="publicFeedbackTextarea">Public Feedback:</label><br>
-  <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PublicFeedback || ""}</textarea><br>`;
+  <textarea id="publicFeedbackTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PublicFeedback || ""}</textarea><br>`;
             content += `<label for="privateNotesTextarea">Private Notes:</label><br>
-  <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
+  <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
             content += `<label for="tagsInput">Private Tags:</label><br>
-  <textarea id="tagsInput" rows="1" maxlength="200" style="width:100%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
+  <textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
             content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.updateUserTaskRecord()">Save Changes</button>`;
             content += `</div>`;
 
