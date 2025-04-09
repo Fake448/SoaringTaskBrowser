@@ -1782,9 +1782,9 @@ class TaskBrowser {
         let postData = new URLSearchParams();
         postData.append("entrySeqID", tb.currentTask.EntrySeqID);
         // Use the stored date/time stamps instead of converting the checkbox values.
-        postData.append("MarkedFlown", tb.currentUserTaskEntry.MarkedFlownDateUTC);
-        postData.append("MarkedFlyNext", tb.currentUserTaskEntry.MarkedFlyNextUTC);
-        postData.append("MarkedFavorites", tb.currentUserTaskEntry.MarkedFavoritesUTC);
+        postData.append("MarkedFlown", tb.currentUserTaskEntry.MarkedFlownDateUTC ?? "");
+        postData.append("MarkedFlyNext", tb.currentUserTaskEntry.MarkedFlyNextUTC ?? "");
+        postData.append("MarkedFavorites", tb.currentUserTaskEntry.MarkedFavoritesUTC ?? "");
         postData.append("DifficultyRating", difficultyRating);
         postData.append("QualityRating", qualityRating);
         postData.append("PublicFeedback", publicFeedback);
