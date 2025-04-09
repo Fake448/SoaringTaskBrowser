@@ -22,140 +22,125 @@ if (!isset($_POST['entrySeqID'])) {
 
 $entrySeqID = (int) $_POST['entrySeqID'];
 
-// Helper function to check if a POST field is empty and return null if so.
+/**
+ * Helper function to read a POST field. 
+ * Returns NULL if the field is not set, is an empty string, or literally 'null' (case-insensitive).
+ */
 function getPostValueOrNull($key) {
     if (!isset($_POST[$key])) {
         return null;
     }
     $val = trim($_POST[$key]);
-    // If it's an empty string or literally "null" (case-insensitive), return PHP null.
+    // If it's an empty string or literally "null" (case-insensitive), return NULL.
     if ($val === "" || strtolower($val) === "null") {
         return null;
     }
     return $val;
 }
 
+// We will maintain a list of all possible fields in the UsersTasks table that you want to update or insert.
+// This ensures that if the record does not exist, we can insert NULL for fields not posted.
+$allFields = [
+    'PrivateNotes',
+    'Tags',
+    'PublicFeedback',
+    'DifficultyRating',
+    'QualityRating',
+    'MarkedFlownDateUTC',
+    'MarkedFlyNextUTC',
+    'MarkedFavoritesUTC'
+];
+
+// This array will hold only the fields we actually want to update (for an existing record).
+$updates = [];
+
+// For insertion, we will always supply all columns, defaulting to NULL if not posted.
+$insertColumns = ['WSGUserID', 'EntrySeqID'];
+$insertPlaceholders = [':wsgUserID', ':entrySeqID'];
+
+// We always bind these params for both UPDATE and INSERT.
+$params = [
+    ':wsgUserID'  => $wsgUserID,
+    ':entrySeqID' => $entrySeqID
+];
+
 try {
     // Open the database connection.
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-    
+
     // First, check if a record exists for this user and task.
-    $selectSql = "SELECT COUNT(*) FROM UsersTasks WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
-    $stmtSelect = $pdo->prepare($selectSql);
-    $stmtSelect->execute([
-        ':wsgUserID' => $wsgUserID,
+    $sqlCheck = "
+        SELECT COUNT(*) 
+        FROM UsersTasks 
+        WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID
+    ";
+    $stmtCheck = $pdo->prepare($sqlCheck);
+    $stmtCheck->execute([
+        ':wsgUserID'  => $wsgUserID,
         ':entrySeqID' => $entrySeqID
     ]);
-    $recordExists = $stmtSelect->fetchColumn() > 0;
+    $recordExists = ($stmtCheck->fetchColumn() > 0);
 
-    // Build an array of fields to update/insert based on provided POST values.
-    // We'll use the same fields for both UPDATE and INSERT.
-    $updates = [];  // used for the update query
-    $insertColumns = []; // columns for insert
-    $insertPlaceholders = []; // placeholders for insert
-    $params = [
-        ':wsgUserID' => $wsgUserID,
-        ':entrySeqID' => $entrySeqID
-    ];
-    
-    // For INSERT, we always need to include the primary keys.
-    $insertColumns[] = "WSGUserID";
-    $insertColumns[] = "EntrySeqID";
-    $insertPlaceholders[] = ":wsgUserID";
-    $insertPlaceholders[] = ":entrySeqID";
+    // Loop over the known fields and see what the user posted. 
+    // If posted (or we always want to handle them on INSERT), store them in $params.
+    foreach ($allFields as $field) {
+        $postValue = getPostValueOrNull($field);
 
-    // Markings - these are date/time strings or empty (to be set as NULL).
-    if (isset($_POST['MarkedFlown'])) {
-        $value = getPostValueOrNull('MarkedFlown');
-        $updates[] = "MarkedFlownDateUTC = :markedFlown";
-        $insertColumns[] = "MarkedFlownDateUTC";
-        $insertPlaceholders[] = ":markedFlown";
-        $params[':markedFlown'] = $value;
+        // For an existing record, only update fields explicitly provided in $_POST.
+        // For a new record, we do an INSERT including all columns, using NULL for unprovided fields.
+        if (!$recordExists) {
+            // The record does not exist: we insert a row with all fields (some might be NULL).
+            $insertColumns[] = $field;        // e.g. MarkedFlownDateUTC
+            $insertPlaceholders[] = ":$field";  
+            $params[":$field"] = $postValue;  // possibly NULL
+        } else {
+            // The record exists: only update if the field was actually posted.
+            if (array_key_exists($field, $_POST)) {
+                $updates[] = "$field = :$field";
+                $params[":$field"] = $postValue;
+            }
+        }
     }
-    if (isset($_POST['MarkedFlyNext'])) {
-        $value = getPostValueOrNull('MarkedFlyNext');
-        $updates[] = "MarkedFlyNextUTC = :markedFlyNext";
-        $insertColumns[] = "MarkedFlyNextUTC";
-        $insertPlaceholders[] = ":markedFlyNext";
-        $params[':markedFlyNext'] = $value;
-    }
-    if (isset($_POST['MarkedFavorites'])) {
-        $value = getPostValueOrNull('MarkedFavorites');
-        $updates[] = "MarkedFavoritesUTC = :markedFavorites";
-        $insertColumns[] = "MarkedFavoritesUTC";
-        $insertPlaceholders[] = ":markedFavorites";
-        $params[':markedFavorites'] = $value;
-    }
-    
-    // Ratings.
-    if (isset($_POST['DifficultyRating'])) {
-        $value = getPostValueOrNull('DifficultyRating');
-        $updates[] = "DifficultyRating = :difficultyRating";
-        $insertColumns[] = "DifficultyRating";
-        $insertPlaceholders[] = ":difficultyRating";
-        $params[':difficultyRating'] = $value;
-    }
-    if (isset($_POST['QualityRating'])) {
-        $value = getPostValueOrNull('QualityRating');
-        $updates[] = "QualityRating = :qualityRating";
-        $insertColumns[] = "QualityRating";
-        $insertPlaceholders[] = ":qualityRating";
-        $params[':qualityRating'] = $value;
-    }
-    
-    // Text fields.
-    if (isset($_POST['PublicFeedback'])) {
-        $value = getPostValueOrNull('PublicFeedback');
-        $updates[] = "PublicFeedback = :publicFeedback";
-        $insertColumns[] = "PublicFeedback";
-        $insertPlaceholders[] = ":publicFeedback";
-        $params[':publicFeedback'] = $value;
-    }
-    if (isset($_POST['PrivateNotes'])) {
-        $value = getPostValueOrNull('PrivateNotes');
-        $updates[] = "PrivateNotes = :privateNotes";
-        $insertColumns[] = "PrivateNotes";
-        $insertPlaceholders[] = ":privateNotes";
-        $params[':privateNotes'] = $value;
-    }
-    if (isset($_POST['Tags'])) {
-        $value = getPostValueOrNull('Tags');
-        $updates[] = "Tags = :tags";
-        $insertColumns[] = "Tags";
-        $insertPlaceholders[] = ":tags";
-        $params[':tags'] = $value;
-    }
-    
-    if (empty($updates)) {
-        echo json_encode(["error" => "No fields provided to update"]);
-        exit;
-    }
-    
+
     if ($recordExists) {
-        // Build the UPDATE SQL statement dynamically.
-        $sql = "UPDATE UsersTasks SET " . implode(", ", $updates) . " WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
-        $stmt = $pdo->prepare($sql);
-        
-        // Bind parameters. PDO will convert PHP nulls to SQL NULL.
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        // If we have no fields to update, return a message
+        if (empty($updates)) {
+            echo json_encode(["success" => true, "message" => "No fields were updated"]);
+            exit;
         }
-        
-        $stmt->execute();
-    } else {
-        // Build the INSERT SQL statement dynamically.
-        $sql = "INSERT INTO UsersTasks (" . implode(", ", $insertColumns) . ") VALUES (" . implode(", ", $insertPlaceholders) . ")";
-        $stmt = $pdo->prepare($sql);
-        
-        foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
-        }
-        
-        $stmt->execute();
-    }
 
-    echo json_encode(["success" => true]);
+        // Build the UPDATE statement dynamically
+        $sqlUpdate = "
+            UPDATE UsersTasks 
+            SET " . implode(", ", $updates) . " 
+            WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID
+        ";
+        $stmtUpdate = $pdo->prepare($sqlUpdate);
+
+        // Bind all parameters, converting any null to PDO::PARAM_NULL
+        foreach ($params as $key => $value) {
+            $stmtUpdate->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        }
+
+        $stmtUpdate->execute();
+        echo json_encode(["success" => true, "message" => "Record updated"]);
+    } else {
+        // Build the INSERT statement (always insert all fields, some may be NULL).
+        $sqlInsert = "
+            INSERT INTO UsersTasks (" . implode(", ", $insertColumns) . ") 
+            VALUES (" . implode(", ", $insertPlaceholders) . ")
+        ";
+        $stmtInsert = $pdo->prepare($sqlInsert);
+
+        // Bind all parameters
+        foreach ($params as $key => $value) {
+            $stmtInsert->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        }
+
+        $stmtInsert->execute();
+        echo json_encode(["success" => true, "message" => "Record created"]);
+    }
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(["error" => $e->getMessage()]);
