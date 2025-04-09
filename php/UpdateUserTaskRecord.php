@@ -4,13 +4,9 @@ require_once __DIR__ . '/CommonFunctions.php';
 
 header('Content-Type: application/json');
 
-// Log the start.
-error_log("UpdateUserTaskRecord.php started");
-
 // Ensure the user is logged in.
 if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     http_response_code(401);
-    error_log("User not authenticated");
     echo json_encode(["error" => "User not authenticated"]);
     exit;
 }
@@ -20,14 +16,11 @@ $wsgUserID = $_SESSION['user']['id'];
 // Ensure the required parameter (entrySeqID) is provided via POST.
 if (!isset($_POST['entrySeqID'])) {
     http_response_code(400);
-    error_log("Missing required parameter: entrySeqID");
     echo json_encode(["error" => "Missing required parameter: entrySeqID"]);
     exit;
 }
 
 $entrySeqID = (int) $_POST['entrySeqID'];
-
-error_log("Processing record for WSGUserID: $wsgUserID, EntrySeqID: $entrySeqID");
 
 /**
  * Helper function to read a POST field. 
@@ -35,15 +28,12 @@ error_log("Processing record for WSGUserID: $wsgUserID, EntrySeqID: $entrySeqID"
  */
 function getPostValueOrNull($key) {
     if (!isset($_POST[$key])) {
-        error_log("POST key '$key' not set, returning NULL.");
         return null;
     }
     $val = trim($_POST[$key]);
     if ($val === "" || strtolower($val) === "null") {
-        error_log("POST key '$key' is empty or 'null', returning NULL.");
         return null;
     }
-    error_log("POST key '$key' has value: $val");
     return $val;
 }
 
@@ -88,7 +78,6 @@ try {
         ':entrySeqID' => $entrySeqID
     ]);
     $recordExists = ($stmtCheck->fetchColumn() > 0);
-    error_log("Record exists: " . ($recordExists ? "true" : "false"));
 
     // Loop over the field mappings.
     foreach ($fieldsMap as $postKey => $dbColumn) {
@@ -99,45 +88,37 @@ try {
             if (array_key_exists($postKey, $_POST)) {
                 $updates[] = "$dbColumn = :$postKey";
                 $params[":$postKey"] = $postValue;
-                error_log("Preparing UPDATE for $dbColumn with value: " . var_export($postValue, true));
             }
         } else {
             // For a new record, include all fields—using NULL when no value is provided.
             $insertColumns[] = $dbColumn;
             $insertPlaceholders[] = ":$postKey";
             $params[":$postKey"] = $postValue;
-            error_log("Preparing INSERT for $dbColumn with value: " . var_export($postValue, true));
         }
     }
     
     if ($recordExists) {
         if (empty($updates)) {
-            error_log("No update fields provided.");
             echo json_encode(["success" => true, "message" => "No fields were updated"]);
             exit;
         }
         $sqlUpdate = "UPDATE UsersTasks SET " . implode(", ", $updates) . " WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
-        error_log("UPDATE SQL: $sqlUpdate");
         $stmtUpdate = $pdo->prepare($sqlUpdate);
         foreach ($params as $key => $value) {
             $stmtUpdate->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         }
         $stmtUpdate->execute();
-        error_log("Record updated successfully.");
         echo json_encode(["success" => true, "message" => "Record updated"]);
     } else {
         $sqlInsert = "INSERT INTO UsersTasks (" . implode(", ", $insertColumns) . ") VALUES (" . implode(", ", $insertPlaceholders) . ")";
-        error_log("INSERT SQL: $sqlInsert");
         $stmtInsert = $pdo->prepare($sqlInsert);
         foreach ($params as $key => $value) {
             $stmtInsert->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
         }
         $stmtInsert->execute();
-        error_log("Record created successfully.");
         echo json_encode(["success" => true, "message" => "Record created"]);
     }
 } catch (Exception $e) {
-    error_log("Error: " . $e->getMessage());
     http_response_code(500);
     echo json_encode(["error" => $e->getMessage()]);
 }
