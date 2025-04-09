@@ -13,6 +13,14 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
 
 $wsgUserID = $_SESSION['user']['id'];
 
+// Validate that the user ID is a valid positive integer.
+if ($wsgUserID <= 0) {
+    http_response_code(400);
+    error_log("Invalid WSGUserID: $wsgUserID");
+    echo json_encode(["error" => "Invalid user ID"]);
+    exit;
+}
+
 // Ensure the required parameter (entrySeqID) is provided via POST.
 if (!isset($_POST['entrySeqID'])) {
     http_response_code(400);

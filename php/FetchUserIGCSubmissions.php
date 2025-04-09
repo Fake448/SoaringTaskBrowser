@@ -13,6 +13,14 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
 // Use the user id stored in the session.
 $wsgUserID = $_SESSION['user']['id'];
 
+// Validate that the user ID is a valid positive integer.
+if ($wsgUserID <= 0) {
+    http_response_code(400);
+    error_log("Invalid WSGUserID: $wsgUserID");
+    echo json_encode(["error" => "Invalid user ID"]);
+    exit;
+}
+
 try {
     // Open the database connection using the path from CommonFunctions.php.
     $pdo = new PDO("sqlite:$databasePath");
