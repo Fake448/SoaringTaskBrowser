@@ -35,79 +35,125 @@ function getPostValueOrNull($key) {
     return $val;
 }
 
-// Build an array of fields to update based on provided POST values.
-$updates = [];
-$params = [
-    ':wsgUserID' => $wsgUserID,
-    ':entrySeqID' => $entrySeqID
-];
-
-// Markings - these are date/time strings or empty (to be set as NULL).
-if (isset($_POST['MarkedFlown'])) {
-    $value = getPostValueOrNull('MarkedFlown');
-    $updates[] = "MarkedFlownDateUTC = :markedFlown";
-    $params[':markedFlown'] = $value;
-}
-if (isset($_POST['MarkedFlyNext'])) {
-    $value = getPostValueOrNull('MarkedFlyNext');
-    $updates[] = "MarkedFlyNextUTC = :markedFlyNext";
-    $params[':markedFlyNext'] = $value;
-}
-if (isset($_POST['MarkedFavorites'])) {
-    $value = getPostValueOrNull('MarkedFavorites');
-    $updates[] = "MarkedFavoritesUTC = :markedFavorites";
-    $params[':markedFavorites'] = $value;
-}
-
-// Ratings.
-if (isset($_POST['DifficultyRating'])) {
-    $value = getPostValueOrNull('DifficultyRating');
-    $updates[] = "DifficultyRating = :difficultyRating";
-    $params[':difficultyRating'] = $value;
-}
-if (isset($_POST['QualityRating'])) {
-    $value = getPostValueOrNull('QualityRating');
-    $updates[] = "QualityRating = :qualityRating";
-    $params[':qualityRating'] = $value;
-}
-
-// Text fields.
-if (isset($_POST['PublicFeedback'])) {
-    $value = getPostValueOrNull('PublicFeedback');
-    $updates[] = "PublicFeedback = :publicFeedback";
-    $params[':publicFeedback'] = $value;
-}
-if (isset($_POST['PrivateNotes'])) {
-    $value = getPostValueOrNull('PrivateNotes');
-    $updates[] = "PrivateNotes = :privateNotes";
-    $params[':privateNotes'] = $value;
-}
-if (isset($_POST['Tags'])) {
-    $value = getPostValueOrNull('Tags');
-    $updates[] = "Tags = :tags";
-    $params[':tags'] = $value;
-}
-
-if (empty($updates)) {
-    echo json_encode(["error" => "No fields provided to update"]);
-    exit;
-}
-
 try {
     // Open the database connection.
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-    // Build the UPDATE SQL statement dynamically.
-    $sql = "UPDATE UsersTasks SET " . implode(", ", $updates) . " WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
-    $stmt = $pdo->prepare($sql);
     
-    // Bind parameters. PDO will convert PHP nulls to SQL NULL.
-    foreach ($params as $key => $value) {
-        $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+    // First, check if a record exists for this user and task.
+    $selectSql = "SELECT COUNT(*) FROM UsersTasks WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
+    $stmtSelect = $pdo->prepare($selectSql);
+    $stmtSelect->execute([
+        ':wsgUserID' => $wsgUserID,
+        ':entrySeqID' => $entrySeqID
+    ]);
+    $recordExists = $stmtSelect->fetchColumn() > 0;
+
+    // Build an array of fields to update/insert based on provided POST values.
+    // We'll use the same fields for both UPDATE and INSERT.
+    $updates = [];  // used for the update query
+    $insertColumns = []; // columns for insert
+    $insertPlaceholders = []; // placeholders for insert
+    $params = [
+        ':wsgUserID' => $wsgUserID,
+        ':entrySeqID' => $entrySeqID
+    ];
+    
+    // For INSERT, we always need to include the primary keys.
+    $insertColumns[] = "WSGUserID";
+    $insertColumns[] = "EntrySeqID";
+    $insertPlaceholders[] = ":wsgUserID";
+    $insertPlaceholders[] = ":entrySeqID";
+
+    // Markings - these are date/time strings or empty (to be set as NULL).
+    if (isset($_POST['MarkedFlown'])) {
+        $value = getPostValueOrNull('MarkedFlown');
+        $updates[] = "MarkedFlownDateUTC = :markedFlown";
+        $insertColumns[] = "MarkedFlownDateUTC";
+        $insertPlaceholders[] = ":markedFlown";
+        $params[':markedFlown'] = $value;
+    }
+    if (isset($_POST['MarkedFlyNext'])) {
+        $value = getPostValueOrNull('MarkedFlyNext');
+        $updates[] = "MarkedFlyNextUTC = :markedFlyNext";
+        $insertColumns[] = "MarkedFlyNextUTC";
+        $insertPlaceholders[] = ":markedFlyNext";
+        $params[':markedFlyNext'] = $value;
+    }
+    if (isset($_POST['MarkedFavorites'])) {
+        $value = getPostValueOrNull('MarkedFavorites');
+        $updates[] = "MarkedFavoritesUTC = :markedFavorites";
+        $insertColumns[] = "MarkedFavoritesUTC";
+        $insertPlaceholders[] = ":markedFavorites";
+        $params[':markedFavorites'] = $value;
     }
     
-    $stmt->execute();
+    // Ratings.
+    if (isset($_POST['DifficultyRating'])) {
+        $value = getPostValueOrNull('DifficultyRating');
+        $updates[] = "DifficultyRating = :difficultyRating";
+        $insertColumns[] = "DifficultyRating";
+        $insertPlaceholders[] = ":difficultyRating";
+        $params[':difficultyRating'] = $value;
+    }
+    if (isset($_POST['QualityRating'])) {
+        $value = getPostValueOrNull('QualityRating');
+        $updates[] = "QualityRating = :qualityRating";
+        $insertColumns[] = "QualityRating";
+        $insertPlaceholders[] = ":qualityRating";
+        $params[':qualityRating'] = $value;
+    }
+    
+    // Text fields.
+    if (isset($_POST['PublicFeedback'])) {
+        $value = getPostValueOrNull('PublicFeedback');
+        $updates[] = "PublicFeedback = :publicFeedback";
+        $insertColumns[] = "PublicFeedback";
+        $insertPlaceholders[] = ":publicFeedback";
+        $params[':publicFeedback'] = $value;
+    }
+    if (isset($_POST['PrivateNotes'])) {
+        $value = getPostValueOrNull('PrivateNotes');
+        $updates[] = "PrivateNotes = :privateNotes";
+        $insertColumns[] = "PrivateNotes";
+        $insertPlaceholders[] = ":privateNotes";
+        $params[':privateNotes'] = $value;
+    }
+    if (isset($_POST['Tags'])) {
+        $value = getPostValueOrNull('Tags');
+        $updates[] = "Tags = :tags";
+        $insertColumns[] = "Tags";
+        $insertPlaceholders[] = ":tags";
+        $params[':tags'] = $value;
+    }
+    
+    if (empty($updates)) {
+        echo json_encode(["error" => "No fields provided to update"]);
+        exit;
+    }
+    
+    if ($recordExists) {
+        // Build the UPDATE SQL statement dynamically.
+        $sql = "UPDATE UsersTasks SET " . implode(", ", $updates) . " WHERE WSGUserID = :wsgUserID AND EntrySeqID = :entrySeqID";
+        $stmt = $pdo->prepare($sql);
+        
+        // Bind parameters. PDO will convert PHP nulls to SQL NULL.
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        }
+        
+        $stmt->execute();
+    } else {
+        // Build the INSERT SQL statement dynamically.
+        $sql = "INSERT INTO UsersTasks (" . implode(", ", $insertColumns) . ") VALUES (" . implode(", ", $insertPlaceholders) . ")";
+        $stmt = $pdo->prepare($sql);
+        
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, is_null($value) ? PDO::PARAM_NULL : PDO::PARAM_STR);
+        }
+        
+        $stmt->execute();
+    }
 
     echo json_encode(["success" => true]);
 } catch (Exception $e) {

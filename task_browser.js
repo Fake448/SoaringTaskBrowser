@@ -1554,15 +1554,15 @@ class TaskBrowser {
             content += `<div class="user-markings">`;
             content += `<label>
           <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flown', this.checked)">
-          ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + this.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
+          ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
           <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flyNext', this.checked)">
-          🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + this.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
+          🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
           <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('favorites', this.checked)">
-          🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + this.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
+          🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + tb.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
       </label>`;
             content += `</div>`;
 
@@ -1609,15 +1609,15 @@ class TaskBrowser {
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
-            //if (data.igcRecords && data.igcRecords.length > 0) {
-            //    content += `<h3>Your IGC Records</h3><ul>`;
-            //    data.igcRecords.forEach(record => {
-            //        content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
-            //    });
-            //    content += `</ul>`;
-            //} else {
-            //    content += `<p>No IGC records found for this task.</p>`;
-            //}
+            if (data.igcRecords && data.igcRecords.length > 0) {
+                content += `<h3>Your IGC Records</h3><ul>`;
+                data.igcRecords.forEach(record => {
+                    content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
+                });
+                content += `</ul>`;
+            } else {
+                content += `<p>No IGC records found for this task.</p>`;
+            }
 
             // --- Generate the collapsible section ---
             tb.generateCollapsibleSection(
