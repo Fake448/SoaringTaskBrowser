@@ -452,6 +452,7 @@ body {
     width: 100%;
     height: 100%;
     position: absolute;
+    opacity: 65%;
 }
 
 .wind-arrow {
@@ -460,6 +461,7 @@ body {
     left: 43%;
     top: 13%;
     position: relative;
+    opacity: 65%;
 }
 
 .wind-direction {
