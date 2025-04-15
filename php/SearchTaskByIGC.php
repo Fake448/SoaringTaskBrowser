@@ -227,6 +227,7 @@ try {
             }
 
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
+            logMessage("Parse Browserless Response to Extract IGC Results");
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
                 $dom = new DOMDocument();
@@ -251,6 +252,7 @@ try {
                     }
         
                     // Extract the information from the information column.
+                    logMessage("Extract the information from the information column");
                     $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
@@ -293,8 +295,9 @@ try {
                                 // Incomplete tasks: only flown distance is provided.
                                 $distance = floatval(str_replace('km', '', $resultText));
                             }
-                
+
                             // Build the parsed results array.
+                            logMessage("Build the parsed results array");
                             $parsedResults = [
                                 "TaskCompleted" => $taskCompleted,
                                 "Penalties" => $penalties,
