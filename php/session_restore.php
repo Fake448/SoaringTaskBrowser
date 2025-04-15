@@ -4,7 +4,18 @@ require_once __DIR__ . '/CommonFunctions.php';
 // Set session and cookie parameters to persist for 30 days.
 // If you need the cookie to be available on all subdomains, adjust the domain accordingly.
 ini_set('session.gc_maxlifetime', 86400 * 30);
-session_set_cookie_params(86400 * 30);
+
+$domain = preg_replace('#^https?://#', '', $wsgRoot);
+$domain = rtrim($domain, '/');  // Remove trailing slash if present
+
+session_set_cookie_params([
+    'lifetime' => 86400 * 30,
+    'path'     => '/',
+    'domain'   => $domain, 
+    'secure'   => isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on',
+    'httponly' => true,
+    'samesite' => 'Lax'
+]);
 
 // Start the session if it is not already active.
 if (session_status() !== PHP_SESSION_ACTIVE) {
