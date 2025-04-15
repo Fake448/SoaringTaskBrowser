@@ -1,4 +1,4 @@
-<?php
+ï»¿<?php
 require __DIR__ . '/CommonFunctions.php';
 require_once __DIR__ . '/session_restore.php';
 
@@ -232,7 +232,7 @@ try {
                 $dom->loadHTML($htmlContent);
                 libxml_clear_errors();
                 $xpath = new DOMXPath($dom);
-    
+
                 // Look for the table with id "tracklogs_table" and then its rows.
                 $rows = $xpath->query('//table[@id="tracklogs_table"]//tr');
                 if ($rows->length > 0) {
@@ -247,12 +247,25 @@ try {
                     if ($targetRow === null) {
                         $targetRow = $rows->item(0);
                     }
-        
+
                     // Extract the information from the information column.
                     $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
+                        // Process IGC Validity: check whether the first text node starts with the lock emoji.
+                        $igcValid = false;
+                        $pilotText = "";
+                        foreach ($nameDiv->childNodes as $node) {
+                            if ($node->nodeType === XML_TEXT_NODE) {
+                                $pilotText = trim($node->nodeValue);
+                                break;
+                            }
+                        }
+                        if (mb_substr($pilotText, 0, 1) === "ðŸ”’") {
+                            $igcValid = true;
+                        }
+            
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
                             $resultDiv = $resultDivCandidates->item(0);
@@ -275,7 +288,6 @@ try {
                                     $duration = $parts[0];
                                     if (strpos($parts[1], 'km') !== false) {
                                         // For AAT tasks: duration, distance, speed.
-                                        // Using sprintf to format as string with one decimal.
                                         $distance = sprintf('%.1f', floatval(str_replace('km', '', $parts[1])));
                                         $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[2])));
                                     } else {
@@ -291,17 +303,17 @@ try {
                                 $distance = sprintf('%.1f', floatval(str_replace('km', '', $resultText)));
                             }
 
-                            // Build the parsed results array.
+                            // Build the parsed results array including the new IGCValid flag.
                             $parsedResults = [
                                 "TaskCompleted" => $taskCompleted,
                                 "Penalties" => $penalties,
                                 "Duration" => $duration,
                                 "Distance" => $distance,
-                                "Speed" => $speed
+                                "Speed" => $speed,
+                                "IGCValid" => $igcValid
                             ];
                 
                             $_SESSION['parsedResults'] = $parsedResults;
-                
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
                         } else {
@@ -341,7 +353,7 @@ try {
 }
 
 /**
- * Convert a coordinate string (e.g., "N70° 56' 38.94\"" or "N70°56'38.94\"") to a decimal degree.
+ * Convert a coordinate string (e.g., "N70Â° 56' 38.94\"" or "N70Â°56'38.94\"") to a decimal degree.
  * This version normalizes the string using str_replace and preg_replace, then uses sscanf.
  *
  * @param string $coord
@@ -349,10 +361,10 @@ try {
  */
 function coordinateToDecimal($coord) {
     $coord = trim($coord);
-    $coord = str_replace(array("\xC2\xB0", "°"), "°", $coord);
+    $coord = str_replace(array("\xC2\xB0", "Â°"), "Â°", $coord);
     $coord = preg_replace('/\s+/', ' ', $coord);
     // logMessage("coordinateToDecimal normalized: " . $coord);
-    $result = sscanf($coord, "%c%d° %d' %f", $hem, $deg, $min, $sec);
+    $result = sscanf($coord, "%c%dÂ° %d' %f", $hem, $deg, $min, $sec);
     if ($result === 4) {
         $decimal = $deg + ($min / 60) + ($sec / 3600);
         if ($hem === 'S' || $hem === 'W') {
@@ -365,8 +377,8 @@ function coordinateToDecimal($coord) {
 
 /**
  * Normalize an XML coordinate string by removing the elevation portion.
- * For example, from "N70° 56' 38.92\",W8° 39' 8.43\",+000021.00" return an array:
- *   [ "N70° 56' 38.92\"", "W8° 39' 8.43\"" ]
+ * For example, from "N70Â° 56' 38.92\",W8Â° 39' 8.43\",+000021.00" return an array:
+ *   [ "N70Â° 56' 38.92\"", "W8Â° 39' 8.43\"" ]
  *
  * @param string $xmlCoord
  * @return array|null
