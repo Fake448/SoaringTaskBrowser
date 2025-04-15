@@ -286,41 +286,48 @@ function processIGCFile(file) {
             outputHTML += `<p><strong>Competition ID:</strong> ${competitionID}</p>`;
             outputHTML += `<p><strong>Competition Class:</strong> ${competitionClass}</p>`;
             outputHTML += `<p><strong>Glider Type:</strong> ${gliderType}</p>`;
-
             outputDiv.innerHTML = outputHTML;
+
+            // --- New code: Build FormData instead of sending JSON ---
+            const formData = new FormData();
+            // Append each property from igcData; note that igcWaypoints is an object so we send it as a JSON string.
+            for (let key in igcData) {
+                formData.append(key, igcData[key]);
+            }
+            // Append the IGC file.
+            formData.append('igcFile', file);
 
             // Send igcData to the PHP script via AJAX for matching
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(igcData)
+                body: formData
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'found') {
-                    outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
-                    outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
-                    outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
-                    // Add a "Submit" button
-                    outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
-                    document.getElementById('submitButton').addEventListener('click', () => {
-                        alert("Submitted!");
-                    });
-                } else if (data.status === 'duplicate') {
-                    outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
-                    // Add a "Delete" button to remove the existing IGC record.
-                    outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
-                    document.getElementById('deleteButton').addEventListener('click', () => {
-                        deleteIGCRecord(data.IGCKey);
-                    });
-                } else {
-                    outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
-            });
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status === 'found') {
+                        outputDiv.innerHTML += `<p><strong>Match found!</strong></p>`;
+                        outputDiv.innerHTML += `<p>WeSimGlide Task ID: ${data.EntrySeqID}</p>`;
+                        outputDiv.innerHTML += `<p>Title: ${data.Title}</p>`;
+                        // Add a "Submit" button
+                        outputDiv.innerHTML += `<button class="button-style" id="submitButton">Submit</button>`;
+                        document.getElementById('submitButton').addEventListener('click', () => {
+                            alert("Submitted!");
+                        });
+                    } else if (data.status === 'duplicate') {
+                        outputDiv.innerHTML += `<p style="color: red;"><strong>Duplicate IGC record exists. Not saved.</strong></p>`;
+                        // Add a "Delete" button to remove the existing IGC record.
+                        outputDiv.innerHTML += `<button class="button-style" id="deleteButton">Delete IGC Record</button>`;
+                        document.getElementById('deleteButton').addEventListener('click', () => {
+                            deleteIGCRecord(data.IGCKey);
+                        });
+                    } else {
+                        outputDiv.innerHTML += `<p><strong>No matching task found.</strong></p>`;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    outputDiv.innerHTML += `<p style="color: red;">Error processing the search.</p>`;
+                });
 
         } else {
             outputDiv.innerHTML = `<p style="color: red;">Could not parse header from IGC file.</p>`;
