@@ -228,7 +228,7 @@ try {
 
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
             logMessage("Parse Browserless Response to Extract IGC Results");
-            logmessage($browserlessResult);
+            logMessage("Browserless Result Array: " . print_r($browserlessResult, true));
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
                 $dom = new DOMDocument();
