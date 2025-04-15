@@ -10,7 +10,6 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     echo json_encode(["error" => "User not authenticated"]);
     exit;
 }
-logMessage("SearchTask Session ID: " . session_id());
 
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");

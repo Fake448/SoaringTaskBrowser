@@ -10,7 +10,6 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     echo json_encode(["error" => "User not authenticated"]);
     exit;
 }
-logMessage("Session Dump - Session ID: " . session_id());
 
 // Set the content-type header to JSON.
 header('Content-Type: application/json');
