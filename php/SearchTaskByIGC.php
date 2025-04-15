@@ -204,6 +204,7 @@ try {
             } else {
                 // Fake Browserless response for testing: read from a local file.
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
+                logmessage($fakeResponseFile);
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
                     $decoded = json_decode($bl_response, true);
