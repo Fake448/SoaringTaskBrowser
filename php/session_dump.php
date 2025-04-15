@@ -11,6 +11,8 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     exit;
 }
 
+logMessage("Session ID: " . session_id());
+
 // Set the content-type header to JSON.
 header('Content-Type: application/json');
 

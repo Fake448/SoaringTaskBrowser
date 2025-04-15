@@ -11,6 +11,8 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     exit;
 }
 
+logMessage("Session ID: " . session_id());
+
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");
 
@@ -301,11 +303,8 @@ try {
                                 "Speed" => $speed
                             ];
                 
-                            // Store the parsed results in the user session to prevent client-side tampering.
-                            if (session_status() !== PHP_SESSION_ACTIVE) {
-                                session_start();
-                            }
                             $_SESSION['parsedResults'] = $parsedResults;
+                            logMessage("Parsed Results stored in session: " . print_r($_SESSION['parsedResults'], true));
                 
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
