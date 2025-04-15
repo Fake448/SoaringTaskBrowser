@@ -270,25 +270,25 @@ try {
                             $speed = null;
                 
                             if ($taskCompleted) {
-                                // Completed tasks will have either 2 metrics (normal: duration & speed)
-                                // or 3 metrics (AAT: duration, distance, speed).
                                 $parts = preg_split('/\s+/', $resultText);
                                 if (count($parts) >= 3) {
                                     $duration = $parts[0];
                                     if (strpos($parts[1], 'km') !== false) {
-                                        // This is an AAT completed task: duration, distance, and speed.
-                                        $distance = round(floatval(str_replace('km', '', $parts[1])), 1);
-                                        $speed = round(floatval(str_replace('kph', '', $parts[2])), 1);
+                                        // For AAT tasks: duration, distance, speed.
+                                        // Using sprintf to format as string with one decimal.
+                                        $distance = sprintf('%.1f', floatval(str_replace('km', '', $parts[1])));
+                                        $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[2])));
                                     } else {
-                                        // Normal completed task: duration and speed.
+                                        // For normal completed tasks: duration and speed.
+                                        $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[1])));
                                     }
                                 } elseif (count($parts) == 2) {
                                     $duration = $parts[0];
-                                    $speed = round(floatval(str_replace('kph', '', $parts[1])), 1);
+                                    $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[1])));
                                 }
                             } else {
                                 // Incomplete tasks: only flown distance is provided.
-                                $distance = round(floatval(str_replace('km', '', $resultText)), 1);
+                                $distance = sprintf('%.1f', floatval(str_replace('km', '', $resultText)));
                             }
 
                             // Build the parsed results array.
