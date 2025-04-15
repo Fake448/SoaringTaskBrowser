@@ -308,7 +308,8 @@
             // Query the server for a matching task.
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
-                body: formData
+                body: formData,
+                credentials: 'include'
             })
                 .then(response => response.json())
                 .then(data => {
