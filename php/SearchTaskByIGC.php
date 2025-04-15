@@ -134,10 +134,76 @@ try {
                 throw new Exception("Failed to save the uploaded IGC file.");
             }
             
+            // --- Begin Browserless Call Integration ---
+            // Only call Browserless if the token ($blesstok) is defined and not empty.
+            if (isset($blesstok) && !empty($blesstok)) {
+                // Remove the protocol from $wsgRoot (e.g., "https://wesimglide.org" becomes "wesimglide.org")
+                $rootWithoutProtocol = preg_replace('#^https?://#', '', $wsgRoot);
+
+                // Build the URL without including "https://"
+                $igcFileUrl = $rootWithoutProtocol . "/php/DPHXTemp/{$IGCKey}/" . urlencode($IGCKey . '.igc');
+        
+                $url = "https://production-sfo.browserless.io/chrome/bql";
+                $endpoint = sprintf("%s?token=%s", $url, $blesstok);
+        
+                // Build the GraphQL mutation, injecting the igcFileUrl in place of the placeholder.
+                $query = "mutation ExtractTracklogsOnly {
+                          goto(
+                            url: \"https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc={$igcFileUrl}\",
+                            waitUntil: networkIdle
+                          ) {
+                            status
+                          }
+
+                          waitTracklogs: waitForSelector(selector: \"#tracklogs\", visible: true) {
+                            time
+                          }
+
+                          tracklogsHTML: html(selector: \"#tracklogs\", visible: true) {
+                            html
+                          }
+                        }";
+        
+                $postData = json_encode([
+                    'query' => $query,
+                    'operationName' => "ExtractTracklogsOnly"
+                ]);
+        
+                $curl = curl_init();
+                curl_setopt_array($curl, [
+                    CURLOPT_URL => $endpoint,
+                    CURLOPT_RETURNTRANSFER => true,
+                    CURLOPT_ENCODING => "",
+                    CURLOPT_MAXREDIRS => 10,
+                    CURLOPT_TIMEOUT => 30,
+                    CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+                    CURLOPT_CUSTOMREQUEST => "POST",
+                    CURLOPT_POSTFIELDS => $postData,
+                    CURLOPT_HTTPHEADER => [
+                        "Content-Type: application/json",
+                    ]
+                ]);
+                $bl_response = curl_exec($curl);
+                if (curl_errno($curl)) {
+                    // Log or handle the cURL error if necessary.
+                    $bl_error = curl_error($curl);
+                    $browserlessResult = ["error" => $bl_error];
+                } else {
+                    $browserlessResult = json_decode($bl_response, true);
+                }
+                curl_close($curl);
+            } else {
+                // If the Browserless token is not set, simply note that no call was made.
+                $browserlessResult = ["error" => "Browserless token not configured."];
+            }
+            // --- End Browserless Call Integration ---
+    
+            // Return the found task details along with the Browserless task results.
             echo json_encode([
                 'status' => 'found',
                 'EntrySeqID' => $foundTask['EntrySeqID'],
-                'Title' => $foundTask['Title']
+                'Title' => $foundTask['Title'],
+                'browserless' => $browserlessResult
             ]);
         }
     } else {
