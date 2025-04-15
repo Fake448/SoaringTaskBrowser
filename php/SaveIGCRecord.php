@@ -45,9 +45,13 @@ try {
     $IGCComment = isset($_POST['IGCComment']) ? trim($_POST['IGCComment']) : "";
     $WSGUserID = (int) trim($_POST['WSGUserID']);
     
-    // Ensure file is uploaded.
-    if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
-        throw new Exception("IGC file not uploaded or error during upload.");
+    // Instead of ensuring an uploaded file exists in $_FILES, 
+    // locate the previously saved IGC file in the temporary folder.
+    $tempDir = __DIR__ . '/DPHXTemp';
+    $sourceFolder = $tempDir . '/' . $IGCKey;
+    $sourceFilePath = $sourceFolder . '/' . $IGCKey . '.igc';
+    if (!file_exists($sourceFilePath)) {
+        throw new Exception("IGC file not found in temporary folder.");
     }
     
     // Open the database connection.
@@ -80,9 +84,9 @@ try {
     // Destination filename: [IGCKey].igc
     $destFilename = $destFolder . '/' . $IGCKey . '.igc';
     
-    // Move the uploaded file.
-    if (!move_uploaded_file($_FILES['igcFile']['tmp_name'], $destFilename)) {
-        throw new Exception("Failed to move uploaded file.");
+    // Move the saved IGC file from its temporary folder to the official destination.
+    if (!rename($sourceFilePath, $destFilename)) {
+        throw new Exception("Failed to move saved IGC file to destination folder.");
     }
     
     // Insert the new record into IGCRecords table.

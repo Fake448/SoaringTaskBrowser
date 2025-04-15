@@ -400,8 +400,9 @@ class IGCUpload {
     }
 
     submitIGCRecord() {
-        if (!this.igcFileGlobal) {
-            alert("No IGC file available for submission.");
+        // Check that we have stored igcData with a valid IGCKey.
+        if (!this.igcData || !this.igcData.IGCKey) {
+            alert("No saved IGC file available for submission.");
             return;
         }
         // Use the stored igcData from processIGCFile.
@@ -422,7 +423,7 @@ class IGCUpload {
         formData.append('NB21Version', igcData.NB21Version);
         formData.append('Sim', igcData.Sim);
 
-        formData.append('igcFile', this.igcFileGlobal);
+        // No need to append the IGC file anymore.
 
         // Retrieve the IGC comment from the input field.
         const commentField = document.getElementById('igcCommentField');
