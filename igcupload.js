@@ -1,4 +1,4 @@
-class IGCUpload {
+﻿class IGCUpload {
     constructor(taskBrowser) {
         // Store the reference to the TaskBrowser instance.
         this.taskBrowser = taskBrowser;
@@ -324,6 +324,34 @@ class IGCUpload {
                         // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
                         const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
                         igcData.IGCKey = key;
+
+                        // Check if Browserless returned an error.
+                        if (data.browserless && data.browserless.error) {
+                            // Set the fake tracklogs table as the fake answer.
+                            data.browserless.tracklogsHTML = `<table xmlns="http://www.w3.org/1999/xhtml" id="tracklogs_table">
+                            <tr class="tracklogs_entry_current">
+                                <td class="tracklogs_entry_checkbox">
+                                    <input type="checkbox" checked="checked" />
+                                </td>
+                                <td class="tracklogs_entry_info" title="Click for task results.">
+                                    <div class="tracklogs_entry_name">🔒MAJDAD - Asobo_LS8
+                                        <div class="tracklogs_entry_finished_ok">
+                                            <span> 1:02:56  97.7kph</span>
+                                        </div>
+                                    </div>
+                                    <div class="tracklogs_entry_filename">534_MAJDAD_MXS_241113003550.igc</div>
+                                    <div>Begins: 14 Nov 2024 00:38Z</div>
+                                </td>
+                                <td class="tracklogs_entry_colors_td">
+                                    <div class="tracklogs_entry_colors">
+                                        <div class="tracklogs_entry_color_top" style="background-color: rgb(51, 51, 51);"></div>
+                                        <div class="tracklogs_entry_color_middle" style="background-color: rgb(51, 51, 51);"></div>
+                                        <div class="tracklogs_entry_color_bottom" style="background-color: rgb(51, 51, 51);"></div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>`;
+                        }
 
                         // Build the matching details HTML.
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
