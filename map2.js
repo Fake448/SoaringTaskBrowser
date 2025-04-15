@@ -564,6 +564,13 @@ class TaskBrowserMap {
     selectTaskFromClick(entrySeqID, forceZoomToTask = false) {
 
         let tbm = this;
+
+        // Check if the igcOverlay is visible. If so, exit immediately.
+        const igcOverlay = document.getElementById('igcOverlay');
+        if (igcOverlay && igcOverlay.style.display === 'block') {
+            return;
+        }
+
         tbm.tb.fromURL = false;
         console.log("selectTaskFromClick()", entrySeqID);
         tbm.clearIGCTracklogs();
