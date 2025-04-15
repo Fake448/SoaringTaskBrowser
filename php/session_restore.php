@@ -9,6 +9,7 @@ session_set_cookie_params(86400 * 30);
 // Start the session if it is not already active.
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
+    logMessage("Session Restore - Session ID: " . session_id());
 }
 
 // If session data isn't set but the WSGUserID cookie exists, restore the session.
