@@ -542,6 +542,7 @@ class TaskBrowserMap {
         }
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
+        tbm.clearIGCTracklogs();
 
         // 1. Remove the task parameter from the URL
         tbm.tb.clearUrlParameter('task');
@@ -565,6 +566,7 @@ class TaskBrowserMap {
         let tbm = this;
         tbm.tb.fromURL = false;
         console.log("selectTaskFromClick()", entrySeqID);
+        tbm.clearIGCTracklogs();
 
         // 1. Call the selectTaskCommon to perform the common actions
         tbm.selectTaskCommon(entrySeqID, forceZoomToTask);
@@ -624,7 +626,6 @@ class TaskBrowserMap {
 
         if (realSelection) {
             // 3. Zoom in on the task if specified or if task bounds outside current map bounds
-            tbm.clearIGCTracklogs();
             let taskBounds = tbm.b21_task.get_bounds();
             let mapBounds = tbm.map.getBounds();
             let containsBounds = mapBounds.contains(taskBounds);
