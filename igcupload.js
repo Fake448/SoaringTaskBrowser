@@ -273,7 +273,7 @@ class IGCUpload {
             // Prepare data to send to PHP.
             const igcData = {
                 igcTitle: headerData.taskTitle,
-                igcWaypoints: {},
+                igcWaypoints: JSON.stringify({}),
                 pilot: this.pilot,
                 gliderType: this.gliderType,
                 IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes.
@@ -287,18 +287,28 @@ class IGCUpload {
                 Sim: this.sim
             };
 
+            // Create an object for the waypoints.
+            const wpObj = {};
             waypoints.forEach(wp => {
-                igcData.igcWaypoints[wp.originalId] = `${wp.latitude}, ${wp.longitude}`;
+                wpObj[wp.originalId] = `${wp.latitude}, ${wp.longitude}`;
             });
+            igcData.igcWaypoints = JSON.stringify(wpObj);
 
             // Save igcData in the instance for later use.
             this.igcData = igcData;
 
+            // Build FormData and append each field.
+            const formData = new FormData();
+            for (let key in igcData) {
+                formData.append(key, igcData[key]);
+            }
+            // Append the IGC file.
+            formData.append('igcFile', file);
+
             // Query the server for a matching task.
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(igcData)
+                body: formData
             })
                 .then(response => response.json())
                 .then(data => {
@@ -334,8 +344,7 @@ class IGCUpload {
                         this.taskBrowser.igcMatchData = html;
 
                         // Select the task on the map.
-                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID,true);
-
+                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, true);
                     }
                     else if (data.error) {
                         alert("Error from server: " + data.error);

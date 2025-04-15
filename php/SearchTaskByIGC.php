@@ -6,16 +6,16 @@ header('Content-Type: application/json');
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");
 
-    // Read JSON input from POST
-    $input = file_get_contents('php://input');
-    // logMessage("Input JSON: " . $input);
-    
-    if (!$input) {
-        throw new Exception("No input received.");
+    // Use POST data instead of reading JSON from php://input
+    $data = $_POST;
+    if (empty($data)) {
+        throw new Exception("No POST data received.");
     }
-    $data = json_decode($input, true);
+    // If igcWaypoints is sent as a JSON string, decode it.
+    if (isset($data['igcWaypoints']) && is_string($data['igcWaypoints'])) {
+        $data['igcWaypoints'] = json_decode($data['igcWaypoints'], true);
+    }
     if (
-        !$data || 
         !isset($data['igcTitle']) || 
         !isset($data['igcWaypoints']) || 
         !isset($data['pilot']) || 
@@ -30,6 +30,11 @@ try {
     $igcWaypoints = $data['igcWaypoints']; // associative array: waypointID => coordinate string
     // logMessage("IGC Title: " . $igcTitle);
     // logMessage("IGC Waypoints: " . print_r($igcWaypoints, true));
+
+    // Validate that the IGC file has been provided as an upload.
+    if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
+        throw new Exception("IGC file not provided in the upload.");
+    }
 
     // Open the database connection
     $pdo = new PDO("sqlite:$databasePath");
@@ -114,7 +119,21 @@ try {
             ]);
         } else {
             // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
-            // TODO: Save the IGC file under the temporary folder under the igckey subfolder
+            // Save the IGC file under the temporary folder under the igckey subfolder
+            $tempDir = __DIR__ . '/DPHXTemp';
+            if (!is_dir($tempDir)) {
+                mkdir($tempDir, 0755, true);
+            }
+            $igcKeyDir = $tempDir . '/' . $IGCKey;
+            if (!is_dir($igcKeyDir)) {
+                mkdir($igcKeyDir, 0755, true);
+            }
+            $targetFile = $igcKeyDir . '/' . $IGCKey . '.igc';
+            
+            if (!move_uploaded_file($_FILES['igcFile']['tmp_name'], $targetFile)) {
+                throw new Exception("Failed to save the uploaded IGC file.");
+            }
+            
             echo json_encode([
                 'status' => 'found',
                 'EntrySeqID' => $foundTask['EntrySeqID'],
@@ -209,18 +228,18 @@ function validateCandidate($candidate, $igcWaypoints) {
     
     if (!$xml) {
         $errors = libxml_get_errors();
-        foreach ($errors as $error) {
+        //foreach ($errors as $error) {
             // logMessage("validateCandidate: XML parsing error: " . trim($error->message));
-        }
+        //}
         libxml_clear_errors();
         return false;
     }
     
     $xmlWaypoints = [];
     $xmlWpList = $xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint');
-    if (!$xmlWpList) {
+    //if (!$xmlWpList) {
         // logMessage("validateCandidate: No ATCWaypoint elements found in XML");
-    }
+    //}
     
     foreach ($xmlWpList as $wp) {
         $id = (string)$wp['id'];
