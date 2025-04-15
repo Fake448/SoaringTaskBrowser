@@ -204,7 +204,21 @@ try {
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
-                    $browserlessResult = json_decode($bl_response, true);
+                    $decoded = json_decode($bl_response, true);
+                    if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data']['tracklogsHTML']['html'])) {
+                        // Use the decoded JSON if it has the expected structure.
+                        $browserlessResult = $decoded;
+                    } else {
+                        // Otherwise, assume the file contains raw HTML
+                        // and wrap it in the expected structure.
+                        $browserlessResult = [
+                            "data" => [
+                                "tracklogsHTML" => [
+                                    "html" => $bl_response
+                                ]
+                            ]
+                        ];
+                    }
                 } else {
                     $browserlessResult = ["error" => "Browserless token not configured and fake response file not found."];
                 }
