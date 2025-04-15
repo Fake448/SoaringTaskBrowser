@@ -312,9 +312,24 @@ try {
                                 "Speed" => $speed,
                                 "IGCValid" => $igcValid
                             ];
+
+                            // Write the parsed results to a JSON file in the same directory as the IGC file.
+                            // Define the file path. You can change the filename to "results.xml" if you prefer XML.
+                            $resultsFile = $igcKeyDir . '/results.json';
+
+                            // Convert the $parsedResults array to JSON.
+                            // Using JSON_PRETTY_PRINT for ease of debugging.
+                            $jsonData = json_encode($parsedResults, JSON_PRETTY_PRINT);
+                            if ($jsonData === false) {
+                                // Handle error in JSON conversion.
+                                throw new Exception("Failed to encode parsed results as JSON: " . json_last_error_msg());
+                            }
+
+                            if (file_put_contents($resultsFile, $jsonData) === false) {
+                                // Handle error writing to file.
+                                throw new Exception("Failed to write results file to $resultsFile");
+                            }
                 
-                            $_SESSION['parsedResults'] = $parsedResults;
-                            logMessage("Parsed Results: " . print_r($_SESSION, true));
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
                         } else {
