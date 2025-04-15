@@ -10,6 +10,7 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     echo json_encode(["error" => "User not authenticated"]);
     exit;
 }
+logMessage("Session ID: " . session_id());
 
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");
@@ -315,7 +316,6 @@ try {
                 
                             $_SESSION['parsedResults'] = $parsedResults;
                             logMessage("Parsed Results: " . print_r($_SESSION, true));
-                            logMessage("Session ID: " . session_id());
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
                         } else {
