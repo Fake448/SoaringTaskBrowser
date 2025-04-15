@@ -362,8 +362,8 @@ class IGCUpload {
     }
 
     sendIGCToOnlinePlanner() {
-        if (!this.igcFileGlobal) {
-            alert("No IGC file available for submission.");
+        if (!this.igcData || !this.igcData.IGCKey) {
+            alert("No IGC file has been saved for submission.");
             return;
         }
         // Create a FormData object and append required fields.
@@ -372,10 +372,10 @@ class IGCUpload {
         formData.append('TaskID', this.taskBrowser.currentTask.TaskID);
         formData.append('PLNFilename', this.taskBrowser.currentTask.PLNFilename);
         formData.append('WPRFilename', this.taskBrowser.currentTask.WPRFilename);
-        formData.append('igcFile', this.igcFileGlobal);
+        formData.append('tempIGCKey', this.igcData.IGCKey);
 
-        // Call the new PHP script that saves the IGC file to a temporary folder
-        // and returns the URL parts for the Online Planner.
+        // Call the PHP script that uses the tempIGCKey (or the IGC key list, in other mode)
+        // to prepare the comp file and return the URL parts for the Online Planner.
         fetch('php/SendIGCToTaskPlanner.php', {
             method: 'POST',
             body: formData
@@ -390,12 +390,12 @@ class IGCUpload {
                     const newWindow = window.open('', '_blank');  // Open immediately on user click
                     newWindow.location.href = fullPlannerUrl;  // Navigate the pre-opened window
                 } else {
-                    alert("Error uploading IGC file for planner: " + (result.message || result.error || "Unknown error"));
+                    alert("Error processing IGC file for planner: " + (result.message || result.error || "Unknown error"));
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                alert("Error uploading IGC file for planner.");
+                alert("Error processing IGC file for planner.");
             });
     }
 

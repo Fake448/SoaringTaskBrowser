@@ -27,33 +27,34 @@ try {
     }
     
     // Determine mode:
-    // - File upload mode if 'igcFile' exists and has no error.
+    // - Pre-uploaded mode if 'tempIGCKey' exists and is not empty.
     // - Otherwise, expect a list of IGC keys in POST parameter 'igcKeys'.
-    $useFileUpload = false;
-    if (isset($_FILES['igcFile']) && $_FILES['igcFile']['error'] === UPLOAD_ERR_OK) {
-        $useFileUpload = true;
+    $usePreUploaded = false;
+    if (isset($_POST['tempIGCKey']) && trim($_POST['tempIGCKey']) !== "") {
+        $usePreUploaded = true;
+        $tempIGCKey = trim($_POST['tempIGCKey']);
     } elseif (isset($_POST['igcKeys']) && trim($_POST['igcKeys']) !== "") {
-        $useFileUpload = false;
+        $usePreUploaded = false;
     } else {
-        throw new Exception("No IGC file uploaded and no IGC key list provided.");
+        throw new Exception("No pre-uploaded IGC file key provided and no IGC key list provided.");
     }
     
-    if ($useFileUpload) {
-        // --- FILE UPLOAD MODE ---
-        // Move the uploaded IGC file.
-        $destFilename = basename($_FILES['igcFile']['name']);
-        $destFilePath = $destFolder . '/' . $destFilename;
-        if (!move_uploaded_file($_FILES['igcFile']['tmp_name'], $destFilePath)) {
-            throw new Exception("Failed to move uploaded IGC file.");
+    if ($usePreUploaded) {
+        // --- PRE-UPLOADED MODE ---
+        // The IGC file has been saved previously under tempIGCKey subfolder.
+        // Compute the expected file path.
+        $destFilePath = $tempDir . '/' . $tempIGCKey . '/' . $tempIGCKey . '.igc';
+        if (!file_exists($destFilePath)) {
+            throw new Exception("Pre-uploaded IGC file not found in expected folder.");
         }
-        // Build the URL to access the uploaded IGC file.
+        // Build the URL to access the pre-uploaded IGC file.
         $igcBasePath = __DIR__ . '/DPHXTemp';
         if (strpos($igcBasePath, '/home3/siglr3/soaring.siglr.com/') === 0) {
             $igcBasePath = str_replace('/home3/siglr3/soaring.siglr.com/', 'soaring.siglr.com/', $igcBasePath);
         } elseif (strpos($igcBasePath, '/home3/siglr3/wesimglide/') === 0) {
             $igcBasePath = str_replace('/home3/siglr3/wesimglide/', 'wesimglide.org/', $igcBasePath);
         }
-        $igcFileUrl = $igcBasePath . '/' . $randomFolder . '/' . $destFilename;
+        $igcFileUrl = $igcBasePath . '/' . $tempIGCKey . '/' . $tempIGCKey . '.igc';
         $igcFileUrlNoProtocol = preg_replace('/^https?:\/\//', '', $igcFileUrl);
     }
     
@@ -83,8 +84,8 @@ try {
     $compLines[] = 'https://' . $plnFileUrl;
     $compLines[] = 'https://' . $wprFileUrl;
     
-    if ($useFileUpload) {
-        // In file upload mode, add the uploaded IGC file URL.
+    if ($usePreUploaded) {
+        // In pre-uploaded mode, add the pre-uploaded IGC file URL.
         $compLines[] = 'https://' . $igcFileUrlNoProtocol;
     } else {
         // --- IGC KEY LIST MODE ---
