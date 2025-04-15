@@ -1,7 +1,15 @@
 <?php
 require __DIR__ . '/CommonFunctions.php';
+require_once __DIR__ . '/session_restore.php';
 
 header('Content-Type: application/json');
+
+// Ensure the user is logged in; if not, return an error response.
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+    http_response_code(401);
+    echo json_encode(["error" => "User not authenticated"]);
+    exit;
+}
 
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");
@@ -135,17 +143,16 @@ try {
             }
             
             // --- Begin Browserless Call Integration ---
-            // Only call Browserless if the token ($blesstok) is defined and not empty.
             if (isset($blesstok) && !empty($blesstok)) {
                 // Remove the protocol from $wsgRoot (e.g., "https://wesimglide.org" becomes "wesimglide.org")
                 $rootWithoutProtocol = preg_replace('#^https?://#', '', $wsgRoot);
 
                 // Build the URL without including "https://"
                 $igcFileUrl = $rootWithoutProtocol . "/php/DPHXTemp/{$IGCKey}/" . urlencode($IGCKey . '.igc');
-        
+
                 $url = "https://production-sfo.browserless.io/chrome/bql";
                 $endpoint = sprintf("%s?token=%s", $url, $blesstok);
-        
+
                 // Build the GraphQL mutation, injecting the igcFileUrl in place of the placeholder.
                 $query = "mutation ExtractTracklogsOnly {
                           goto(
@@ -163,12 +170,12 @@ try {
                             html
                           }
                         }";
-        
+
                 $postData = json_encode([
                     'query' => $query,
                     'operationName' => "ExtractTracklogsOnly"
                 ]);
-        
+
                 $curl = curl_init();
                 curl_setopt_array($curl, [
                     CURLOPT_URL => $endpoint,
@@ -193,10 +200,114 @@ try {
                 }
                 curl_close($curl);
             } else {
-                // If the Browserless token is not set, simply note that no call was made.
-                $browserlessResult = ["error" => "Browserless token not configured."];
+                // Fake Browserless response for testing: read from a local file.
+                $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
+                if (file_exists($fakeResponseFile)) {
+                    $bl_response = file_get_contents($fakeResponseFile);
+                    $browserlessResult = json_decode($bl_response, true);
+                } else {
+                    $browserlessResult = ["error" => "Browserless token not configured and fake response file not found."];
+                }
             }
-            // --- End Browserless Call Integration ---
+
+            // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
+            if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
+                $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
+                $dom = new DOMDocument();
+                libxml_use_internal_errors(true);
+                $dom->loadHTML($htmlContent);
+                libxml_clear_errors();
+                $xpath = new DOMXPath($dom);
+    
+                // Look for the table with id "tracklogs_table" and then its rows.
+                $rows = $xpath->query('//table[@id="tracklogs_table"]//tr');
+                if ($rows->length > 0) {
+                    // Prefer the row with class "tracklogs_entry_current" if present; otherwise, take the first row.
+                    $targetRow = null;
+                    foreach ($rows as $row) {
+                        if (strpos($row->getAttribute('class'), "tracklogs_entry_current") !== false) {
+                            $targetRow = $row;
+                            break;
+                        }
+                    }
+                    if ($targetRow === null) {
+                        $targetRow = $rows->item(0);
+                    }
+        
+                    // Extract the information from the information column.
+                    $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
+                    if ($infoDiv) {
+                        // Extract the pilot/task information and result details.
+                        $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
+                        $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
+                        if ($resultDivCandidates->length > 0) {
+                            $resultDiv = $resultDivCandidates->item(0);
+                            $class = $resultDiv->getAttribute('class');
+                            // Determine task completion and penalty status.
+                            $taskCompleted = (strpos($class, "tracklogs_entry_finished_ok") !== false);
+                            $penalties = (strpos($class, "penalties") !== false);
+                
+                            // Get the text content from the <span> inside the result div.
+                            $span = $xpath->query('.//span', $resultDiv)->item(0);
+                            $resultText = trim($span->textContent);
+                
+                            $duration = null;
+                            $distance = null;
+                            $speed = null;
+                
+                            if ($taskCompleted) {
+                                // Completed tasks will have either 2 metrics (normal: duration & speed)
+                                // or 3 metrics (AAT: duration, distance, speed).
+                                $parts = preg_split('/\s+/', $resultText);
+                                if (count($parts) >= 3) {
+                                    $duration = $parts[0];
+                                    if (strpos($parts[1], 'km') !== false) {
+                                        // This is an AAT completed task: duration, distance, and speed.
+                                        $distance = floatval(str_replace('km', '', $parts[1]));
+                                        $speed = floatval(str_replace('kph', '', $parts[2]));
+                                    } else {
+                                        // Normal completed task: duration and speed.
+                                        $speed = floatval(str_replace('kph', '', $parts[1]));
+                                    }
+                                } elseif (count($parts) == 2) {
+                                    $duration = $parts[0];
+                                    $speed = floatval(str_replace('kph', '', $parts[1]));
+                                }
+                            } else {
+                                // Incomplete tasks: only flown distance is provided.
+                                $distance = floatval(str_replace('km', '', $resultText));
+                            }
+                
+                            // Build the parsed results array.
+                            $parsedResults = [
+                                "TaskCompleted" => $taskCompleted,
+                                "Penalties" => $penalties,
+                                "Duration" => $duration,
+                                "Distance" => $distance,
+                                "Speed" => $speed
+                            ];
+                
+                            // Store the parsed results in the user session to prevent client-side tampering.
+                            if (session_status() !== PHP_SESSION_ACTIVE) {
+                                session_start();
+                            }
+                            $_SESSION['parsedResults'] = $parsedResults;
+                
+                            // Also attach the parsed results to the Browserless result for the JSON response.
+                            $browserlessResult['parsedResults'] = $parsedResults;
+                        } else {
+                            $browserlessResult['error'] = "Result element not found in tracklogs entry.";
+                        }
+                    } else {
+                        $browserlessResult['error'] = "Information column not found in tracklogs entry.";
+                    }
+                } else {
+                    $browserlessResult['error'] = "No tracklogs found in the HTML.";
+                }
+            } else {
+                $browserlessResult['error'] = "Browserless response did not include tracklogs HTML.";
+            }
+            // --- END: Parsing Browserless Response ---
     
             // Return the found task details along with the Browserless task results.
             echo json_encode([
