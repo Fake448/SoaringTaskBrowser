@@ -114,6 +114,7 @@ try {
             ]);
         } else {
             // logMessage("Found matching task: EntrySeqID = " . $foundTask['EntrySeqID'] . ", Title = " . $foundTask['Title']);
+            // TODO: Save the IGC file under the temporary folder under the igckey subfolder
             echo json_encode([
                 'status' => 'found',
                 'EntrySeqID' => $foundTask['EntrySeqID'],
@@ -192,20 +193,36 @@ function compareCoordinates($coord1, $coord2, $tolerance = 0.001) {
 }
 
 /**
- * Updated validateCandidate function using normalization and tolerance.
+ * Updated validateCandidate function using normalization and tolerance with additional logging.
  */
 function validateCandidate($candidate, $igcWaypoints) {
+    // logMessage("validateCandidate: Starting candidate validation for EntrySeqID: " . ($candidate['EntrySeqID'] ?? 'unknown'));
+    
     if (!isset($candidate['PLNXML'])) {
+        // logMessage("validateCandidate: Candidate does not have PLNXML");
         return false;
     }
+    
     $xmlString = $candidate['PLNXML'];
     libxml_use_internal_errors(true);
     $xml = simplexml_load_string($xmlString);
+    
     if (!$xml) {
+        $errors = libxml_get_errors();
+        foreach ($errors as $error) {
+            // logMessage("validateCandidate: XML parsing error: " . trim($error->message));
+        }
+        libxml_clear_errors();
         return false;
     }
+    
     $xmlWaypoints = [];
-    foreach ($xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint') as $wp) {
+    $xmlWpList = $xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint');
+    if (!$xmlWpList) {
+        // logMessage("validateCandidate: No ATCWaypoint elements found in XML");
+    }
+    
+    foreach ($xmlWpList as $wp) {
         $id = (string)$wp['id'];
         $worldPosRaw = trim((string)$wp->WorldPosition);
         $normalized = normalizeXmlCoordinate($worldPosRaw);
@@ -215,31 +232,52 @@ function validateCandidate($candidate, $igcWaypoints) {
             $position = $worldPosRaw;
         }
         $xmlWaypoints[$id] = $position;
+        // logMessage("validateCandidate: Extracted waypoint - ID: " . $id . ", Position: " . $position);
     }
     
     foreach ($igcWaypoints as $wpID => $igcCoord) {
+        // logMessage("validateCandidate: Checking IGC waypoint - ID: " . $wpID . ", Coord: " . $igcCoord);
+        
         if (!isset($xmlWaypoints[$wpID])) {
+            // logMessage("validateCandidate: IGC waypoint " . $wpID . " not found in candidate XML.");
             return false;
         }
+        
         $xmlParts = explode(',', $xmlWaypoints[$wpID]);
         if (count($xmlParts) < 2) {
+            // logMessage("validateCandidate: XML waypoint " . $wpID . " has invalid coordinate format: " . $xmlWaypoints[$wpID]);
             return false;
         }
+        
         $xmlLat = trim($xmlParts[0]);
         $xmlLon = trim($xmlParts[1]);
-        $igcCoord = str_replace(" ", "", $igcCoord);
-        $igcParts = explode(',', $igcCoord);
+        
+        // Remove any spaces from the IGC coordinate
+        $igcCoordNoSpaces = str_replace(" ", "", $igcCoord);
+        $igcParts = explode(',', $igcCoordNoSpaces);
         if (count($igcParts) < 2) {
+            // logMessage("validateCandidate: IGC waypoint " . $wpID . " has invalid coordinate format: " . $igcCoord);
             return false;
         }
+        
         $igcLat = trim($igcParts[0]);
         $igcLon = trim($igcParts[1]);
+        
+        // logMessage("validateCandidate: Comparing waypoint " . $wpID . " latitudes - IGC: " . $igcLat . " vs XML: " . $xmlLat);
         $latMatch = compareCoordinates($igcLat, $xmlLat);
+        
+        // logMessage("validateCandidate: Comparing waypoint " . $wpID . " longitudes - IGC: " . $igcLon . " vs XML: " . $xmlLon);
         $lonMatch = compareCoordinates($igcLon, $xmlLon);
+        
         if (!$latMatch || !$lonMatch) {
+            // logMessage("validateCandidate: Coordinate mismatch for waypoint " . $wpID . ". latMatch: " . ($latMatch ? "true" : "false") . ", lonMatch: " . ($lonMatch ? "true" : "false"));
             return false;
+        } else {
+            // logMessage("validateCandidate: Waypoint " . $wpID . " matches successfully.");
         }
     }
+    
+    // logMessage("validateCandidate: All IGC waypoints validated successfully for candidate.");
     return true;
 }
 ?>
