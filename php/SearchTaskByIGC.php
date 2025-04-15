@@ -11,8 +11,6 @@ if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     exit;
 }
 
-logMessage("Session ID: " . session_id());
-
 try {
     // logMessage("SearchTaskByIGC.php: Script started.");
 
@@ -204,7 +202,6 @@ try {
             } else {
                 // Fake Browserless response for testing: read from a local file.
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
-                logmessage($fakeResponseFile);
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
                     $decoded = json_decode($bl_response, true);
@@ -228,8 +225,6 @@ try {
             }
 
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
-            logMessage("Parse Browserless Response to Extract IGC Results");
-            logMessage("Browserless Result Array: " . print_r($browserlessResult, true));
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
                 $dom = new DOMDocument();
@@ -254,7 +249,6 @@ try {
                     }
         
                     // Extract the information from the information column.
-                    logMessage("Extract the information from the information column");
                     $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
@@ -283,23 +277,21 @@ try {
                                     $duration = $parts[0];
                                     if (strpos($parts[1], 'km') !== false) {
                                         // This is an AAT completed task: duration, distance, and speed.
-                                        $distance = floatval(str_replace('km', '', $parts[1]));
-                                        $speed = floatval(str_replace('kph', '', $parts[2]));
+                                        $distance = round(floatval(str_replace('km', '', $parts[1])), 1);
+                                        $speed = round(floatval(str_replace('kph', '', $parts[2])), 1);
                                     } else {
                                         // Normal completed task: duration and speed.
-                                        $speed = floatval(str_replace('kph', '', $parts[1]));
                                     }
                                 } elseif (count($parts) == 2) {
                                     $duration = $parts[0];
-                                    $speed = floatval(str_replace('kph', '', $parts[1]));
+                                    $speed = round(floatval(str_replace('kph', '', $parts[1])), 1);
                                 }
                             } else {
                                 // Incomplete tasks: only flown distance is provided.
-                                $distance = floatval(str_replace('km', '', $resultText));
+                                $distance = round(floatval(str_replace('km', '', $resultText)), 1);
                             }
 
                             // Build the parsed results array.
-                            logMessage("Build the parsed results array");
                             $parsedResults = [
                                 "TaskCompleted" => $taskCompleted,
                                 "Penalties" => $penalties,
@@ -309,7 +301,6 @@ try {
                             ];
                 
                             $_SESSION['parsedResults'] = $parsedResults;
-                            logMessage("Parsed Results stored in session: " . print_r($_SESSION['parsedResults'], true));
                 
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
