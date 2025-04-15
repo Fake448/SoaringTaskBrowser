@@ -373,6 +373,9 @@
 
                         // Select the task on the map.
                         this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, true);
+                        // Draw the IGC
+                        this.taskBrowser.tbm.processIGCRecordDisplay(data.EntrySeqID, igcData.IGCKey, true, text);
+
                     }
                     else if (data.error) {
                         alert("Error from server: " + data.error);

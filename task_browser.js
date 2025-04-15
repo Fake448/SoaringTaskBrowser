@@ -1900,6 +1900,7 @@ class TaskBrowser {
             });
             document.getElementById('cancelIGCBtn').addEventListener('click', () => {
                 // Clear the match data.
+                tb.tbm.processIGCRecordDisplay(tb.igcMatchData.EntrySeqID, tb.igcMatchData.IGCKey, false);
                 tb.igcMatchData = "";
                 tb.showTaskDetailsStandalone(task);
                 tb.enableMapInteractions();

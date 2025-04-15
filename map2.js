@@ -922,7 +922,7 @@ class TaskBrowserMap {
         }
     }
 
-    processIGCRecordDisplay(entrySeqID, igcKey, isChecked) {
+    processIGCRecordDisplay(entrySeqID, igcKey, isChecked, igcText) {
         let tbm = this;
         // Check if the cache belongs to the current task.
         if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
@@ -943,30 +943,41 @@ class TaskBrowserMap {
             if (tbm.igcTrackCache[igcKey]) {
                 if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
                     tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
-                } else {
                 }
             } else {
-                fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
-                    .then(response => {
-                        if (!response.ok) {
-                            throw new Error(`HTTP error! status: ${response.status}`);
-                        }
-                        return response.text();
-                    })
-                    .then(igcText => {
-                        // Now use the parser attached to tbm
-                        const igcData = tbm.igcParser.parse(igcText);
-                        if (igcData.fixes.length > 0) {
-                            const polyline = L.polyline(igcData.fixes.map(fix => [fix.lat, fix.lon]), { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight });
-                            tbm.igcTrackCache[igcKey] = polyline;
-                            polyline.addTo(tbm.map);
-                        } else {
-                            console.warn(`No fixes found for IGCKey ${igcKey}.`);
-                        }
-                    })
-                    .catch(error => {
-                        console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
-                    });
+                // Function to process the IGC text: parse and add the polyline.
+                const processIGC = (igcContent) => {
+                    const igcData = tbm.igcParser.parse(igcContent);
+                    if (igcData.fixes.length > 0) {
+                        const polyline = L.polyline(
+                            igcData.fixes.map(fix => [fix.lat, fix.lon]),
+                            { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight }
+                        );
+                        tbm.igcTrackCache[igcKey] = polyline;
+                        polyline.addTo(tbm.map);
+                    } else {
+                        console.warn(`No fixes found for IGCKey ${igcKey}.`);
+                    }
+                };
+
+                // If igcText is provided, process it directly; otherwise, fetch it.
+                if (igcText) {
+                    processIGC(igcText);
+                } else {
+                    fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.text();
+                        })
+                        .then(fetchedIgcText => {
+                            processIGC(fetchedIgcText);
+                        })
+                        .catch(error => {
+                            console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
+                        });
+                }
             }
         } else {
             if (tbm.igcTrackCache[igcKey]) {
