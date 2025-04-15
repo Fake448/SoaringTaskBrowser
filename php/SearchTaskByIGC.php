@@ -314,6 +314,7 @@ try {
                             ];
                 
                             $_SESSION['parsedResults'] = $parsedResults;
+                            logMessage("Parsed Results: " . print_r($_SESSION, true));
                             // Also attach the parsed results to the Browserless result for the JSON response.
                             $browserlessResult['parsedResults'] = $parsedResults;
                         } else {
