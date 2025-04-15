@@ -1,8 +1,15 @@
 <?php
-// session_display.php
+require __DIR__ . '/CommonFunctions.php';
+require_once __DIR__ . '/session_restore.php';
 
-// Start (or resume) the session.
-session_start();
+header('Content-Type: application/json');
+
+// Ensure the user is logged in; if not, return an error response.
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+    http_response_code(401);
+    echo json_encode(["error" => "User not authenticated"]);
+    exit;
+}
 
 // Set the content-type header to JSON.
 header('Content-Type: application/json');
