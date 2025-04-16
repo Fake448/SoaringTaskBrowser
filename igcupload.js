@@ -330,15 +330,26 @@
                         let resultsLine = "";
                         if (data.browserless && data.browserless.parsedResults) {
                             const r = data.browserless.parsedResults;
+                            // Build the prefix using emoji for validity, task status, and penalties.
                             resultsLine += r.IGCValid ? "🔒" : "⚠️";
                             resultsLine += r.TaskCompleted ? "🏁" : "⛔";
                             resultsLine += r.Penalties ? "👮" : "";
-                            resultsLine += ` - ${r.Duration}`;
+
+                            // Build an array for the metrics (duration, distance, speed).
+                            let metrics = [];
+                            if (r.Duration) {
+                                metrics.push(r.Duration);
+                            }
                             if (r.Distance) {
-                                resultsLine += `, ${r.Distance} km`;
+                                metrics.push(`${r.Distance} km`);
                             }
                             if (r.Speed) {
-                                resultsLine += `, ${r.Speed} km/h`;
+                                metrics.push(`${r.Speed} km/h`);
+                            }
+
+                            // If any metrics exist, join them with commas and add as a suffix.
+                            if (metrics.length > 0) {
+                                resultsLine += " - " + metrics.join(", ");
                             }
                         }
 
