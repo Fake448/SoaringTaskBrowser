@@ -776,8 +776,8 @@ body {
     display: block;
     text-align: center;
     margin-bottom: 10px;
-    font-size: 16px;
-    color: #fff; /* Adjust the color to ensure readability against your background */
+    font-size: 20px;
+    color: #000; /* Adjust the color to ensure readability against your background */
 }
 
 #taskGridOverlay {
