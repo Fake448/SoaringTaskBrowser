@@ -765,6 +765,12 @@ body {
     left: 50%;
     transform: translate(-50%, -50%);
     z-index: 1000; /* Ensures the spinner is on top of other elements */
+
+    display: flex;
+    flex-direction: column; /* Stack text over image */
+    align-items: center; /* Center them horizontally */
+    justify-content: center; /* (Optional) center them vertically within the container */
+    text-align: center; /* Just in case, to center text */
 }
 
 .loading-spinner img {
@@ -777,6 +783,7 @@ body {
     text-align: center;
     margin-bottom: 10px;
     font-size: 20px;
+    font-weight: bold;
     color: #000; /* Adjust the color to ensure readability against your background */
 }
 
