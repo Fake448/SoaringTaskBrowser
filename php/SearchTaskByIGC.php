@@ -253,17 +253,18 @@ try {
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
-                        // Process IGC Validity: check whether the first text node starts with the lock emoji.
-                        $igcValid = false;
-                        $pilotText = "";
-                        foreach ($nameDiv->childNodes as $node) {
-                            if ($node->nodeType === XML_TEXT_NODE) {
-                                $pilotText = trim($node->nodeValue);
-                                break;
-                            }
-                        }
-                        if (mb_substr($pilotText, 0, 1) === "🔒") {
+
+                        // Retrieve the complete text content from the name div.
+                        $rawNameContent = $nameDiv->textContent;
+
+                        // Remove a UTF‑8 BOM if it is present.
+                        $rawNameContent = preg_replace('/^\xEF\xBB\xBF/', '', $rawNameContent);
+
+                        // Use a Unicode‑aware regex to check if the first non‑whitespace character is the lock emoji.
+                        if (preg_match('/^\s*🔒/u', $rawNameContent)) {
                             $igcValid = true;
+                        } else {
+                            $igcValid = false;
                         }
             
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
