@@ -204,11 +204,7 @@ try {
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
-                    logMessage("Before conversion");
-                    logMessage($bl_response);
-                    // Convert the fake response from Windows-1252 to UTF-8.
-                    $bl_response = mb_convert_encoding($bl_response, 'UTF-8', 'Windows-1252');
-                    logMessage("After conversion");
+                    logMessage("Read from file:");
                     logMessage($bl_response);
                     $decoded = json_decode($bl_response, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data']['tracklogsHTML']['html'])) {
@@ -232,6 +228,8 @@ try {
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
+                logMessage("HTML Content:");
+                logMessage($htmlContent);
                 $dom = new DOMDocument();
                 libxml_use_internal_errors(true);
                 $dom->loadHTML($htmlContent);
