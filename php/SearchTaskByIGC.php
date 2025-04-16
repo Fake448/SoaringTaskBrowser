@@ -204,8 +204,12 @@ try {
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
+                    logMessage("Before conversion");
+                    logMessage($bl_response);
                     // Convert the fake response from Windows-1252 to UTF-8.
                     $bl_response = mb_convert_encoding($bl_response, 'UTF-8', 'Windows-1252');
+                    logMessage("After conversion");
+                    logMessage($bl_response);
                     $decoded = json_decode($bl_response, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data']['tracklogsHTML']['html'])) {
                         // Use the decoded JSON if it has the expected structure.
@@ -254,24 +258,8 @@ try {
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
-
-                        // Simply get the full text content from the element and trim it.
                         $rawNameContent = trim($nameDiv->textContent);
-                        logMessage("DEBUG: rawNameContent before iconv: " . $rawNameContent);
-                        logMessage("DEBUG: rawNameContent (hex) before iconv: " . bin2hex($rawNameContent));
-
-                        // Convert the misinterpreted string from Windows-1252 to UTF-8 using iconv.
-                        $convertedNameContent = iconv('Windows-1252', 'UTF-8//IGNORE', $rawNameContent);
-                        logMessage("DEBUG: rawNameContent after iconv: " . $convertedNameContent);
-                        logMessage("DEBUG: rawNameContent (hex) after iconv: " . bin2hex($convertedNameContent));
-
-                        // Get the first character (using UTF-8 encoding).
-                        $firstChar = mb_substr($convertedNameContent, 0, 1, 'UTF-8');
-                        logMessage("DEBUG: firstChar: " . $firstChar . " (hex: " . bin2hex($firstChar) . ")");
-
-                        // Set IGCValid to true if the first character equals the lock emoji.
-                        $igcValid = ($firstChar === "🔒");
-                        logMessage("DEBUG: IGCValid set to: " . ($igcValid ? 'true' : 'false'));
+                        $igcValid = (mb_substr($rawNameContent, 0, 1, 'UTF-8') === "🔒");
 
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
