@@ -228,9 +228,9 @@ try {
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
-                logMessage("HTML Content:");
-                logMessage($htmlContent);
-                $dom = new DOMDocument();
+                // Prepend the XML declaration to force UTF-8 interpretation.
+                $htmlContent = '<?xml encoding="UTF-8">' . $htmlContent;
+                $dom = new DOMDocument('1.0', 'UTF-8');
                 libxml_use_internal_errors(true);
                 $dom->loadHTML($htmlContent);
                 libxml_clear_errors();
@@ -260,7 +260,7 @@ try {
                         logMessage("RawNameContent:");
                         logMessage($rawNameContent);
 
-                        $igcValid = (mb_substr($rawNameContent, 0, 1, 'UTF-8') === "🔒");
+                        $igcValid = (mb_substr($rawNameContent, 0, 1) === "🔒");
 
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
