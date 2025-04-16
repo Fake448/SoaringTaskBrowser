@@ -253,10 +253,19 @@ try {
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
+
                         // Simply get the full text content from the element and trim it.
                         $rawNameContent = trim($nameDiv->textContent);
+                        logMessage("DEBUG: rawNameContent: " . $rawNameContent);
+                        logMessage("DEBUG: rawNameContent (hex): " . bin2hex($rawNameContent));
+
+                        // Get the first character (using UTF-8 encoding) of the trimmed text.
+                        $firstChar = mb_substr($rawNameContent, 0, 1, 'UTF-8');
+                        logMessage("DEBUG: firstChar: " . $firstChar . " (hex: " . bin2hex($firstChar) . ")");
+
                         // Set IGCValid to true if the first character is the lock emoji.
-                        $igcValid = (mb_substr($rawNameContent, 0, 1) === "🔒");
+                        $igcValid = ($firstChar === "🔒");
+                        logMessage("DEBUG: IGCValid set to: " . ($igcValid ? 'true' : 'false'));
 
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
