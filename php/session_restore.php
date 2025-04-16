@@ -1,7 +1,7 @@
 <?php
 require_once __DIR__ . '/CommonFunctions.php';
 
-// Set session and cookie parameters to persist for 30 days.
+// Set session and cookie parameters to persist for 30 days
 // If you need the cookie to be available on all subdomains, adjust the domain accordingly.
 ini_set('session.gc_maxlifetime', 86400 * 30);
 

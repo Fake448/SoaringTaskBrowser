@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 require __DIR__ . '/CommonFunctions.php';
 require_once __DIR__ . '/session_restore.php';
 
