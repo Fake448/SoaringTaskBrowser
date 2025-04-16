@@ -332,7 +332,7 @@
                             const r = data.browserless.parsedResults;
                             // Build the prefix using emoji for validity, task status, and penalties.
                             resultsLine += r.IGCValid ? "🔒" : "⚠️";
-                            resultsLine += r.TaskCompleted ? "🏁" : "⛔";
+                            resultsLine += r.TaskCompleted ? "🏁" : "❌";
                             resultsLine += r.Penalties ? "👮" : "";
 
                             // Build an array for the metrics (duration, distance, speed).
