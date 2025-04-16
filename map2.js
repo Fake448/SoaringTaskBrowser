@@ -227,12 +227,23 @@ class TaskBrowserMap {
         };
     }
 
+    showLoadingSpinner(message) {
+        const spinnerEl = document.getElementById('loadingSpinner');
+        const messageEl = document.getElementById('loadingMessage');
+        messageEl.textContent = message || "Loading...";
+        spinnerEl.style.display = 'block';
+    }
+
+    hideLoadingSpinner() {
+        document.getElementById('loadingSpinner').style.display = 'none';
+    }
+
     // Fetch and filter tasks based on current filter settings
     fetchTasks() {
         let tbm = this;
 
         // Show the loading spinner
-        document.getElementById('loadingSpinner').style.display = 'block';
+        tbm.showLoadingSpinner("Fetching tasks");
 
         console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter, tbm.durationMin, tbm.durationMax, tbm.includeNoDuration);
 
@@ -302,7 +313,7 @@ class TaskBrowserMap {
                 console.error('Error fetching tasks:', error);
             })
             .finally(() => {
-                document.getElementById('loadingSpinner').style.display = 'none';
+                tbm.hideLoadingSpinner();
             });
     }
 
@@ -312,7 +323,7 @@ class TaskBrowserMap {
         if (!tbm.allTasks) return; // Ensure tasks are loaded first
 
         // Show the loading spinner
-        document.getElementById('loadingSpinner').style.display = 'block';
+        tbm.showLoadingSpinner("Fetching tasks...");
 
         let bounds = tbm.map.getBounds();
         const bufferKm = 0.5;
@@ -358,7 +369,7 @@ class TaskBrowserMap {
         }
 
         // Hide the loading spinner
-        document.getElementById('loadingSpinner').style.display = 'none';
+        tbm.hideLoadingSpinner();
 
     }
 

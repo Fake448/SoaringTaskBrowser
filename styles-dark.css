@@ -772,6 +772,14 @@ body {
     height: 50px;
 }
 
+.loading-message {
+    display: block;
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #fff; /* Adjust the color to ensure readability against your background */
+}
+
 #taskGridOverlay {
     background-color: #1e1e1e;
     color: #dcdcdc;
