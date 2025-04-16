@@ -88,13 +88,42 @@ try {
     if (!rename($sourceFilePath, $destFilename)) {
         throw new Exception("Failed to move saved IGC file to destination folder.");
     }
-    
+
+    // Read the results from the results.json file ===
+    $resultsFile = $sourceFolder . '/results.json';
+    if (!file_exists($resultsFile)) {
+        throw new Exception("Results file not found in temporary folder.");
+    }
+    $resultsContent = file_get_contents($resultsFile);
+    $parsedResults = json_decode($resultsContent, true);
+    if (json_last_error() !== JSON_ERROR_NONE) {
+        throw new Exception("Failed to decode results file: " . json_last_error_msg());
+    }
+
+    // Convert boolean values to integers.
+    $taskCompletedInt = isset($parsedResults["TaskCompleted"]) && $parsedResults["TaskCompleted"] ? 1 : 0;
+    $penaltiesInt     = isset($parsedResults["Penalties"]) && $parsedResults["Penalties"] ? 1 : 0;
+    $igcValidInt      = isset($parsedResults["IGCValid"]) && $parsedResults["IGCValid"] ? 1 : 0;
+
+    // Convert Duration from "HH:MM:SS" to seconds.
+    $durationSeconds = 0;
+    if (!empty($parsedResults["Duration"])) {
+        list($hours, $minutes, $seconds) = explode(":", $parsedResults["Duration"]);
+        $durationSeconds = ((int)$hours * 3600) + ((int)$minutes * 60) + ((int)$seconds);
+    }
+
+    // Convert Distance and Speed to float.
+    $distanceFloat = (!empty($parsedResults["Distance"])) ? (float)$parsedResults["Distance"] : null;
+    $speedFloat    = (!empty($parsedResults["Speed"])) ? (float)$parsedResults["Speed"] : null;
+
     // Insert the new record into IGCRecords table.
     $insertQuery = "INSERT INTO IGCRecords 
-        (IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime, BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID, CompetitionClass, NB21Version, Sim, WSGUserID, Comment)
+        (IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime, BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID, CompetitionClass, NB21Version, Sim, WSGUserID, Comment,
+         TaskCompleted, Penalties, Duration, Distance, Speed, IGCValid)
         VALUES 
-        (:IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime, :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID, :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment)";
-    
+        (:IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime, :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID, :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment,
+         :TaskCompleted, :Penalties, :Duration, :Distance, :Speed, :IGCValid)";
+
     $stmt = $pdo->prepare($insertQuery);
     $stmt->bindParam(':IGCKey', $IGCKey, PDO::PARAM_STR);
     $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
@@ -111,7 +140,13 @@ try {
     $stmt->bindParam(':Sim', $Sim, PDO::PARAM_STR);
     $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
     $stmt->bindParam(':Comment', $IGCComment, PDO::PARAM_STR);
-    
+    $stmt->bindParam(':TaskCompleted', $taskCompletedInt, PDO::PARAM_INT);
+    $stmt->bindParam(':Penalties', $penaltiesInt, PDO::PARAM_INT);
+    $stmt->bindParam(':Duration', $durationSeconds, PDO::PARAM_INT);
+    $stmt->bindParam(':Distance', $distanceFloat);
+    $stmt->bindParam(':Speed', $speedFloat);
+    $stmt->bindParam(':IGCValid', $igcValidInt, PDO::PARAM_INT);
+
     $stmt->execute();
     
     // Transform IGCRecordDateTimeUTC to the desired format for saving in MarkedFlownDateUTC.
