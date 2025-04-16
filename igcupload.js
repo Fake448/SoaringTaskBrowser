@@ -327,6 +327,21 @@
                         igcData.IGCKey = key;
 
                         // Build the matching details HTML.
+                        let resultsLine = "";
+                        if (data.browserless && data.browserless.parsedResults) {
+                            const r = data.browserless.parsedResults;
+                            resultsLine += r.IGCValid ? "🔒" : "⚠️";
+                            resultsLine += r.TaskCompleted ? "🏁" : "⛔";
+                            resultsLine += r.Penalties ? "👮" : "";
+                            resultsLine += ` - ${r.Duration}`;
+                            if (r.Distance) {
+                                resultsLine += `, ${r.Distance} km`;
+                            }
+                            if (r.Speed) {
+                                resultsLine += `, ${r.Speed} km/h`;
+                            }
+                        }
+
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
                         html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
                         html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
@@ -335,6 +350,7 @@
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
                         html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
+                        html += `<strong>Results:</strong> ${resultsLine}</br>`;
                         html += `<strong>Comment:</strong> <input type="text" id="igcCommentField" placeholder="Enter your comment here"></br>`;
                         html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open this IGC file on the B21 Task Planner</a></br>`;
                         html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
@@ -347,9 +363,8 @@
                         // Select the task on the map.
                         this.taskBrowser.tbm.deselectTask();
                         this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, true);
-                        // Draw the IGC
+                        // Draw the IGC.
                         this.taskBrowser.tbm.processIGCRecordDisplay(data.EntrySeqID, igcData.IGCKey, true, text);
-
                     }
                     else if (data.error) {
                         alert("Error from server: " + data.error);
