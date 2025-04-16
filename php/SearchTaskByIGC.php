@@ -257,14 +257,19 @@ try {
 
                         // Simply get the full text content from the element and trim it.
                         $rawNameContent = trim($nameDiv->textContent);
-                        logMessage("DEBUG: rawNameContent: " . $rawNameContent);
-                        logMessage("DEBUG: rawNameContent (hex): " . bin2hex($rawNameContent));
+                        logMessage("DEBUG: rawNameContent before iconv: " . $rawNameContent);
+                        logMessage("DEBUG: rawNameContent (hex) before iconv: " . bin2hex($rawNameContent));
 
-                        // Get the first character (using UTF-8 encoding) of the trimmed text.
-                        $firstChar = mb_substr($rawNameContent, 0, 1, 'UTF-8');
+                        // Convert the misinterpreted string from Windows-1252 to UTF-8 using iconv.
+                        $convertedNameContent = iconv('Windows-1252', 'UTF-8//IGNORE', $rawNameContent);
+                        logMessage("DEBUG: rawNameContent after iconv: " . $convertedNameContent);
+                        logMessage("DEBUG: rawNameContent (hex) after iconv: " . bin2hex($convertedNameContent));
+
+                        // Get the first character (using UTF-8 encoding).
+                        $firstChar = mb_substr($convertedNameContent, 0, 1, 'UTF-8');
                         logMessage("DEBUG: firstChar: " . $firstChar . " (hex: " . bin2hex($firstChar) . ")");
 
-                        // Set IGCValid to true if the first character is the lock emoji.
+                        // Set IGCValid to true if the first character equals the lock emoji.
                         $igcValid = ($firstChar === "🔒");
                         logMessage("DEBUG: IGCValid set to: " . ($igcValid ? 'true' : 'false'));
 
