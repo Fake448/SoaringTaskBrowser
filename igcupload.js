@@ -306,6 +306,7 @@
             formData.append('igcFile', file);
 
             // Query the server for a matching task.
+            this.taskBrowser.tbm.showLoadingSpinner("Processing IGC file...");
             fetch('php/SearchTaskByIGC.php', {
                 method: 'POST',
                 body: formData,
@@ -313,6 +314,7 @@
             })
                 .then(response => response.json())
                 .then(data => {
+                    this.taskBrowser.tbm.hideLoadingSpinner();
                     if (data.status === 'not_found') {
                         alert("Task not found in the database.");
                     }
@@ -378,13 +380,16 @@
                         this.taskBrowser.tbm.processIGCRecordDisplay(data.EntrySeqID, igcData.IGCKey, true, text);
                     }
                     else if (data.error) {
+                        this.taskBrowser.tbm.hideLoadingSpinner();
                         alert("Error from server: " + data.error);
                     }
                     else {
+                        this.taskBrowser.tbm.hideLoadingSpinner();
                         alert("Unexpected server response.");
                     }
                 })
                 .catch(error => {
+                    this.taskBrowser.tbm.hideLoadingSpinner();
                     console.error('Error:', error);
                     alert("Error contacting the server: " + error);
                 });
