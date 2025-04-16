@@ -204,8 +204,6 @@ try {
                 $fakeResponseFile = __DIR__ . '/fake_browserless_response.txt';
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
-                    logMessage("Read from file:");
-                    logMessage($bl_response);
                     $decoded = json_decode($bl_response, true);
                     if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data']['tracklogsHTML']['html'])) {
                         // Use the decoded JSON if it has the expected structure.
@@ -257,8 +255,6 @@ try {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
                         $rawNameContent = trim($nameDiv->textContent);
-                        logMessage("RawNameContent:");
-                        logMessage($rawNameContent);
 
                         $igcValid = (mb_substr($rawNameContent, 0, 1) === "🔒");
 
