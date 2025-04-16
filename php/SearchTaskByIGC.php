@@ -253,20 +253,20 @@ try {
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
-
-                        // Retrieve the complete text content from the name div.
+                        // Retrieve the full text content.
                         $rawNameContent = $nameDiv->textContent;
-
-                        // Remove a UTF‑8 BOM if it is present.
+                        // Remove any UTF-8 BOM if present.
                         $rawNameContent = preg_replace('/^\xEF\xBB\xBF/', '', $rawNameContent);
+                        // Trim it.
+                        $rawNameContent = trim($rawNameContent);
 
-                        // Use a Unicode‑aware regex to check if the first non‑whitespace character is the lock emoji.
-                        if (preg_match('/^\s*🔒/u', $rawNameContent)) {
+                        // Use a Unicode‑aware regular expression that matches any leading whitespace
+                        // followed by the lock emoji specified by its code point (U+1F512).
+                        if (preg_match('/^\s*\x{1F512}/u', $rawNameContent)) {
                             $igcValid = true;
                         } else {
                             $igcValid = false;
-                        }
-            
+                        }            
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
                             $resultDiv = $resultDivCandidates->item(0);
