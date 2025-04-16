@@ -253,6 +253,8 @@ try {
 
                     // Extract the information from the information column.
                     $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
+                    logMessage("infoDiv query Content:");
+                    logMessage($infoDiv);
                     if ($infoDiv) {
                         // Extract the pilot/task information and result details.
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
