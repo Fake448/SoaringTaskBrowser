@@ -1335,6 +1335,8 @@ class TaskBrowser {
                         <th>Pilot</th>
                         <th>Glider</th>
                         <th>Class</th>
+                        <th>Flags</th>
+                        <th>Speed</th>
                         <th>Sim</th>
                     </tr>
                 </thead>
@@ -1398,6 +1400,35 @@ class TaskBrowser {
                     { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
                     { data: 'GliderType', title: 'Glider', name: 'GliderType' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
+                    {
+                        data: null,
+                        title: 'Flags',
+                        name: 'Flags',
+                        orderable: false,
+                        render: function (data, type, row) {
+                            if (type !== 'display') return '';
+                            var flags = '';
+                            flags += row.IGCValid ? '🔒' : '⚠️';
+                            flags += row.TaskCompleted ? '🏁' : '❌';
+                            flags += row.Penalties ? '👮' : '';
+                            return flags;
+                        }
+                    },
+                    {
+                        data: 'Speed',
+                        title: 'Speed',
+                        name: 'Speed',
+                        render: function (data, type, row) {
+                            if (type !== 'display') return data;
+                            var speed = parseFloat(data) || 0;
+                            if (tb.userSettings.distance === 'imperial') {
+                                // convert km/h to mph
+                                speed = speed * 0.621371;
+                            }
+                            // round to one decimal place
+                            return speed.toFixed(1);
+                        }
+                    },
                     { data: 'Sim', title: 'Sim', name: 'Sim' }
                 ],
                 paging: false,
@@ -1405,7 +1436,8 @@ class TaskBrowser {
                 ordering: true,
                 info: true,
                 columnDefs: [
-                    { targets: 0, width: '15px' }
+                    { targets: 0, width: '15px' },
+                    { targets: 7, width: '60px' }
                 ],
                 headerCallback: function (thead, data, start, end, display) {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
