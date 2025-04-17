@@ -1337,6 +1337,8 @@ class TaskBrowser {
                         <th>Class</th>
                         <th>Flags</th>
                         <th>Speed</th>
+                        <th>Time</th>
+                        <th>Distance</th>
                         <th>Sim</th>
                     </tr>
                 </thead>
@@ -1404,7 +1406,7 @@ class TaskBrowser {
                         data: null,
                         title: 'Flags',
                         name: 'Flags',
-                        orderable: false,
+                        orderable: true,
                         render: function (data, type, row) {
                             if (type !== 'display') return '';
                             var flags = '';
@@ -1421,12 +1423,37 @@ class TaskBrowser {
                         render: function (data, type, row) {
                             if (type !== 'display') return data;
                             var speed = parseFloat(data) || 0;
-                            if (tb.userSettings.distance === 'imperial') {
-                                // convert km/h to mph
-                                speed = speed * 0.621371;
+                            var isImperial = tb.userSettings.distance === 'imperial';
+                            if (isImperial) {
+                                speed *= 0.621371; // Convert km/h to mph
                             }
-                            // round to one decimal place
-                            return speed.toFixed(1);
+                            const unit = isImperial ? 'mph' : 'km/h';
+                            return `${speed.toFixed(1)} ${unit}`;
+                        }
+                    },
+                    {
+                        data: 'Duration',
+                        title: 'Time',
+                        name: 'Time',
+                        render: function (data, type, row) {
+                            if (type !== 'display' || !data || data.trim() === '') return '';
+                            return data;
+                        }
+                    },
+                    {
+                        data: 'Distance',
+                        title: 'Distance',
+                        name: 'Distance',
+                        render: function (data, type, row) {
+                            if (type !== 'display') return data;
+                            var distance = parseFloat(data);
+                            if (!distance || distance <= 0) return '';
+                            var isImperial = tb.userSettings.distance === 'imperial';
+                            if (isImperial) {
+                                distance *= 0.621371;
+                            }
+                            const unit = isImperial ? 'mi' : 'km';
+                            return `${distance.toFixed(1)} ${unit}`;
                         }
                     },
                     { data: 'Sim', title: 'Sim', name: 'Sim' }
@@ -1437,7 +1464,64 @@ class TaskBrowser {
                 info: true,
                 columnDefs: [
                     { targets: 0, width: '15px' },
-                    { targets: 7, width: '60px' }
+                    {
+                        targets: 1, // Created on
+                        width: '140px',
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '140px');
+                        }
+                    },
+                    {
+                        targets: 2, // Pilot
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '100px');
+                        }
+                    },
+                    {
+                        targets: 4, // Class
+                        width: '150px',
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '100px');
+                        }
+                    },
+                    {
+                        targets: 5, // Flags
+                        width: '60px',
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '60px');
+                        }
+                    },
+                    {
+                        targets: 6, // Speed
+                        width: '75px',
+                        createdCell: function (td /*, cellData, rowData, row, col */) {
+                            $(td)
+                                .css('min-width', '75px')
+                                .css('text-align', 'right')
+                                .css('padding-right', '10px');
+                        }
+                    },
+                    {
+                        targets: 7, // Time
+                        width: '65px',
+                        createdCell: function (td /*, cellData, rowData, row, col */) {
+                            $(td)
+                                .css('min-width', '65px')
+                                .css('text-align', 'right')
+                                .css('padding-right', '10px');
+                        }
+                    },
+                    {
+                        targets: 8, // Distance
+                        width: '75px',
+                        createdCell: function (td /*, cellData, rowData, row, col */) {
+                            $(td)
+                                .css('min-width', '75px')
+                                .css('text-align', 'right')
+                                .css('padding-right', '10px');
+                        }
+                    },
+                    { targets: 9, width: '60px' }
                 ],
                 headerCallback: function (thead, data, start, end, display) {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
