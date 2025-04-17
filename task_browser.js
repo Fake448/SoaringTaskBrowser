@@ -1365,6 +1365,9 @@ class TaskBrowser {
             const dt = $('#igcRecordsTable').DataTable({
                 data: igcRecords,
                 autoWidth: false,
+                scrollX: true,         // ← enable horizontal scroll
+                scrollCollapse: true,  // ← collapse container when table is narrow
+                responsive: false,     // ← disable Responsive extension
                 order: [[1, 'desc']],  // Order by the UTC column (index 1) descending
                 columns: [
                     {
@@ -1426,6 +1429,29 @@ class TaskBrowser {
                     });
                 },
                 initComplete: function () {
+                    var api = this.api();
+
+                    // 1) Immediately adjust in case you're already visible:
+                    api.columns.adjust();
+
+                    // 2) Re‑adjust when the collapsible opens:
+                    var wrapper = $(api.table().container())
+                        .closest('.tool-entry.collapsible');
+                    wrapper.find('.title').on('click', function () {
+                        setTimeout(function () {
+                            api.columns.adjust();
+                        }, 150);
+                    });
+
+                    // 3) WATCH for panel resizes and re‑adjust automatically:
+                    const panel = document.getElementById('taskDetailContainer');
+                    if (window.ResizeObserver && panel) {
+                        const ro = new ResizeObserver(() => api.columns.adjust());
+                        ro.observe(panel);
+                    } else {
+                        // fallback for older browsers — catches window resizes
+                        $(window).on('resize.igc', () => api.columns.adjust());
+                    }
                     const tableWrapper = $(this.api().table().container());
                     const filterDiv = tableWrapper.find('div.dataTables_filter');
                     filterDiv.css({
