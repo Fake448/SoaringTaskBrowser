@@ -333,7 +333,7 @@
                         if (data.browserless && data.browserless.parsedResults) {
                             const r = data.browserless.parsedResults;
                             // Build the prefix using emoji for validity, task status, and penalties.
-                            resultsLine += r.IGCValid ? "🔒" : "⚠️";
+                            resultsLine += r.IGCValid ? "🔒" : "❗";
                             resultsLine += r.TaskCompleted ? "🏁" : "❌";
                             resultsLine += r.Penalties ? "👮" : "";
 

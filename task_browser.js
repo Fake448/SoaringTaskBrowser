@@ -1410,7 +1410,7 @@ class TaskBrowser {
                         render: function (data, type, row) {
                             if (type !== 'display') {
                                 let flags = '';
-                                flags += row.IGCValid ? '🔒' : '⚠️';
+                                flags += row.IGCValid ? '🔒' : '❗';
                                 flags += row.TaskCompleted ? '🏁' : '❌';
                                 flags += row.Penalties ? '👮' : '';
                                 return flags.trim(); // searchable keywords
@@ -1418,7 +1418,7 @@ class TaskBrowser {
 
                             // Display actual emoji in UI
                             let emoji = '';
-                            emoji += row.IGCValid ? '🔒' : '⚠️';
+                            emoji += row.IGCValid ? '🔒' : '❗';
                             emoji += row.TaskCompleted ? '🏁' : '❌';
                             emoji += row.Penalties ? '👮' : '';
                             return emoji;
