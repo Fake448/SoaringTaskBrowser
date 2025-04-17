@@ -1372,7 +1372,7 @@ class TaskBrowser {
                 scrollX: true,         // ← enable horizontal scroll
                 scrollCollapse: true,  // ← collapse container when table is narrow
                 responsive: false,     // ← disable Responsive extension
-                order: [[1, 'desc']],  // Order by the UTC column (index 1) descending
+                order: [[6, 'desc']],  // Order by speed descending
                 columns: [
                     {
                         data: null,
