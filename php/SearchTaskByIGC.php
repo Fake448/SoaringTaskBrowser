@@ -205,28 +205,43 @@ try {
                 if (file_exists($fakeResponseFile)) {
                     $bl_response = file_get_contents($fakeResponseFile);
                     $decoded = json_decode($bl_response, true);
-                    if (json_last_error() === JSON_ERROR_NONE && isset($decoded['data']['tracklogsHTML']['html'])) {
-                        // Use the decoded JSON if it has the expected structure.
+
+                    if (json_last_error() === JSON_ERROR_NONE
+                        && isset($decoded['data']['tracklogsHTML']['html'])
+                    ) {
+                        // Make sure plannerVersion is defined, even if empty
+                        if (!isset($decoded['data']['plannerVersion']['html'])) {
+                            $decoded['data']['plannerVersion'] = ['html' => ''];
+                        }
                         $browserlessResult = $decoded;
                     } else {
-                        // Otherwise, assume the file contains raw HTML and wrap it in the expected structure.
+                        // Raw HTML fallback: wrap in the expected structure, including plannerVersion
                         $browserlessResult = [
-                            "data" => [
-                                "tracklogsHTML" => [
-                                    "html" => $bl_response
-                                ]
+                            'data' => [
+                                'tracklogsHTML'   => ['html' => $bl_response],
+                                'plannerVersion'  => ['html' => '']
                             ]
                         ];
                     }
                 } else {
-                    $browserlessResult = ["error" => "Browserless token not configured and fake response file not found."];
+                    $browserlessResult = [
+                        'error' => 'Browserless token not configured and fake response file not found.'
+                    ];
                 }
             }
 
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
+                // 1. Extract the raw HTML for tracklogs...
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
-                // Prepend the XML declaration to force UTF-8 interpretation.
+
+                // 2. Extract the planner version (TPVersion)
+                $plannerVersion = '';
+                if (isset($browserlessResult['data']['plannerVersion']['html'])) {
+                    $plannerVersion = trim($browserlessResult['data']['plannerVersion']['html']);
+                }
+
+                // 3. Load the tracklogs HTML into DOMDocument
                 $htmlContent = '<?xml encoding="UTF-8">' . $htmlContent;
                 $dom = new DOMDocument('1.0', 'UTF-8');
                 libxml_use_internal_errors(true);
@@ -234,10 +249,10 @@ try {
                 libxml_clear_errors();
                 $xpath = new DOMXPath($dom);
 
-                // Look for the table with id "tracklogs_table" and then its rows.
+                // 4. Find the rows in the tracklogs table
                 $rows = $xpath->query('//table[@id="tracklogs_table"]//tr');
                 if ($rows->length > 0) {
-                    // Prefer the row with class "tracklogs_entry_current" if present; otherwise, take the first row.
+                    // pick the “current” row if present
                     $targetRow = null;
                     foreach ($rows as $row) {
                         if (strpos($row->getAttribute('class'), "tracklogs_entry_current") !== false) {
@@ -249,80 +264,65 @@ try {
                         $targetRow = $rows->item(0);
                     }
 
-                    // Extract the information from the information column.
+                    // 5. Extract the info cell
                     $infoDiv = $xpath->query('.//td[contains(@class,"tracklogs_entry_info")]', $targetRow)->item(0);
                     if ($infoDiv) {
-                        // Extract the pilot/task information and result details.
+                        // pilot / task name & icon
                         $nameDiv = $xpath->query('.//div[contains(@class,"tracklogs_entry_name")]', $infoDiv)->item(0);
                         $rawNameContent = trim($nameDiv->textContent);
-
                         $igcValid = (mb_substr($rawNameContent, 0, 1) === "🔒");
 
+                        // result details div
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
                         if ($resultDivCandidates->length > 0) {
                             $resultDiv = $resultDivCandidates->item(0);
                             $class = $resultDiv->getAttribute('class');
-                            // Determine task completion and penalty status.
                             $taskCompleted = (strpos($class, "tracklogs_entry_finished_ok") !== false);
-                            $penalties = (strpos($class, "penalties") !== false);
-                
-                            // Get the text content from the <span> inside the result div.
-                            $span = $xpath->query('.//span', $resultDiv)->item(0);
+                            $penalties    = (strpos($class, "penalties") !== false);
+
+                            $span       = $xpath->query('.//span', $resultDiv)->item(0);
                             $resultText = trim($span->textContent);
-                
-                            $duration = null;
-                            $distance = null;
-                            $speed = null;
-                
+
+                            $duration = $distance = $speed = null;
                             if ($taskCompleted) {
                                 $parts = preg_split('/\s+/', $resultText);
-                                if (count($parts) >= 3) {
+                                if (count($parts) >= 3 && strpos($parts[1], 'km') !== false) {
+                                    // AAT: duration, distance, speed
                                     $duration = $parts[0];
-                                    if (strpos($parts[1], 'km') !== false) {
-                                        // For AAT tasks: duration, distance, speed.
-                                        $distance = sprintf('%.1f', floatval(str_replace('km', '', $parts[1])));
-                                        $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[2])));
-                                    } else {
-                                        // For normal completed tasks: duration and speed.
-                                        $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[1])));
-                                    }
-                                } elseif (count($parts) == 2) {
+                                    $distance = sprintf('%.1f', floatval(str_replace('km', '', $parts[1])));
+                                    $speed    = sprintf('%.1f', floatval(str_replace('kph', '', $parts[2])));
+                                } elseif (count($parts) >= 2) {
+                                    // normal: duration, speed
                                     $duration = $parts[0];
-                                    $speed = sprintf('%.1f', floatval(str_replace('kph', '', $parts[1])));
+                                    $speed    = sprintf('%.1f', floatval(str_replace('kph', '', $parts[1])));
                                 }
                             } else {
-                                // Incomplete tasks: only flown distance is provided.
+                                // incomplete: only flown distance
                                 $distance = sprintf('%.1f', floatval(str_replace('km', '', $resultText)));
                             }
 
-                            // Build the parsed results array including the new IGCValid flag.
+                            // 6. Build parsedResults including TPVersion
                             $parsedResults = [
                                 "TaskCompleted" => $taskCompleted,
-                                "Penalties" => $penalties,
-                                "Duration" => $duration,
-                                "Distance" => $distance,
-                                "Speed" => $speed,
-                                "IGCValid" => $igcValid
+                                "Penalties"     => $penalties,
+                                "Duration"      => $duration,
+                                "Distance"      => $distance,
+                                "Speed"         => $speed,
+                                "IGCValid"      => $igcValid,
+                                "TPVersion"     => $plannerVersion
                             ];
 
-                            // Write the parsed results to a JSON file in the same directory as the IGC file.
-                            // Define the file path. You can change the filename to "results.xml" if you prefer XML.
+                            // 7. Write results.json
                             $resultsFile = $igcKeyDir . '/results.json';
-
-                            // Convert the $parsedResults array to JSON.
-                            // Using JSON_PRETTY_PRINT for ease of debugging.
                             $jsonData = json_encode($parsedResults, JSON_PRETTY_PRINT);
                             if ($jsonData === false) {
-                                // Handle error in JSON conversion.
                                 throw new Exception("Failed to encode parsed results as JSON: " . json_last_error_msg());
                             }
-
                             if (file_put_contents($resultsFile, $jsonData) === false) {
-                                // Handle error writing to file.
                                 throw new Exception("Failed to write results file to $resultsFile");
                             }
-                
-                            // Also attach the parsed results to the Browserless result for the JSON response.
+
+                            // 8. Attach to the response
                             $browserlessResult['parsedResults'] = $parsedResults;
                         } else {
                             $browserlessResult['error'] = "Result element not found in tracklogs entry.";
