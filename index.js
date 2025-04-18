@@ -331,7 +331,7 @@ function refreshIGCSubmissionsContent() {
                         data: 'IGCRecordDateTimeUTC',
                         title: 'Created on',
                         name: 'IGCRecordDateTimeUTC',
-                        render: function (data, type, row) {
+                        render: function (data, type) {
                             if (type === 'display') {
                                 return TB.formatSimDateTime(data, true, false, true, true, true);
                             }
@@ -355,27 +355,26 @@ function refreshIGCSubmissionsContent() {
                     { data: 'CompetitionID', title: 'Ident', name: 'CompetitionID' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
 
-                    // ←── NEW COLUMNS inserted here ──→
+                    // ─── Combined Flags column ───
                     {
-                        data: 'TaskCompleted',
-                        title: 'Completed',
-                        name: 'TaskCompleted',
-                        render: function (data, type) {
-                            return type === 'display'
-                                ? (data ? '🏁' : '❌')
-                                : data;
+                        data: null,
+                        title: 'Flags',
+                        name: 'Flags',
+                        orderable: true,
+                        render: function (data, type, row) {
+                            // build the three emojis as searchable text when type !== 'display'
+                            let flags = '';
+                            flags += row.IGCValid ? '🔒' : '❗';
+                            flags += row.TaskCompleted ? '🏁' : '❌';
+                            flags += row.Penalties ? '👮' : '';
+                            if (type === 'display') {
+                                // show emojis in UI
+                                return flags;
+                            }
+                            return flags.trim();
                         }
                     },
-                    {
-                        data: 'Penalties',
-                        title: 'Penalties',
-                        name: 'Penalties',
-                        render: function (data, type) {
-                            return type === 'display'
-                                ? (data ? '👮' : '')
-                                : data;
-                        }
-                    },
+
                     {
                         data: 'Duration',
                         title: 'Time',
@@ -404,18 +403,8 @@ function refreshIGCSubmissionsContent() {
                         }
                     },
                     {
-                        data: 'IGCValid',
-                        title: 'Valid',
-                        name: 'IGCValid',
-                        render: function (data, type) {
-                            return type === 'display'
-                                ? (data ? '🔒' : '⚠️')
-                                : data;
-                        }
-                    },
-                    {
                         data: 'TPVersion',
-                        title: 'TP Version',
+                        title: 'Planner',
                         name: 'TPVersion',
                         render: function (data, type) {
                             if (type !== 'display' || !data) return data;
@@ -423,10 +412,11 @@ function refreshIGCSubmissionsContent() {
                         }
                     },
 
-                    // ←── Renamed existing “Version” column to “Logger” ──→
+                    // Renamed “Version” to “Logger”
                     { data: 'NB21Version', title: 'Logger', name: 'NB21Version' },
 
                     { data: 'Sim', title: 'Sim', name: 'Sim' },
+
                     {
                         // Comment column with an editable input. For display, we render an input field.
                         data: 'Comment',
@@ -468,23 +458,21 @@ function refreshIGCSubmissionsContent() {
                 ],
                 // Column definitions for widths (adjust as needed).
                 columnDefs: [
-                    { targets: 0, width: '140px' },     // Created on (UTC Upload)
-                    { targets: 1, width: '1px' },     // Task
-                    { targets: 2, width: '100px' },     // Pilot
-                    { targets: 3, width: '100px' },     // Glider
-                    { targets: 4, width: '40px' },     // Ident
-                    { targets: 5, width: '80px' },     // Class
-                    { targets: 6, width: '60px' },     // Completed
-                    { targets: 7, width: '60px' },     // Penalties
-                    { targets: 8, width: '65px' },     // Time
-                    { targets: 9, width: '75px' },     // Distance
-                    { targets: 10, width: '75px' },     // Speed
-                    { targets: 11, width: '60px' },     // Valid
-                    { targets: 12, width: '80px' },     // TP Version
-                    { targets: 13, width: '80px' },     // Logger
-                    { targets: 14, width: '40px' },     // Sim
-                    { targets: 15, width: 'auto' },     // Comment
-                    { targets: 16, width: '110px' }     // Actions
+                    { targets: 0, width: '140px' },  // Created on (UTC Upload)
+                    { targets: 1, width: '1px' },  // Task
+                    { targets: 2, width: '100px' },  // Pilot
+                    { targets: 3, width: '100px' },  // Glider
+                    { targets: 4, width: '40px' },  // Ident
+                    { targets: 5, width: '80px' },  // Class
+                    { targets: 6, width: '60px' },  // Flags
+                    { targets: 7, width: '65px' },  // Time
+                    { targets: 8, width: '75px' },  // Distance
+                    { targets: 9, width: '75px' },  // Speed
+                    { targets: 10, width: '80px' },  // TP Version
+                    { targets: 11, width: '80px' },  // Logger
+                    { targets: 12, width: '40px' },  // Sim
+                    { targets: 13, width: 'auto' },  // Comment
+                    { targets: 14, width: '110px' }   // Actions
                 ],
                 paging: false,
                 searching: true,
