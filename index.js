@@ -331,7 +331,7 @@ function refreshIGCSubmissionsContent() {
                         data: 'IGCRecordDateTimeUTC',
                         title: 'Created on',
                         name: 'IGCRecordDateTimeUTC',
-                        render: function (data, type, row, meta) {
+                        render: function (data, type, row) {
                             if (type === 'display') {
                                 return TB.formatSimDateTime(data, true, false, true, true, true);
                             }
@@ -343,7 +343,7 @@ function refreshIGCSubmissionsContent() {
                         data: 'EntrySeqID',
                         title: 'Task',
                         name: 'EntrySeqID',
-                        render: function (data, type, row, meta) {
+                        render: function (data, type) {
                             if (type === 'display') {
                                 return `<a href="#" onclick="switchToMapAndSelectTask('${data}'); return false;">${data}</a>`;
                             }
@@ -354,7 +354,78 @@ function refreshIGCSubmissionsContent() {
                     { data: 'GliderType', title: 'Glider', name: 'GliderType' },
                     { data: 'CompetitionID', title: 'Ident', name: 'CompetitionID' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
-                    { data: 'NB21Version', title: 'Version', name: 'NB21Version' },
+
+                    // ←── NEW COLUMNS inserted here ──→
+                    {
+                        data: 'TaskCompleted',
+                        title: 'Completed',
+                        name: 'TaskCompleted',
+                        render: function (data, type) {
+                            return type === 'display'
+                                ? (data ? '🏁' : '❌')
+                                : data;
+                        }
+                    },
+                    {
+                        data: 'Penalties',
+                        title: 'Penalties',
+                        name: 'Penalties',
+                        render: function (data, type) {
+                            return type === 'display'
+                                ? (data ? '👮' : '')
+                                : data;
+                        }
+                    },
+                    {
+                        data: 'Duration',
+                        title: 'Time',
+                        name: 'Duration',
+                        render: function (data, type) {
+                            if (type !== 'display' || !data) return data;
+                            return data;
+                        }
+                    },
+                    {
+                        data: 'Distance',
+                        title: 'Distance',
+                        name: 'Distance',
+                        render: function (data, type) {
+                            if (type !== 'display' || !data) return data;
+                            return `${data} km`;
+                        }
+                    },
+                    {
+                        data: 'Speed',
+                        title: 'Speed',
+                        name: 'Speed',
+                        render: function (data, type) {
+                            if (type !== 'display' || !data) return data;
+                            return `${data} km/h`;
+                        }
+                    },
+                    {
+                        data: 'IGCValid',
+                        title: 'Valid',
+                        name: 'IGCValid',
+                        render: function (data, type) {
+                            return type === 'display'
+                                ? (data ? '🔒' : '⚠️')
+                                : data;
+                        }
+                    },
+                    {
+                        data: 'TPVersion',
+                        title: 'TP Version',
+                        name: 'TPVersion',
+                        render: function (data, type) {
+                            if (type !== 'display' || !data) return data;
+                            return data.replace(/^v/, '');
+                        }
+                    },
+
+                    // ←── Renamed existing “Version” column to “Logger” ──→
+                    { data: 'NB21Version', title: 'Logger', name: 'NB21Version' },
+
                     { data: 'Sim', title: 'Sim', name: 'Sim' },
                     {
                         // Comment column with an editable input. For display, we render an input field.
@@ -363,7 +434,7 @@ function refreshIGCSubmissionsContent() {
                         name: 'Comment',
                         orderable: false,
                         searchable: false,
-                        render: function (data, type, row, meta) {
+                        render: function (data, type, row) {
                             const original = data ? data : '';
                             if (type === 'display') {
                                 return `<input type="text" value="${original}" class="comment-input" data-entry="${row.IGCKey}" data-original="${original}" style="width:95%;">`;
@@ -378,7 +449,7 @@ function refreshIGCSubmissionsContent() {
                         name: 'Actions',
                         orderable: false,
                         searchable: false,
-                        render: function (data, type, row, meta) {
+                        render: function (data, type, row) {
                             return `
                                 <button class="igc-button-style download-igc" data-entry="${row.IGCKey}"
                                   onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${row.EntrySeqID}/${encodeURIComponent(row.IGCKey)}.igc', '${row.IGCKey}.igc'); return false;"
@@ -398,15 +469,22 @@ function refreshIGCSubmissionsContent() {
                 // Column definitions for widths (adjust as needed).
                 columnDefs: [
                     { targets: 0, width: '140px' },     // Created on (UTC Upload)
-                    { targets: 1, width: '1px' },       // Task (narrow, auto-sized)
+                    { targets: 1, width: '1px' },     // Task
                     { targets: 2, width: '100px' },     // Pilot
                     { targets: 3, width: '100px' },     // Glider
-                    { targets: 4, width: '40px' },      // Ident
-                    { targets: 5, width: '80px' },      // Class
-                    { targets: 6, width: '1px' },       // Version
-                    { targets: 7, width: '40px' },      // Sim
-                    { targets: 8, width: 'auto' },      // Comment (flexible)
-                    { targets: 9, width: '110px' }     // Actions
+                    { targets: 4, width: '40px' },     // Ident
+                    { targets: 5, width: '80px' },     // Class
+                    { targets: 6, width: '60px' },     // Completed
+                    { targets: 7, width: '60px' },     // Penalties
+                    { targets: 8, width: '65px' },     // Time
+                    { targets: 9, width: '75px' },     // Distance
+                    { targets: 10, width: '75px' },     // Speed
+                    { targets: 11, width: '60px' },     // Valid
+                    { targets: 12, width: '80px' },     // TP Version
+                    { targets: 13, width: '80px' },     // Logger
+                    { targets: 14, width: '40px' },     // Sim
+                    { targets: 15, width: 'auto' },     // Comment
+                    { targets: 16, width: '110px' }     // Actions
                 ],
                 paging: false,
                 searching: true,

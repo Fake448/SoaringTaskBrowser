@@ -47,7 +47,8 @@ try {
                 Duration,
                 Distance,
                 Speed,
-                IGCValid
+                IGCValid,
+                TPVersion
               FROM IGCRecords 
               WHERE WSGUserID = :wsgUserID
               ORDER BY IGCUploadDateTimeUTC DESC";
