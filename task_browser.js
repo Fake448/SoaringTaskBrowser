@@ -1340,6 +1340,8 @@ class TaskBrowser {
                         <th>Time</th>
                         <th>Distance</th>
                         <th>Sim</th>
+                        <th>Planner</th>
+                        <th>Logger</th>
                     </tr>
                 </thead>
                 <tbody></tbody>
@@ -1464,7 +1466,26 @@ class TaskBrowser {
                             return `${distance.toFixed(1)} ${unit}`;
                         }
                     },
-                    { data: 'Sim', title: 'Sim', name: 'Sim' }
+                    { data: 'Sim', title: 'Sim', name: 'Sim' },
+                    {
+                        data: 'TPVersion',
+                        title: 'Planner',
+                        name: 'TPVersion',
+                        render: function (data, type, row) {
+                            if (type === 'display' && data) {
+                                return data.replace(/^v/, '');
+                            }
+                            return data || '';
+                        }
+                    },
+                    {
+                        data: 'NB21Version',
+                        title: 'Logger',
+                        name: 'NB21Version',
+                        render: function (data, type, row) {
+                            return (type === 'display' && data) ? data : (data || '');
+                        }
+                    }
                 ],
                 paging: false,
                 searching: true,
@@ -1529,7 +1550,9 @@ class TaskBrowser {
                                 .css('padding-right', '10px');
                         }
                     },
-                    { targets: 9, width: '60px' }
+                    { targets: 9, width: '60px' },  // Sim
+                    { targets: 10, width: '80px' }, // Planner
+                    { targets: 11, width: '80px' }  // Logger
                 ],
                 headerCallback: function (thead, data, start, end, display) {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');

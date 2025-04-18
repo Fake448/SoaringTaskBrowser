@@ -118,7 +118,8 @@ try {
                         Duration,
                         Distance,
                         Speed,
-                        IGCValid
+                        IGCValid,
+                        TPVersion
                      FROM IGCRecords
                      WHERE EntrySeqID = :entrySeqID";
         $stmtIgc = $pdo->prepare($igcQuery);
