@@ -1,4 +1,4 @@
-﻿<?php
+<?php
 // Use the dedicated session restoration file instead of calling session_start() directly.
 require_once __DIR__ . '/session_restore.php';
 require_once __DIR__ . '/CommonFunctions.php';
