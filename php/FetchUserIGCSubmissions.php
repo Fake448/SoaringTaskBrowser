@@ -1,4 +1,4 @@
-<?php
+﻿<?php
 // Use the dedicated session restoration file instead of calling session_start() directly.
 require_once __DIR__ . '/session_restore.php';
 require_once __DIR__ . '/CommonFunctions.php';
@@ -26,7 +26,8 @@ try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // Retrieve IGC records for the logged in user, ordered by upload date descending.
+    // Retrieve IGC records for the logged in user, ordered by upload date descending,
+    // including the new result fields.
     $query = "SELECT 
                 IGCKey,
                 EntrySeqID,
@@ -40,11 +41,16 @@ try {
                 NB21Version,
                 Sim,
                 WSGUserID,
-                Comment
+                Comment,
+                TaskCompleted,
+                Penalties,
+                Duration,
+                Distance,
+                Speed,
+                IGCValid
               FROM IGCRecords 
               WHERE WSGUserID = :wsgUserID
               ORDER BY IGCUploadDateTimeUTC DESC";
-              
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':wsgUserID', $wsgUserID, PDO::PARAM_STR);
     $stmt->execute();
@@ -72,11 +78,35 @@ try {
                 $fullYear, $mm, $dd, $HH, $mi
             );
         }
-        
+
         // Transform the "Sim" field so that it only returns the year, prefixed by "MS".
         if (!empty($record['Sim'])) {
             $record['Sim'] = 'MS' . substr($record['Sim'], -4);
         }
+
+        // === start: handle new result fields ===
+
+        // Flags → booleans
+        $record['TaskCompleted'] = (bool)$record['TaskCompleted'];
+        $record['Penalties']     = (bool)$record['Penalties'];
+        $record['IGCValid']      = (bool)$record['IGCValid'];
+
+        // Duration (seconds) → "HH:MM:SS" or null
+        if ($record['Duration'] !== null) {
+            $secs = (int)$record['Duration'];
+            $h = floor($secs / 3600);
+            $m = floor(($secs % 3600) / 60);
+            $s = $secs % 60;
+            $record['Duration'] = sprintf("%02d:%02d:%02d", $h, $m, $s);
+        } else {
+            $record['Duration'] = null;
+        }
+
+        // Distance & Speed → floats or null
+        $record['Distance'] = $record['Distance'] !== null ? (float)$record['Distance'] : null;
+        $record['Speed']    = $record['Speed']    !== null ? (float)$record['Speed']    : null;
+
+        // === end: handle new result fields ===
     }
     unset($record); // Good practice when iterating by reference.
 
