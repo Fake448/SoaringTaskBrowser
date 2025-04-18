@@ -100,10 +100,13 @@ try {
         throw new Exception("Failed to decode results file: " . json_last_error_msg());
     }
 
+    // Extract the new TPVersion (planner version)
+    $tpVersion = isset($parsedResults['TPVersion']) ? $parsedResults['TPVersion'] : null;
+
     // Convert boolean values to integers.
-    $taskCompletedInt = isset($parsedResults["TaskCompleted"]) && $parsedResults["TaskCompleted"] ? 1 : 0;
-    $penaltiesInt     = isset($parsedResults["Penalties"]) && $parsedResults["Penalties"] ? 1 : 0;
-    $igcValidInt      = isset($parsedResults["IGCValid"]) && $parsedResults["IGCValid"] ? 1 : 0;
+    $taskCompletedInt = !empty($parsedResults["TaskCompleted"]) ? 1 : 0;
+    $penaltiesInt     = !empty($parsedResults["Penalties"])    ? 1 : 0;
+    $igcValidInt      = !empty($parsedResults["IGCValid"])     ? 1 : 0;
 
     // Convert Duration from "HH:MM:SS" to seconds.
     $durationSeconds = 0;
@@ -114,38 +117,49 @@ try {
 
     // Convert Distance and Speed to float.
     $distanceFloat = (!empty($parsedResults["Distance"])) ? (float)$parsedResults["Distance"] : null;
-    $speedFloat    = (!empty($parsedResults["Speed"])) ? (float)$parsedResults["Speed"] : null;
+    $speedFloat    = (!empty($parsedResults["Speed"]))    ? (float)$parsedResults["Speed"]    : null;
 
     // Insert the new record into IGCRecords table.
-    $insertQuery = "INSERT INTO IGCRecords 
-        (IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime, BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID, CompetitionClass, NB21Version, Sim, WSGUserID, Comment,
-         TaskCompleted, Penalties, Duration, Distance, Speed, IGCValid)
-        VALUES 
-        (:IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime, :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID, :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment,
-         :TaskCompleted, :Penalties, :Duration, :Distance, :Speed, :IGCValid)";
+    // Note the added TPVersion column and placeholder.
+    $insertQuery = "
+      INSERT INTO IGCRecords (
+        IGCKey, EntrySeqID, IGCRecordDateTimeUTC, IGCUploadDateTimeUTC, LocalTime,
+        BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID,
+        CompetitionClass, NB21Version, Sim, WSGUserID, Comment,
+        TaskCompleted, Penalties, Duration, Distance, Speed, IGCValid,
+        TPVersion
+      ) VALUES (
+        :IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime,
+        :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID,
+        :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment,
+        :TaskCompleted, :Penalties, :Duration, :Distance, :Speed, :IGCValid,
+        :TPVersion
+      )
+    ";
 
     $stmt = $pdo->prepare($insertQuery);
-    $stmt->bindParam(':IGCKey', $IGCKey, PDO::PARAM_STR);
-    $stmt->bindParam(':EntrySeqID', $EntrySeqID, PDO::PARAM_INT);
-    $stmt->bindParam(':IGCRecordDateTimeUTC', $IGCRecordDateTimeUTC, PDO::PARAM_STR);
-    $stmt->bindParam(':IGCUploadDateTimeUTC', $IGCUploadDateTimeUTC, PDO::PARAM_STR);
-    $stmt->bindParam(':LocalTime', $LocalTime, PDO::PARAM_STR);
-    $stmt->bindParam(':BeginTimeUTC', $BeginTimeUTC, PDO::PARAM_STR);
-    $stmt->bindParam(':Pilot', $Pilot, PDO::PARAM_STR);
-    $stmt->bindParam(':GliderType', $GliderType, PDO::PARAM_STR);
-    $stmt->bindParam(':GliderID', $GliderID, PDO::PARAM_STR);
-    $stmt->bindParam(':CompetitionID', $CompetitionID, PDO::PARAM_STR);
-    $stmt->bindParam(':CompetitionClass', $CompetitionClass, PDO::PARAM_STR);
-    $stmt->bindParam(':NB21Version', $NB21Version, PDO::PARAM_STR);
-    $stmt->bindParam(':Sim', $Sim, PDO::PARAM_STR);
-    $stmt->bindParam(':WSGUserID', $WSGUserID, PDO::PARAM_INT);
-    $stmt->bindParam(':Comment', $IGCComment, PDO::PARAM_STR);
-    $stmt->bindParam(':TaskCompleted', $taskCompletedInt, PDO::PARAM_INT);
-    $stmt->bindParam(':Penalties', $penaltiesInt, PDO::PARAM_INT);
-    $stmt->bindParam(':Duration', $durationSeconds, PDO::PARAM_INT);
-    $stmt->bindParam(':Distance', $distanceFloat);
-    $stmt->bindParam(':Speed', $speedFloat);
-    $stmt->bindParam(':IGCValid', $igcValidInt, PDO::PARAM_INT);
+    $stmt->bindParam(':IGCKey',                 $IGCKey,               PDO::PARAM_STR);
+    $stmt->bindParam(':EntrySeqID',             $EntrySeqID,           PDO::PARAM_INT);
+    $stmt->bindParam(':IGCRecordDateTimeUTC',   $IGCRecordDateTimeUTC, PDO::PARAM_STR);
+    $stmt->bindParam(':IGCUploadDateTimeUTC',   $IGCUploadDateTimeUTC, PDO::PARAM_STR);
+    $stmt->bindParam(':LocalTime',              $LocalTime,            PDO::PARAM_STR);
+    $stmt->bindParam(':BeginTimeUTC',           $BeginTimeUTC,         PDO::PARAM_STR);
+    $stmt->bindParam(':Pilot',                  $Pilot,                PDO::PARAM_STR);
+    $stmt->bindParam(':GliderType',             $GliderType,           PDO::PARAM_STR);
+    $stmt->bindParam(':GliderID',               $GliderID,             PDO::PARAM_STR);
+    $stmt->bindParam(':CompetitionID',          $CompetitionID,        PDO::PARAM_STR);
+    $stmt->bindParam(':CompetitionClass',       $CompetitionClass,     PDO::PARAM_STR);
+    $stmt->bindParam(':NB21Version',            $NB21Version,          PDO::PARAM_STR);
+    $stmt->bindParam(':Sim',                    $Sim,                  PDO::PARAM_STR);
+    $stmt->bindParam(':WSGUserID',              $WSGUserID,            PDO::PARAM_INT);
+    $stmt->bindParam(':Comment',                $IGCComment,           PDO::PARAM_STR);
+    $stmt->bindParam(':TaskCompleted',          $taskCompletedInt,     PDO::PARAM_INT);
+    $stmt->bindParam(':Penalties',              $penaltiesInt,         PDO::PARAM_INT);
+    $stmt->bindParam(':Duration',               $durationSeconds,      PDO::PARAM_INT);
+    $stmt->bindParam(':Distance',               $distanceFloat);
+    $stmt->bindParam(':Speed',                  $speedFloat);
+    $stmt->bindParam(':IGCValid',               $igcValidInt,          PDO::PARAM_INT);
+    $stmt->bindParam(':TPVersion',              $tpVersion,            PDO::PARAM_STR);
 
     $stmt->execute();
     

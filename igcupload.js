@@ -353,6 +353,11 @@
                             if (metrics.length > 0) {
                                 resultsLine += " - " + metrics.join(", ");
                             }
+
+                            // Finally, append TPVersion in parentheses if present
+                            if (r.TPVersion) {
+                                resultsLine += ` (${r.TPVersion})`;
+                            }
                         }
 
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
