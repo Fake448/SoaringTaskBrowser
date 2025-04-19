@@ -169,6 +169,10 @@ try {
                           tracklogsHTML: html(selector: \"#tracklogs\", visible: true) {
                             html
                           }
+
+                          plannerVersion: html(selector: \"#b21_task_planner_version\", visible: true) {
+                            html
+                          }
                         }";
 
                 $postData = json_encode([
