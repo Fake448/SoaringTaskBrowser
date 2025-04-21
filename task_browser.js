@@ -1465,7 +1465,7 @@ class TaskBrowser {
                                 let flags = '';
                                 flags += row.IGCValid ? '🔒' : '❗';
                                 flags += row.TaskCompleted ? '🏁' : '❌';
-                                flags += row.Penalties ? '👮' : '';
+                                flags += row.Penalties ? '👮' : '✅';
                                 return flags.trim(); // searchable keywords
                             }
 
@@ -1473,7 +1473,7 @@ class TaskBrowser {
                             let emoji = '';
                             emoji += row.IGCValid ? '🔒' : '❗';
                             emoji += row.TaskCompleted ? '🏁' : '❌';
-                            emoji += row.Penalties ? '👮' : '';
+                            emoji += row.Penalties ? '👮' : '✅';
                             return emoji;
                         }
                     },

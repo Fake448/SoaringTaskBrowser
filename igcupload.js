@@ -335,7 +335,7 @@
                             // Build the prefix using emoji for validity, task status, and penalties.
                             resultsLine += r.IGCValid ? "🔒" : "❗";
                             resultsLine += r.TaskCompleted ? "🏁" : "❌";
-                            resultsLine += r.Penalties ? "👮" : "";
+                            resultsLine += r.Penalties ? "👮" : "✅";
 
                             // Build an array for the metrics (duration, distance, speed).
                             let metrics = [];

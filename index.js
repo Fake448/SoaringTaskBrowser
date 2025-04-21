@@ -366,7 +366,7 @@ function refreshIGCSubmissionsContent() {
                             let flags = '';
                             flags += row.IGCValid ? '🔒' : '❗';
                             flags += row.TaskCompleted ? '🏁' : '❌';
-                            flags += row.Penalties ? '👮' : '';
+                            flags += row.Penalties ? '👮' : '✅';
                             if (type === 'display') {
                                 // show emojis in UI
                                 return flags;
