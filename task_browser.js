@@ -3,8 +3,9 @@
 class TaskBrowser {
     constructor() {
         let tb = this;
-        let shouldHandlePopState = true;
-        let fromURL = false;
+        tb.shouldHandlePopState = true;
+        tb.fromURL = false;
+        tb.sectionsToExpandFromURL = [];
         tb.isDownloadPage = false;
         tb.discordPostHelperTaskBrowserPath = "";
         tb.discordTasksChannel = "";
@@ -165,25 +166,42 @@ class TaskBrowser {
     }
 
     expandAllCollapsibleSections() {
-        // Get the taskDetailContainer element
+        let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
-
-        if (taskDetailContainer) {
-            // Find all elements with the "collapsible" class inside taskDetailContainer
-            const collapsibleSections = taskDetailContainer.querySelectorAll(".collapsible");
-
-            // Iterate over each collapsible section and expand them
-            collapsibleSections.forEach(section => {
-                // Remove the "collapsed" class to expand
-                section.classList.remove("collapsed");
-
-                // Optionally ensure it's visible (depends on implementation)
-                section.style.display = "block";
-            });
-
-        } else {
+        if (!taskDetailContainer) {
             console.error("taskDetailContainer not found.");
+            return;
         }
+
+        // If there’s a non-empty array, only expand those names; else expand all
+        const toExpand = Array.isArray(tb.sectionsToExpandFromURL) && tb.sectionsToExpandFromURL.length
+            ? tb.sectionsToExpandFromURL
+            : null;
+
+        const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
+
+        collapsibleSections.forEach(section => {
+            const titleSpan = section.querySelector(".title span");
+            const sectionName = titleSpan ? titleSpan.textContent.trim() : "";
+
+            if (toExpand) {
+                // Expand only the listed sections; collapse the rest
+                if (toExpand.includes(sectionName)) {
+                    section.classList.remove("collapsed");
+                    section.style.display = "block";
+                } else {
+                    section.classList.add("collapsed");
+                    section.style.display = "none";
+                }
+            } else {
+                // No filter list → expand everything
+                section.classList.remove("collapsed");
+                section.style.display = "block";
+            }
+        });
+
+        // Consume it so next calls expand all by default
+        tb.sectionsToExpandFromURL = [];
     }
 
     // Function to add date range picker with quick select dropdown as a collapsible section
@@ -1348,9 +1366,14 @@ class TaskBrowser {
             </table>
         `;
 
+        // Define the button callback for this section
+        const callbackButton = () => {
+            alert('You pressed the copy to IGC Record section button');
+        };
+
         // Insert as a collapsible section
         const container = document.getElementById("taskDetailContainer");
-        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container);
+        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container,null,null,callbackButton,null,null,null,"Copy link");
 
         // Now that the HTML is in the DOM, call the population function
         tb.populateIGCRecordsTable(task.IGCRecords);
@@ -2083,7 +2106,7 @@ class TaskBrowser {
         tb.updateTaskHeaderMarkings();
 
         if (tb.fromURL) {
-            this.expandAllCollapsibleSections();
+            tb.expandAllCollapsibleSections();
         }
 
     }
@@ -2157,7 +2180,8 @@ class TaskBrowser {
         resetCallback = null,
         countdownSection = null,
         backgroundImageUrl = null,
-        iconImageUrl = null
+        iconImageUrl = null,
+        resetButtonText = null
     ) {
         let tb = this;
         const section = document.createElement('div');
@@ -2194,12 +2218,15 @@ class TaskBrowser {
             titleElement.classList.add(highlightClass);
         }
 
-        // Add reset button if callback is provided
+        // Add (reset) button if callback is provided
         if (resetCallback) {
+            if (!resetButtonText) {
+                resetButtonText = 'Reset';
+            }
             titleElement.style.justifyContent = 'space-between';
             const resetButton = document.createElement('button');
             resetButton.className = 'collapsible-reset-button';
-            resetButton.innerText = 'Reset';
+            resetButton.innerText = resetButtonText;
             resetButton.style.marginLeft = 'auto';
             resetButton.addEventListener('click', (event) => {
                 event.stopPropagation();

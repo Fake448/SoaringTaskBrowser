@@ -543,14 +543,17 @@ class TaskBrowserMap {
     //
 
     // Selecting a task from the "task" parameter in the URL string
-    selectTaskFromURL(entrySeqID, doNotExpand = false) {
+    selectTaskFromURL(entrySeqID, doNotExpand = false, sectionsToExpand = []) {
         let tbm = this;
+
         if (doNotExpand) {
             tbm.tb.fromURL = false;
-        }
-        else {
+            tbm.tb.sectionsToExpandFromURL = null;
+        } else {
             tbm.tb.fromURL = true;
+            tbm.tb.sectionsToExpandFromURL = Array.isArray(sectionsToExpand) ? sectionsToExpand : [];
         }
+
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
         tbm.clearIGCTracklogs();
