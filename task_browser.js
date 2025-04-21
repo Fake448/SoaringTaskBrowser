@@ -19,6 +19,7 @@ class TaskBrowser {
 
         // Store the reference to the TaskBrowser instance.
         tb.IGCUpload = igcUpload;
+        tb.getUserConnectionInfo();
 
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
@@ -67,7 +68,6 @@ class TaskBrowser {
         tb.SearchFiltersPanelVisible = false;
         tb.hideTaskDetailsPanel();
         tb.hideSearchFiltersPanel();
-        tb.getUserConnectionInfo();
 
     }
 
