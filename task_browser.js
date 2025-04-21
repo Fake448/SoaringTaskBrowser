@@ -1372,7 +1372,7 @@ class TaskBrowser {
 
         // Define the button callback for this section
         const callbackButton = () => {
-            alert('You pressed the copy to IGC Record section button');
+            tb.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}&results=1`);
         };
 
         // Insert as a collapsible section
