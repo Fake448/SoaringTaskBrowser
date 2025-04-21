@@ -166,14 +166,14 @@ class TaskBrowser {
     }
 
     expandAllCollapsibleSections() {
-        let tb = this;
+        const tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         if (!taskDetailContainer) {
             console.error("taskDetailContainer not found.");
             return;
         }
 
-        // If there’s a non-empty array, only expand those names; else expand all
+        // If there’s a non‑empty array, only expand those names; else expand all
         const toExpand = Array.isArray(tb.sectionsToExpandFromURL) && tb.sectionsToExpandFromURL.length
             ? tb.sectionsToExpandFromURL
             : null;
@@ -181,17 +181,21 @@ class TaskBrowser {
         const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
 
         collapsibleSections.forEach(section => {
-            const titleSpan = section.querySelector(".title span");
-            const sectionName = titleSpan ? titleSpan.textContent.trim() : "";
+            // Grab the full text, e.g. "📑 IGC Records"
+            const rawTitle = (section.querySelector(".title span")?.textContent || "").trim();
+
+            // Remove leading emoji(s) and space, leaving e.g. "IGC Records"
+            const title = rawTitle.includes(" ")
+                ? rawTitle.substring(rawTitle.indexOf(" ") + 1)
+                : rawTitle;
 
             if (toExpand) {
-                // Expand only the listed sections; collapse the rest
-                if (toExpand.includes(sectionName)) {
+                // Only open the ones in our list
+                if (toExpand.includes(title)) {
                     section.classList.remove("collapsed");
                     section.style.display = "block";
                 } else {
                     section.classList.add("collapsed");
-                    section.style.display = "none";
                 }
             } else {
                 // No filter list → expand everything
@@ -200,7 +204,7 @@ class TaskBrowser {
             }
         });
 
-        // Consume it so next calls expand all by default
+        // Clear it so future calls expand all by default
         tb.sectionsToExpandFromURL = [];
     }
 
@@ -2098,6 +2102,7 @@ class TaskBrowser {
                 // Clear the match data.
                 tb.tbm.processIGCRecordDisplay(tb.igcMatchData.EntrySeqID, tb.igcMatchData.IGCKey, false);
                 tb.igcMatchData = "";
+                tb.fromURL = false;
                 tb.showTaskDetailsStandalone(task);
                 tb.enableMapInteractions();
             });

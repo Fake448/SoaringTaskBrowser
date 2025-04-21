@@ -380,7 +380,7 @@
 
                         // Select the task on the map.
                         this.taskBrowser.tbm.deselectTask();
-                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, true);
+                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, false, ["IGC Records"]);
                         // Draw the IGC.
                         this.taskBrowser.tbm.processIGCRecordDisplay(data.EntrySeqID, igcData.IGCKey, true, text);
                     }
@@ -487,7 +487,7 @@
                     // Clear the match data.
                     this.taskBrowser.igcMatchData = "";
                     this.taskBrowser.enableMapInteractions();
-                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID, true);
+                    this.taskBrowser.tbm.selectTaskFromURL(igcData.EntrySeqID, false, ["IGC Records"]);
                 } else if (result.status === 'duplicate') {
                     alert("Duplicate IGC record exists. Cannot offer Save.");
                 } else {
