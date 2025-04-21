@@ -536,9 +536,9 @@ class TaskBrowser {
 
     // Function to clear a specific parameter from the URL
     clearUrlParameter(param) {
-        //const url = new URL(window.location);
-        //url.searchParams.delete(param);
-        //window.history.replaceState({}, document.title, url.toString());
+        const url = new URL(window.location);
+        url.searchParams.delete(param);
+        window.history.replaceState({}, document.title, url.toString());
     }
 
     copyTextToClipboard(text) {
