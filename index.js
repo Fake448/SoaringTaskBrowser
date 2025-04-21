@@ -1015,7 +1015,18 @@ function handleParams(params) {
     }
     if (params.task) {
         TB.switchTab('mapTab');
-        TB.tbm.selectTaskFromURL(params.task); // Ensure task details are fetched
+        // if “results” is present, only expand IGC Records,
+        let sections = [];
+        if (params.results !== undefined) {
+            sections = ['IGC Records'];
+        }
+        // Pass that array as the 3rd argument
+        TB.tbm.selectTaskFromURL(
+            params.task,
+            false,          // doNotExpand = false → we do want expansion
+            sections        // [] → all, ['IGC Records'] → just that one
+        );
+
     } else if (params.event) {
         TB.switchTab('eventsTab');
         const eventId = `${params.event}`;
