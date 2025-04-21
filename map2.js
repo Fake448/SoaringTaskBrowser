@@ -560,6 +560,7 @@ class TaskBrowserMap {
 
         // 1. Remove the task parameter from the URL
         tbm.tb.clearUrlParameter('task');
+        tbm.tb.clearUrlParameter('results');
 
         // 2. Fetch task details and proceed only if the task is available
         tbm.tb.getTaskDetails(entrySeqIDNbr, true).then(isAvailable => {
