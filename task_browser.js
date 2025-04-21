@@ -208,6 +208,22 @@ class TaskBrowser {
         tb.sectionsToExpandFromURL = [];
     }
 
+    collapseAllCollapsibleSections() {
+        const tb = this;
+        const taskDetailContainer = document.getElementById("taskDetailContainer");
+        if (!taskDetailContainer) {
+            console.error("taskDetailContainer not found.");
+            return;
+        }
+
+        // Find every collapsible section and collapse it
+        const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
+        collapsibleSections.forEach(section => {
+            section.classList.add("collapsed");
+        });
+
+    }
+
     // Function to add date range picker with quick select dropdown as a collapsible section
     addDateRangePicker(container) {
         let tb = this;
@@ -827,23 +843,23 @@ class TaskBrowser {
 
         // Create the task details HTML
         let taskDetailsHtml = `
-            <div class="task-details markdown-content">
-                ${igcContent}
-                <div class="task-header">
-                    <span class="task-number">#${task.EntrySeqID}</span>
-                    <span class="task-flags">${this.addCountryFlags(task.Countries)}</span>
-                </div>
-                <h1>${task.Title}</h1>
-                ${tb.addDetailLineWithoutBreak('', tb.convertToMarkdown(task.ShortDescription))}
-                ${tb.addDetailLineWithBreak('🗺', task.MainAreaPOI)}
-                🛫 ${task.DepartureICAO} ${task.DepartureName} ${task.DepartureExtra}<br>
-                🛬 ${task.ArrivalICAO} ${task.ArrivalName} ${this.addDetailWithinBrackets(task.ArrivalExtra)}<br>
-                ⌚ ${tb.formatSimDateTime(task.SimDateTime, task.IncludeYear)} ${tb.addDetailWithinBrackets(task.SimDateTimeExtraInfo)}<br>
-                ↗️ ${task.SoaringRidge ? 'Ridge' : ''}${task.SoaringThermals ? ' Thermals' : ''}${task.SoaringWaves ? ' Waves' : ''}${task.SoaringDynamic ? ' Dynamic' : ''} ${tb.addDetailWithinBrackets(task.SoaringExtraInfo)}<br>
-                ${task.WeatherSummary ? `⛅ ${task.WeatherSummary}<br>` : ''}
-                📏 ${taskDistance} ${distanceUnitLabel} task (${totalDistance} ${distanceUnitLabel} total)<br>
-                ⏳ ${tb.formatDuration(task.DurationMin, task.DurationMax)} ${tb.addDetailWithinBrackets(task.DurationExtraInfo)}<br>
-                `;
+        <div class="task-details markdown-content">
+            ${igcContent}
+            <div class="task-header">
+                <span class="task-number">#${task.EntrySeqID}</span>
+                <span class="task-flags">${this.addCountryFlags(task.Countries)}</span>
+            </div>
+            <h1>${task.Title}</h1>
+            ${tb.addDetailLineWithoutBreak('', tb.convertToMarkdown(task.ShortDescription))}
+            ${tb.addDetailLineWithBreak('🗺', task.MainAreaPOI)}
+            🛫 ${task.DepartureICAO} ${task.DepartureName} ${task.DepartureExtra}<br>
+            🛬 ${task.ArrivalICAO} ${task.ArrivalName} ${this.addDetailWithinBrackets(task.ArrivalExtra)}<br>
+            ⌚ ${tb.formatSimDateTime(task.SimDateTime, task.IncludeYear)} ${tb.addDetailWithinBrackets(task.SimDateTimeExtraInfo)}<br>
+            ↗️ ${task.SoaringRidge ? 'Ridge' : ''}${task.SoaringThermals ? ' Thermals' : ''}${task.SoaringWaves ? ' Waves' : ''}${task.SoaringDynamic ? ' Dynamic' : ''} ${tb.addDetailWithinBrackets(task.SoaringExtraInfo)}<br>
+            ${task.WeatherSummary ? `⛅ ${task.WeatherSummary}<br>` : ''}
+            📏 ${taskDistance} ${distanceUnitLabel} task (${totalDistance} ${distanceUnitLabel} total)<br>
+            ⏳ ${tb.formatDuration(task.DurationMin, task.DurationMax)} ${tb.addDetailWithinBrackets(task.DurationExtraInfo)}<br>
+            `;
 
         // Check and add AAT minimum time if available
         if (tb.tbm.b21_task && tb.tbm.b21_task.aat_min_time_s) {
@@ -855,12 +871,19 @@ class TaskBrowser {
         }
 
         taskDetailsHtml += `
-                ✈️ ${task.RecommendedGliders}<br>
-                🎚 ${tb.formatDifficultyRating(task.DifficultyRating, task.DifficultyExtraInfo)}
-                <p>${task.Credits}</p>
-                ${task.RepostText ? tb.addDetailLineWithoutBreak('', tb.convertToMarkdown(task.RepostText)) : ''}
-                <p>${lastUpdateInfo}</p>
-            </div>`;
+            ✈️ ${task.RecommendedGliders}<br>
+            🎚 ${tb.formatDifficultyRating(task.DifficultyRating, task.DifficultyExtraInfo)}
+            <p>${task.Credits}</p>
+            <p>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin:0;">
+                <span>${lastUpdateInfo}</span>
+                <button
+                  style="background:#7289da;color:#fff;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;"
+                  onclick="TB.collapseAllCollapsibleSections()"
+                >Collapse All</button>
+              </div>
+            </p>
+        </div>`;
 
         return taskDetailsHtml;
     }
