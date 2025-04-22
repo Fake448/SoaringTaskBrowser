@@ -155,12 +155,37 @@ try {
                 }
             }
     
-            // Convert new fields back to their display formats
-    
             // TaskCompleted and Penalties: convert stored INTEGER (0/1) back to a boolean.
             $record['TaskCompleted'] = (bool)$record['TaskCompleted'];
             $record['Penalties'] = (bool)$record['Penalties'];
             $record['IGCValid'] = (bool)$record['IGCValid'];
+
+            // Parse the task’s SimDateTime once
+            if (!isset($taskDT)) {
+                $taskDT = DateTime::createFromFormat(
+                    'Y-m-d H:i:s',
+                    $task['SimDateTime'],
+                    new DateTimeZone('UTC')
+                );
+                $taskYear = $taskDT->format('Y');
+            }
+
+            // Build a DateTime for the IGC record, using the task’s year
+            // LocalDate is "YYYY-MM-DD", LocalTime is "HHMMSS"
+            $md = substr($record['LocalDate'], 5);            // "MM-DD"
+            $lh = substr($record['LocalTime'],  0, 2);        // "HH"
+            $lm = substr($record['LocalTime'],  2, 2);        // "MM"
+            $ls = substr($record['LocalTime'],  4, 2);        // "SS"
+
+            $recDT = DateTime::createFromFormat(
+                'Y-m-d H:i:s',
+                sprintf('%s-%s %s:%s:%s', $taskYear, $md, $lh, $lm, $ls),
+                new DateTimeZone('UTC')
+            );
+
+            // Compare timestamps with a ±30 minute tolerance
+            $diffSec = abs($taskDT->getTimestamp() - $recDT->getTimestamp());
+            $record['LocalDateTimeMatch'] = ($diffSec <= 30 * 60);
     
             // Duration: Convert from seconds (stored as an INTEGER) back to "HH:MM:SS" text.
             if (isset($record['Duration']) && is_numeric($record['Duration'])) {
