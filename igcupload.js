@@ -264,6 +264,24 @@
                 }
             }
 
+            let localDateRaw = "";
+            for (const line of lines) {
+                if (line.startsWith("B")) break;
+                // look for “LDAT <YYYYMMDD> <YYYYMMDD>”
+                const m = line.match(/LDAT\s+\d{8}\s+(\d{8})/);
+                if (m) {
+                    localDateRaw = m[1];    // take the *second* date (the local date)
+                }
+            }
+            // format “YYYYMMDD” → “YYYY‑MM‑DD” (or leave as raw if you prefer)
+            let localDate = "";
+            if (localDateRaw) {
+                const y = localDateRaw.slice(0, 4);
+                const m = localDateRaw.slice(4, 6);
+                const d = localDateRaw.slice(6, 8);
+                localDate = `${y}-${m}-${d}`;
+            }
+
             // Parse the B record for Begin Time.
             const beginTimeUTC = this.parseBRecord(lines);
 
@@ -284,9 +302,10 @@
                 igcWaypoints: JSON.stringify({}),
                 pilot: this.pilot,
                 gliderType: this.gliderType,
-                IGCRecordDateTimeUTC: keyRecordDateTime,  // For key purposes.
-                EntrySeqID: "", // To be updated after matching.
+                IGCRecordDateTimeUTC: keyRecordDateTime,
+                EntrySeqID: "",
                 LocalTime: headerData.localTime,
+                LocalDate: localDate,
                 BeginTimeUTC: beginTimeUTC,
                 gliderID: this.gliderID,
                 competitionID: this.competitionID,
@@ -371,7 +390,7 @@
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
                         html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
                         html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
-                        html += `<strong>Local Time of Recording:</strong> ${this.formatTime(headerData.localTime)}</br>`;
+                        html += `<strong>Local Time of Recording:</strong> ${localDate} ${this.formatTime(headerData.localTime)}</br>`;
                         html += `<strong>Pilot:</strong> ${this.pilot}</br>`;
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
@@ -462,6 +481,7 @@
         formData.append('EntrySeqID', igcData.EntrySeqID);
         formData.append('IGCRecordDateTimeUTC', igcData.IGCRecordDateTimeUTC);
         formData.append('IGCUploadDateTimeUTC', new Date().toISOString().replace('T', ' ').substring(0, 19));
+        formData.append('LocalDate', igcData.LocalDate);
         formData.append('LocalTime', igcData.LocalTime);
         formData.append('BeginTimeUTC', igcData.BeginTimeUTC);
         formData.append('Pilot', igcData.pilot);

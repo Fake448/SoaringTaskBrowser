@@ -10,6 +10,7 @@ try {
         'EntrySeqID',
         'IGCRecordDateTimeUTC',
         'IGCUploadDateTimeUTC',
+        'LocalDate',
         'LocalTime',
         'BeginTimeUTC',
         'Pilot',
@@ -33,6 +34,7 @@ try {
     $EntrySeqID = (int) $_POST['EntrySeqID'];
     $IGCRecordDateTimeUTC = trim($_POST['IGCRecordDateTimeUTC']);
     $IGCUploadDateTimeUTC = trim($_POST['IGCUploadDateTimeUTC']);
+    $LocalDate = trim($_POST['LocalDate']);
     $LocalTime = trim($_POST['LocalTime']);
     $BeginTimeUTC = trim($_POST['BeginTimeUTC']);
     $Pilot = trim($_POST['Pilot']);
@@ -127,13 +129,13 @@ try {
         BeginTimeUTC, Pilot, GliderType, GliderID, CompetitionID,
         CompetitionClass, NB21Version, Sim, WSGUserID, Comment,
         TaskCompleted, Penalties, Duration, Distance, Speed, IGCValid,
-        TPVersion
+        TPVersion, LocalDate
       ) VALUES (
         :IGCKey, :EntrySeqID, :IGCRecordDateTimeUTC, :IGCUploadDateTimeUTC, :LocalTime,
         :BeginTimeUTC, :Pilot, :GliderType, :GliderID, :CompetitionID,
         :CompetitionClass, :NB21Version, :Sim, :WSGUserID, :Comment,
         :TaskCompleted, :Penalties, :Duration, :Distance, :Speed, :IGCValid,
-        :TPVersion
+        :TPVersion, :LocalDate
       )
     ";
 
@@ -142,6 +144,7 @@ try {
     $stmt->bindParam(':EntrySeqID',             $EntrySeqID,           PDO::PARAM_INT);
     $stmt->bindParam(':IGCRecordDateTimeUTC',   $IGCRecordDateTimeUTC, PDO::PARAM_STR);
     $stmt->bindParam(':IGCUploadDateTimeUTC',   $IGCUploadDateTimeUTC, PDO::PARAM_STR);
+    $stmt->bindParam(':LocalDate',              $LocalDate,            PDO::PARAM_STR);
     $stmt->bindParam(':LocalTime',              $LocalTime,            PDO::PARAM_STR);
     $stmt->bindParam(':BeginTimeUTC',           $BeginTimeUTC,         PDO::PARAM_STR);
     $stmt->bindParam(':Pilot',                  $Pilot,                PDO::PARAM_STR);
