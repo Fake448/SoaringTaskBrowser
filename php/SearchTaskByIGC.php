@@ -104,6 +104,7 @@ try {
         // Build the IGCKey using the new format:
         // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
         $entrySeqID = $foundTask['EntrySeqID'];
+        $simDateTime = $foundTask['SimDateTime'];
         $competitionID = trim($data['competitionID']);
         $gliderType = trim($data['gliderType']);
         $recordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']); // expected in YYMMDDHHMMSS format
@@ -346,6 +347,7 @@ try {
             echo json_encode([
                 'status' => 'found',
                 'EntrySeqID' => $foundTask['EntrySeqID'],
+                'SimDateTime' => $foundTask['SimDateTime'],
                 'Title' => $foundTask['Title'],
                 'browserless' => $browserlessResult
             ]);
