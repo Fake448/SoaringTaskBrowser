@@ -104,6 +104,7 @@ try {
                         EntrySeqID,
                         IGCRecordDateTimeUTC,
                         IGCUploadDateTimeUTC,
+                        LocalDate,
                         LocalTime,
                         BeginTimeUTC,
                         Pilot,
