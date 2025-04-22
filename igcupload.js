@@ -247,6 +247,7 @@
                 const normalized = B21_GLIDERS.find_glider_type(this.gliderType);
                 if (normalized) {
                     this.gliderType = normalized;
+                }
             }
 
             // Parse header and waypoints from C-lines.
