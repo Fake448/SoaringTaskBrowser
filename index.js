@@ -366,6 +366,7 @@ function refreshIGCSubmissionsContent() {
                             let flags = '';
                             flags += row.IGCValid ? '🔒' : '❗';
                             flags += row.TaskCompleted ? '🏁' : '❌';
+                            flags += row.LocalDateTimeMatch ? '⌚' : '❌';
                             flags += row.Penalties ? '👮' : '✅';
                             if (type === 'display') {
                                 // show emojis in UI
@@ -464,7 +465,7 @@ function refreshIGCSubmissionsContent() {
                     { targets: 3, width: '100px' },  // Glider
                     { targets: 4, width: '40px' },  // Ident
                     { targets: 5, width: '80px' },  // Class
-                    { targets: 6, width: '60px' },  // Flags
+                    { targets: 6, width: '80px' },  // Flags
                     { targets: 7, width: '65px' },  // Time
                     { targets: 8, width: '75px' },  // Distance
                     { targets: 9, width: '75px' },  // Speed

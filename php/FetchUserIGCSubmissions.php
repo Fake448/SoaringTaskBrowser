@@ -28,30 +28,37 @@ try {
 
     // Retrieve IGC records for the logged in user, ordered by upload date descending,
     // including the new result fields.
-    $query = "SELECT 
-                IGCKey,
-                EntrySeqID,
-                IGCUploadDateTimeUTC,
-                IGCRecordDateTimeUTC,
-                Pilot,
-                GliderType,
-                GliderID,
-                CompetitionID,
-                CompetitionClass,
-                NB21Version,
-                Sim,
-                WSGUserID,
-                Comment,
-                TaskCompleted,
-                Penalties,
-                Duration,
-                Distance,
-                Speed,
-                IGCValid,
-                TPVersion
-              FROM IGCRecords 
-              WHERE WSGUserID = :wsgUserID
-              ORDER BY IGCUploadDateTimeUTC DESC";
+    $query = "
+          SELECT
+            R.IGCKey,
+            R.EntrySeqID,
+            R.IGCUploadDateTimeUTC,
+            R.IGCRecordDateTimeUTC,
+            R.Pilot,
+            R.GliderType,
+            R.GliderID,
+            R.CompetitionID,
+            R.CompetitionClass,
+            R.NB21Version,
+            R.Sim,
+            R.WSGUserID,
+            R.Comment,
+            R.TaskCompleted,
+            R.Penalties,
+            R.Duration,
+            R.Distance,
+            R.Speed,
+            R.IGCValid,
+            R.TPVersion,
+            R.LocalDate,
+            R.LocalTime,
+            T.SimDateTime
+          FROM IGCRecords R
+          LEFT JOIN Tasks T
+            ON R.EntrySeqID = T.EntrySeqID
+          WHERE R.WSGUserID = :wsgUserID
+          ORDER BY R.IGCUploadDateTimeUTC DESC
+        ";
     $stmt = $pdo->prepare($query);
     $stmt->bindParam(':wsgUserID', $wsgUserID, PDO::PARAM_STR);
     $stmt->execute();
@@ -85,8 +92,6 @@ try {
             $record['Sim'] = 'MS' . substr($record['Sim'], -4);
         }
 
-        // === start: handle new result fields ===
-
         // Flags → booleans
         $record['TaskCompleted'] = (bool)$record['TaskCompleted'];
         $record['Penalties']     = (bool)$record['Penalties'];
@@ -107,7 +112,44 @@ try {
         $record['Distance'] = $record['Distance'] !== null ? (float)$record['Distance'] : null;
         $record['Speed']    = $record['Speed']    !== null ? (float)$record['Speed']    : null;
 
-        // === end: handle new result fields ===
+        // === Compute LocalDateTimeMatch flag ===
+        if (
+            !empty($record['LocalDate']) &&
+            !empty($record['LocalTime']) &&
+            !empty($record['SimDateTime'])
+        ) {
+            // 1) Task’s simulation DateTime
+            $taskDT = DateTime::createFromFormat(
+                'Y-m-d H:i:s',
+                $record['SimDateTime'],
+                new DateTimeZone('UTC')
+            );
+            $taskYear = $taskDT->format('Y');
+
+            // 2) Build a DateTime from the IGC’s LocalDate + LocalTime, but force the task’s year
+            //    LocalDate: YYYY-MM-DD, LocalTime: HHMMSS
+            $md = substr($record['LocalDate'], 5);      // MM-DD
+            $lh = substr($record['LocalTime'],  0, 2);  // HH
+            $lm = substr($record['LocalTime'],  2, 2);  // MM
+            $ls = substr($record['LocalTime'],  4, 2);  // SS
+            $recDT = DateTime::createFromFormat(
+                'Y-m-d H:i:s',
+                sprintf('%s-%s %s:%s:%s', $taskYear, $md, $lh, $lm, $ls),
+                new DateTimeZone('UTC')
+            );
+
+            // 3) Compare, allow ± 30 minutes (1,800 seconds)
+            if ($taskDT && $recDT) {
+                $diffSec = abs($taskDT->getTimestamp() - $recDT->getTimestamp());
+                $record['LocalDateTimeMatch'] = ($diffSec <= 30 * 60);
+            } else {
+                $record['LocalDateTimeMatch'] = false;
+            }
+        } else {
+            $record['LocalDateTimeMatch'] = false;
+        }
+        // === end LocalDateTimeMatch ===
+
     }
     unset($record); // Good practice when iterating by reference.
 
