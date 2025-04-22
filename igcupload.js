@@ -265,21 +265,30 @@
             }
 
             let localDateRaw = "";
+            let bCount = 0;
             for (const line of lines) {
-                if (line.startsWith("B")) break;
+                if (line.startsWith("B")) {
+                    bCount++;
+                    // if we've already captured a date by the first B, stop
+                    if (bCount === 1 && localDateRaw) break;
+                    // or once we hit the second B, stop regardless
+                    if (bCount === 2) break;
+                    continue;
+                }
                 // look for “LDAT <YYYYMMDD> <YYYYMMDD>”
                 const m = line.match(/LDAT\s+\d{8}\s+(\d{8})/);
                 if (m) {
-                    localDateRaw = m[1];    // take the *second* date (the local date)
+                    localDateRaw = m[1];  // overwrite so the last one is kept
                 }
             }
-            // format “YYYYMMDD” → “YYYY‑MM‑DD” (or leave as raw if you prefer)
+
+            // format “YYYYMMDD” → “YYYY‑MM‑DD”
             let localDate = "";
             if (localDateRaw) {
                 const y = localDateRaw.slice(0, 4);
-                const m = localDateRaw.slice(4, 6);
+                const mo = localDateRaw.slice(4, 6);
                 const d = localDateRaw.slice(6, 8);
-                localDate = `${y}-${m}-${d}`;
+                localDate = `${y}-${mo}-${d}`;
             }
 
             // Parse the B record for Begin Time.
