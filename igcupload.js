@@ -191,6 +191,32 @@
         return "";
     }
 
+    /**
+     * Returns true if the IGC’s local date/time falls within ±30 minutes of
+     * the task’s SimDateTime (ignoring year).
+     */
+    localDateTimeMatch(localDate, localTime, simDateTime) {
+        const sim = simDateTime;
+        if (!localDate || !localTime || !sim) return false;
+
+        // 1) Task’s UTC DateTime
+        const taskDT = new Date(sim.replace(' ', 'T') + 'Z');
+        const taskYear = taskDT.getUTCFullYear();
+
+        // 2) Pull month & day from the IGC’s LocalDate (YYYY-MM-DD)
+        const [, , month, day] = localDate.match(/(\d{4})-(\d{2})-(\d{2})/);
+
+        // 3) Build an IGC DateTime in the task’s year, in UTC
+        const hh = localTime.slice(0, 2),
+            mm = localTime.slice(2, 4),
+            ss = localTime.slice(4, 6);
+        const igcIso = `${taskYear}-${month}-${day}T${hh}:${mm}:${ss}Z`;
+        const igcDT = new Date(igcIso);
+
+        // 4) Compare abs diff ≤ 30 minutes
+        return Math.abs(taskDT.getTime() - igcDT.getTime()) <= 30 * 60 * 1000;
+    }
+
     // Main processing function.
     processIGCFile(file) {
         // Check if the user is logged in
@@ -382,6 +408,9 @@
                             // Build the prefix using emoji for validity, task status, and penalties.
                             resultsLine += r.IGCValid ? "🔒" : "❗";
                             resultsLine += r.TaskCompleted ? "🏁" : "❌";
+                            resultsLine += this.localDateTimeMatch(igcData.LocalDate, igcData.LocalTime, data.SimDateTime)
+                                ? "⌚"
+                                : "❌";
                             resultsLine += r.Penalties ? "👮" : "✅";
 
                             // Build an array for the metrics (duration, distance, speed).
