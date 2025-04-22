@@ -305,6 +305,17 @@
             // For key construction, date/time must be in YYMMDDHHMMSS format.
             const keyRecordDateTime = this.formatKeyDateTime(headerData.utcDate, headerData.utcTime);
 
+            // take the C‑record’s localTime…
+            let localTime = headerData.localTime;
+            // …unless it’s “000000”, in which case grab the second 6‑digit field from the first LTIM line
+            if (localTime === '000000') {
+                const ltimLine = lines.find(l => /\bLTIM\b/.test(l));
+                if (ltimLine) {
+                    const m = ltimLine.match(/LTIM\s+\d{6}\s+(\d{6})/);
+                    if (m) localTime = m[1];
+                }
+            }
+
             // Prepare data to send to PHP.
             const igcData = {
                 igcTitle: headerData.taskTitle,
@@ -313,7 +324,7 @@
                 gliderType: this.gliderType,
                 IGCRecordDateTimeUTC: keyRecordDateTime,
                 EntrySeqID: "",
-                LocalTime: headerData.localTime,
+                LocalTime: localTime,
                 LocalDate: localDate,
                 BeginTimeUTC: beginTimeUTC,
                 gliderID: this.gliderID,
@@ -399,7 +410,7 @@
                         let html = `<h3>IGC Submission - Task Found!</h3>`;
                         html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
                         html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
-                        html += `<strong>Local Time of Recording:</strong> ${localDate} ${this.formatTime(headerData.localTime)}</br>`;
+                        html += `<strong>Local Time of Recording:</strong> ${localDate} ${this.formatTime(localTime)}</br>`;
                         html += `<strong>Pilot:</strong> ${this.pilot}</br>`;
                         html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
                         html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
