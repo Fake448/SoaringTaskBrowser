@@ -1401,7 +1401,7 @@ class TaskBrowser {
 
         // Insert as a collapsible section
         const container = document.getElementById("taskDetailContainer");
-        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container,null,null,callbackButton,null,null,null,"Copy link");
+        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container, null, null, callbackButton, null, null, null, "Copy link");
 
         // Now that the HTML is in the DOM, call the population function
         tb.populateIGCRecordsTable(task.IGCRecords);
@@ -1465,6 +1465,7 @@ class TaskBrowser {
                                 let flags = '';
                                 flags += row.IGCValid ? '🔒' : '❗';
                                 flags += row.TaskCompleted ? '🏁' : '❌';
+                                flags += row.LocalDateTimeMatch ? '⌚' : '❌';
                                 flags += row.Penalties ? '👮' : '✅';
                                 return flags.trim(); // searchable keywords
                             }
@@ -1473,6 +1474,7 @@ class TaskBrowser {
                             let emoji = '';
                             emoji += row.IGCValid ? '🔒' : '❗';
                             emoji += row.TaskCompleted ? '🏁' : '❌';
+                            emoji += row.LocalDateTimeMatch ? '⌚' : '❌';
                             emoji += row.Penalties ? '👮' : '✅';
                             return emoji;
                         }
@@ -1566,9 +1568,9 @@ class TaskBrowser {
                     },
                     {
                         targets: 5, // Flags
-                        width: '60px',
+                        width: '80px',
                         createdCell: function (td /*, cellData, rowData, row, col*/) {
-                            $(td).css('min-width', '60px');
+                            $(td).css('min-width', '80px');
                         }
                     },
                     {
