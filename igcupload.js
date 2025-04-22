@@ -242,6 +242,13 @@
                 }
             }
 
+            // Normalize Glider Type
+            if (this.gliderType) {
+                const normalized = B21_GLIDERS.find_glider_type(this.gliderType);
+                if (normalized) {
+                    this.gliderType = normalized;
+            }
+
             // Parse header and waypoints from C-lines.
             for (const line of lines) {
                 if (line.startsWith("C")) {
