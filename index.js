@@ -311,262 +311,237 @@ function refreshIGCSubmissionsContent() {
     const contentDiv = document.getElementById('igc-submissions-content');
     contentDiv.innerHTML = 'Loading...';
 
-    // Fetch fresh IGC submission data from the server.
     fetch('php/FetchUserIGCSubmissions.php')
         .then(response => response.json())
         .then(data => {
-            // Create (or replace) the table element inside the content div.
-            contentDiv.innerHTML = '<table id="userIGCRecordsTable" class="display igcRecordsTable" style="width: 100%;"></table>';
+            // Render only the <table> itself; DataTables handles the scrolling container.
+            contentDiv.innerHTML = `
+        <table
+          id="userIGCRecordsTable"
+          class="display igcRecordsTable"
+          style="width: 100%;"
+        ></table>
+      `;
 
-            // Initialize the DataTable with the fetched data and proper column definitions.
             const dt = $('#userIGCRecordsTable').DataTable({
                 data: data,
+
+                // ─── horizontal scroll setup ─────────────────────────
                 autoWidth: false,
+                scrollX: true,
+                scrollCollapse: true,
+                responsive: false,
+
                 pageLength: 100,
-                order: [[0, 'desc']], // Order by the first column ("Created on") descending.
+                paging: false,
+                order: [[0, 'desc']],
                 dom: '<"top"f>rt<"bottom"lip><"clear">',
+
                 columns: [
                     {
-                        // UTC Date/Time (display formatted, raw for sorting/filtering)
                         data: 'IGCRecordDateTimeUTC',
                         title: 'Created on',
-                        name: 'IGCRecordDateTimeUTC',
-                        render: function (data, type) {
-                            if (type === 'display') {
-                                return TB.formatSimDateTime(data, true, false, true, true, true);
-                            }
-                            return data;
-                        }
+                        render: (d, t) => t === 'display' ? TB.formatSimDateTime(d, true, false, true, true, true) : d
                     },
                     {
-                        // Task column – clickable to switch to map.
                         data: 'EntrySeqID',
                         title: 'Task',
-                        name: 'EntrySeqID',
-                        render: function (data, type) {
-                            if (type === 'display') {
-                                return `<a href="#" onclick="switchToMapAndSelectTask('${data}'); return false;">${data}</a>`;
-                            }
-                            return data;
-                        }
+                        render: (d, t) => t === 'display'
+                            ? `<a href="#" onclick="switchToMapAndSelectTask('${d}');return false;">${d}</a>`
+                            : d
                     },
-                    { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
-                    { data: 'GliderType', title: 'Glider', name: 'GliderType' },
-                    { data: 'CompetitionID', title: 'Ident', name: 'CompetitionID' },
-                    { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
-
-                    // ─── Combined Flags column ───
+                    { data: 'Pilot', title: 'Pilot' },
+                    { data: 'GliderType', title: 'Glider' },
+                    { data: 'CompetitionID', title: 'Ident' },
+                    { data: 'CompetitionClass', title: 'Class' },
                     {
                         data: null,
                         title: 'Flags',
-                        name: 'Flags',
                         orderable: true,
-                        render: function (data, type, row) {
-                            // build the three emojis as searchable text when type !== 'display'
-                            let flags = '';
-                            flags += row.IGCValid ? '🔒' : '❗';
-                            flags += row.TaskCompleted ? '🏁' : '❌';
-                            flags += row.LocalDateTimeMatch ? '⌚' : '❌';
-                            flags += row.Penalties ? '👮' : '✅';
-                            if (type === 'display') {
-                                // show emojis in UI
-                                return flags;
-                            }
-                            return flags.trim();
+                        render: (rowData, t, row) => {
+                            const f =
+                                (row.IGCValid ? '🔒' : '❗') +
+                                (row.TaskCompleted ? '🏁' : '❌') +
+                                (row.LocalDateTimeMatch ? '⌚' : '❌') +
+                                (row.Penalties ? '👮' : '✅');
+                            return t === 'display' ? f : f.trim();
                         }
                     },
-
                     {
                         data: 'Duration',
                         title: 'Time',
-                        name: 'Duration',
-                        render: function (data, type) {
-                            if (type !== 'display' || !data) return data;
-                            return data;
-                        }
+                        render: (d, t) => d ? d : ''
                     },
                     {
                         data: 'Distance',
                         title: 'Distance',
-                        name: 'Distance',
-                        render: function (data, type) {
-                            if (type !== 'display' || !data) return data;
-                            return `${data} km`;
-                        }
+                        render: (d, t) => t === 'display' && d ? `${d} km` : d
                     },
                     {
                         data: 'Speed',
                         title: 'Speed',
-                        name: 'Speed',
-                        render: function (data, type) {
-                            if (type !== 'display' || !data) return data;
-                            return `${data} km/h`;
-                        }
+                        render: (d, t) => t === 'display' && d ? `${d} km/h` : d
                     },
                     {
                         data: 'TPVersion',
                         title: 'Planner',
-                        name: 'TPVersion',
-                        render: function (data, type) {
-                            if (type !== 'display' || !data) return data;
-                            return data.replace(/^v/, '');
-                        }
+                        render: (d, t) => t === 'display' && d ? d.replace(/^v/, '') : d
                     },
-
-                    // Renamed “Version” to “Logger”
-                    { data: 'NB21Version', title: 'Logger', name: 'NB21Version' },
-
-                    { data: 'Sim', title: 'Sim', name: 'Sim' },
-
+                    { data: 'NB21Version', title: 'Logger' },
+                    { data: 'Sim', title: 'Sim' },
                     {
-                        // Comment column with an editable input. For display, we render an input field.
                         data: 'Comment',
                         title: 'Comment',
-                        name: 'Comment',
                         orderable: false,
                         searchable: false,
-                        render: function (data, type, row) {
-                            const original = data ? data : '';
-                            if (type === 'display') {
-                                return `<input type="text" value="${original}" class="comment-input" data-entry="${row.IGCKey}" data-original="${original}" style="width:95%;">`;
-                            }
-                            return data;
+                        render: (d, t, row) => {
+                            const val = d || '';
+                            return t === 'display'
+                                ? `<input type="text" value="${val}"
+                          class="comment-input"
+                          data-entry="${row.IGCKey}"
+                          data-original="${val}"
+                          style="width:100%;box-sizing:border-box;">`
+                                : d;
                         }
                     },
                     {
-                        // Actions column with Download, Save, and Delete buttons.
                         data: null,
                         title: 'Actions',
-                        name: 'Actions',
                         orderable: false,
                         searchable: false,
-                        render: function (data, type, row) {
-                            return `
-                                <button class="igc-button-style download-igc" data-entry="${row.IGCKey}"
-                                  onclick="forceDownload('${TB.discordPostHelperTaskBrowserPath}IGCFiles/${row.EntrySeqID}/${encodeURIComponent(row.IGCKey)}.igc', '${row.IGCKey}.igc'); return false;"
-                                  title="Download this IGC file">
-                                  <img src="images/IGCDownload.png" alt="Download" style="height:20px; vertical-align:middle;">
-                                </button>
-                                <button class="igc-button-style save-comment" data-entry="${row.IGCKey}" disabled title="Save comment">
-                                  <img src="images/ApplyChanges.png" alt="Save" style="height:20px; vertical-align:middle;">
-                                </button>
-                                <button class="igc-button-style delete-igc" data-entry="${row.IGCKey}" title="Delete this IGC record">
-                                  🗑️
-                                </button>
-                            `;
-                        }
+                        render: (d, t, row) => `
+              <button class="igc-button-style download-igc" data-entry="${row.IGCKey}"
+                onclick="forceDownload(
+                  '${TB.discordPostHelperTaskBrowserPath}IGCFiles/${row.EntrySeqID}/${encodeURIComponent(row.IGCKey)}.igc',
+                  '${row.IGCKey}.igc'
+                );return false;"
+                title="Download this IGC file">
+                <img src="images/IGCDownload.png" alt="Download" style="height:20px;vertical-align:middle;">
+              </button>
+              <button class="igc-button-style save-comment" data-entry="${row.IGCKey}" disabled title="Save comment">
+                <img src="images/ApplyChanges.png" alt="Save" style="height:20px;vertical-align:middle;">
+              </button>
+              <button class="igc-button-style delete-igc" data-entry="${row.IGCKey}" title="Delete this IGC record">🗑️</button>
+            `
                     }
                 ],
-                // Column definitions for widths (adjust as needed).
+
                 columnDefs: [
-                    { targets: 0, width: '140px' },  // Created on (UTC Upload)
-                    { targets: 1, width: '1px' },  // Task
-                    { targets: 2, width: '100px' },  // Pilot
-                    { targets: 3, width: '100px' },  // Glider
-                    { targets: 4, width: '40px' },  // Ident
-                    { targets: 5, width: '80px' },  // Class
-                    { targets: 6, width: '80px' },  // Flags
-                    { targets: 7, width: '65px' },  // Time
-                    { targets: 8, width: '75px' },  // Distance
-                    { targets: 9, width: '75px' },  // Speed
-                    { targets: 10, width: '80px' },  // TP Version
-                    { targets: 11, width: '80px' },  // Logger
-                    { targets: 12, width: '40px' },  // Sim
-                    { targets: 13, width: 'auto' },  // Comment
-                    { targets: 14, width: '110px' }   // Actions
+                    { targets: 0, width: '140px' },
+                    { targets: 1, width: '1px' },
+                    { targets: 2, width: '100px' },
+                    { targets: 3, width: '100px' },
+                    { targets: 4, width: '40px' },
+                    { targets: 5, width: '80px' },
+                    { targets: 6, width: '80px' },
+                    { targets: 7, width: '65px' },
+                    { targets: 8, width: '75px' },
+                    { targets: 9, width: '75px' },
+                    { targets: 10, width: '80px' },
+                    { targets: 11, width: '80px' },
+                    { targets: 12, width: '40px' },
+                    { targets: 13, width: 'auto' },
+                    { targets: 14, width: '110px' }
                 ],
-                paging: false,
+
                 searching: true,
                 ordering: true,
                 info: true,
+
                 initComplete: function () {
-                    // Move the search box and add a Refresh button.
-                    const tableWrapper = $(this.api().table().container());
-                    const filterDiv = tableWrapper.find('div.dataTables_filter');
+                    const api = this.api();
+                    // 1) align header & body
+                    api.columns.adjust();
+
+                    // 2) on resize, realign
+                    const container = document.getElementById('igc-submissions-content');
+                    if (window.ResizeObserver && container) {
+                        new ResizeObserver(() => api.columns.adjust()).observe(container);
+                    } else {
+                        $(window).on('resize.igcSubmissions', () => api.columns.adjust());
+                    }
+
+                    // 3) fix search & refresh above scroll
+                    const wrapper = $(api.table().container());
+                    const filterDiv = wrapper.find('div.dataTables_filter');
                     filterDiv.css({
                         display: 'flex',
-                        'align-items': 'center',
-                        'justify-content': 'flex-start',
-                        'width': '100%'
+                        alignItems: 'center',
+                        justifyContent: 'flex-start',
+                        width: '100%'
                     });
                     const refreshBtn = $('<button>')
                         .attr('id', 'refreshIGCBtn')
                         .addClass('igc-button-style')
-                        .css({
-                            'margin-right': 'auto',
-                            'margin-left': '0'
-                        })
+                        .css({ marginRight: 'auto', marginLeft: 0 })
                         .text('Refresh')
-                        .on('click', function () {
-                            refreshIGCSubmissionsContent();
-                        });
+                        .on('click', refreshIGCSubmissionsContent);
                     filterDiv.prepend(refreshBtn);
                 }
             });
 
-            // Bind event listeners for comment input changes.
+            // comment input toggles Save button
             $('#userIGCRecordsTable').on('input', '.comment-input', function () {
-                const original = $(this).data('original');
-                const currentVal = $(this).val();
-                const saveButton = $(this).closest('tr').find('.save-comment');
-                saveButton.prop('disabled', currentVal === original);
+                const orig = $(this).data('original'),
+                    cur = $(this).val();
+                $(this).closest('tr').find('.save-comment').prop('disabled', cur === orig);
             });
 
-            // Bind event listener for the Save button.
+            // Save comment
             $('#userIGCRecordsTable').on('click', '.save-comment', function () {
-                const entryKey = $(this).data('entry');
-                const newComment = $(this).closest('tr').find('.comment-input').val();
-
+                const entry = $(this).data('entry'),
+                    newCom = $(this).closest('tr').find('.comment-input').val(),
+                    button = $(this);
                 fetch('php/UpdateIGCComment.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ IGCKey: entryKey, Comment: newComment })
+                    body: JSON.stringify({ IGCKey: entry, Comment: newCom })
                 })
-                    .then(response => response.json())
-                    .then(result => {
-                        if (result.status === 'success') {
-                            $(this).closest('tr').find('.comment-input').data('original', newComment);
-                            $(this).prop('disabled', true);
+                    .then(r => r.json())
+                    .then(res => {
+                        if (res.status === 'success') {
+                            button.closest('tr').find('.comment-input').data('original', newCom);
+                            button.prop('disabled', true);
                         } else {
-                            alert('Error updating comment: ' + (result.message || result.error));
+                            alert('Error updating comment: ' + (res.message || res.error));
                         }
                     })
-                    .catch(error => {
-                        console.error('Error:', error);
+                    .catch(err => {
+                        console.error(err);
                         alert('Error updating comment.');
                     });
             });
 
-            // Bind event listener for the Delete button.
+            // Delete IGC record
             $('#userIGCRecordsTable').on('click', '.delete-igc', function () {
-                const entryKey = $(this).data('entry');
-                if (confirm("Are you sure you want to delete this IGC submission? This action cannot be undone.")) {
-                    const formData = new URLSearchParams();
-                    formData.append('IGCKey', entryKey);
-
+                const entry = $(this).data('entry'),
+                    row = $(this).closest('tr');
+                if (confirm("Delete this IGC submission? This cannot be undone.")) {
+                    const params = new URLSearchParams({ IGCKey: entry });
                     fetch('php/DeleteIGCRecord.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                        body: formData.toString()
+                        body: params.toString()
                     })
-                        .then(response => response.json())
-                        .then(result => {
-                            if (result.status === 'success') {
-                                dt.row($(this).closest('tr')).remove().draw();
+                        .then(r => r.json())
+                        .then(res => {
+                            if (res.status === 'success') {
+                                dt.row(row).remove().draw();
                             } else {
-                                alert('Error deleting submission: ' + (result.error || result.message));
+                                alert('Error deleting submission: ' + (res.error || res.message));
                             }
                         })
-                        .catch(error => {
-                            console.error('Error:', error);
+                        .catch(err => {
+                            console.error(err);
                             alert('Error deleting submission.');
                         });
                 }
             });
         })
         .catch(err => {
-            document.getElementById('igc-submissions-content').innerHTML = `<p>Error loading IGC submissions.</p>`;
-            console.error('Error fetching IGC submissions:', err);
+            contentDiv.innerHTML = '<p>Error loading IGC submissions.</p>';
+            console.error(err);
         });
 }
 
