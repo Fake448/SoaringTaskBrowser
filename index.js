@@ -383,6 +383,27 @@ function refreshIGCSubmissionsContent() {
                         render: (d, t) => t === 'display' && d ? `${d} km/h` : d
                     },
                     {
+                        data: 'Speed',
+                        title: 'Speed',
+                        render: (d, t) => t === 'display' && d ? `${d} km/h` : d
+                    },
+                    {
+                        data: null,
+                        title: 'Local time',
+                        render: function (data, type, row) {
+                            if (type === 'display') {
+                                const ymd = row.LocalDate;       // e.g. "2025-07-29"
+                                const lt = row.LocalTime;       // e.g. "224329"
+                                const hh = lt.slice(0, 2),
+                                    mm = lt.slice(2, 4),
+                                    ss = lt.slice(4, 6);
+                                const dt = `${ymd} ${hh}:${mm}:${ss}`;
+                                return TB.formatSimDateTime(dt, false, false, false, true, true);
+                            }
+                            return data;
+                        }
+                    },
+                    {
                         data: 'TPVersion',
                         title: 'Planner',
                         render: (d, t) => t === 'display' && d ? d.replace(/^v/, '') : d
@@ -438,11 +459,12 @@ function refreshIGCSubmissionsContent() {
                     { targets: 7, width: '65px' },
                     { targets: 8, width: '75px' },
                     { targets: 9, width: '75px' },
-                    { targets: 10, width: '80px' },
+                    { targets: 10, width: '110px' },
                     { targets: 11, width: '80px' },
-                    { targets: 12, width: '40px' },
-                    { targets: 13, width: 'auto' },
-                    { targets: 14, width: '110px' }
+                    { targets: 12, width: '80px' },
+                    { targets: 13, width: '40px' },
+                    { targets: 14, width: 'auto' },
+                    { targets: 15, width: '110px' }
                 ],
 
                 searching: true,
