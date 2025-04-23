@@ -383,11 +383,6 @@ function refreshIGCSubmissionsContent() {
                         render: (d, t) => t === 'display' && d ? `${d} km/h` : d
                     },
                     {
-                        data: 'Speed',
-                        title: 'Speed',
-                        render: (d, t) => t === 'display' && d ? `${d} km/h` : d
-                    },
-                    {
                         data: null,
                         title: 'Local time',
                         render: function (data, type, row) {
@@ -475,10 +470,10 @@ function refreshIGCSubmissionsContent() {
                             });
                         }
                     },
-                    { targets: 2, width: '100px' },
-                    { targets: 3, width: '100px' },
-                    { targets: 4, width: '40px' },
-                    { targets: 5, width: '80px' },
+                    { targets: 2, width: '100px' }, // Pilot
+                    { targets: 3, width: '100px' }, // Glider
+                    { targets: 4, width: '40px' },  // Ident
+                    { targets: 5, width: '80px' },  // Class
                     {
                         targets: 6,                 // Flags
                         width: '80px',
@@ -492,13 +487,21 @@ function refreshIGCSubmissionsContent() {
                             });
                         }
                     },
-                    { targets: 7, width: '65px' },
-                    { targets: 8, width: '75px' },
-                    { targets: 9, width: '75px' },
-                    { targets: 10, width: '110px' },
-                    { targets: 11, width: '80px' },
+                    { targets: 7, width: '65px' },  // Time
+                    { targets: 8, width: '75px' },  // Distance
+                    { targets: 9, width: '75px' },  // Speed
                     {
-                        targets: 12,                 // Planner
+                        targets: 10,                 // Local time
+                        width: '80px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '80px',
+                                'max-width': '80px',
+                            });
+                        }
+                    },
+                    {
+                        targets: 11,                 // Planner
                         width: '1px',
                         createdCell: function (td) {
                             $(td).css({
@@ -511,7 +514,7 @@ function refreshIGCSubmissionsContent() {
                         }
                     },
                     {
-                        targets: 13,                 // Logger
+                        targets: 12,                 // Logger
                         width: '1px',
                         createdCell: function (td) {
                             $(td).css({
@@ -523,20 +526,28 @@ function refreshIGCSubmissionsContent() {
                             });
                         }
                     },
-                    { targets: 14, width: '50px' },
+                    { targets: 13, width: '50px' }, // Sim
                     {
-                        targets: 15,                 // Comments
-                        width: '140px',
+                        targets: 14,                 // Comments
+                        width: '200px',
                         createdCell: function (td) {
                             $(td).css({
                                 'min-width': '100px',
-                                'overflow': 'hidden',
-                                'text-overflow': 'ellipsis',
-                                'white-space': 'nowrap'
+                                'max-width': '400px',
                             });
                         }
                     },
-                    { targets: 16, width: '100px' }
+                    {
+                        targets: 15,                 // Buttons
+                        width: '100px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '1px',
+                                'max-width': '100px',
+                                'overflow': 'wrapper'
+                            });
+                        }
+                    }
                 ],
 
                 searching: true,
