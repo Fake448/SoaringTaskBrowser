@@ -73,8 +73,13 @@ if (isset($_GET['code'])) {
         die('Invalid user data response: ' . json_encode($discordUser));
     }
 
-    // Always use the global_name from Discord for the display name.
-    $displayName = $discordUser['global_name'];
+    // Use Discord’s global_name if set, otherwise fall back to username
+    if (!empty($discordUser['global_name'])) {
+        $displayName = $discordUser['global_name'];
+    } else {
+        // you can include the discriminator if you want uniqueness:
+        $displayName = $discordUser['username']; // . '#' . $discordUser['discriminator'];
+    }
     
     // Construct the full avatar URL using Discord's CDN.
     $avatarURL = "https://cdn.discordapp.com/avatars/" . $discordUser['id'] . "/" . $discordUser['avatar'] . ".png";
