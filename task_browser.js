@@ -1377,7 +1377,6 @@ class TaskBrowser {
                 <thead>
                     <tr>
                         <th>Sel.</th>
-                        <th>Created on</th>
                         <th>Pilot</th>
                         <th>Glider</th>
                         <th>Class</th>
@@ -1385,6 +1384,8 @@ class TaskBrowser {
                         <th>Speed</th>
                         <th>Time</th>
                         <th>Distance</th>
+                        <th>Local time</th>
+                        <th>Created on</th>
                         <th>Sim</th>
                         <th>Planner</th>
                         <th>Logger</th>
@@ -1425,7 +1426,7 @@ class TaskBrowser {
                 scrollX: true,         // ← enable horizontal scroll
                 scrollCollapse: true,  // ← collapse container when table is narrow
                 responsive: false,     // ← disable Responsive extension
-                order: [[6, 'desc']],  // Order by speed descending
+                order: [[5, 'desc']],  // Order by speed descending
                 columns: [
                     {
                         data: null,
@@ -1437,22 +1438,24 @@ class TaskBrowser {
                         }
                     },
                     {
-                        data: 'IGCRecordDateTimeUTC',
-                        title: 'Created on',
-                        name: 'IGCRecordDateTimeUTC',
+                        data: 'Pilot',
+                        title: 'Pilot',
+                        name: 'Pilot',
                         render: function (data, type, row, meta) {
                             if (type === 'display') {
-                                // Format the date as before.
-                                var formattedDate = TB.formatSimDateTime(data, true, false, true, true, true);
-                                // Get the task EntrySeqID from the closure (assuming tb.currentTask is available).
+                                // grab the current task’s EntrySeqID
                                 var entrySeqID = tb.currentTask.EntrySeqID;
-                                // Return a link that carries both EntrySeqID and IGCKey.
-                                return `<a href="#" class="download-igc-link" data-entryseqid="${entrySeqID}" data-igckey="${row.IGCKey}">${formattedDate}</a>`;
+                                // wrap the pilot name in the same download link
+                                return `<a href="#"
+                                         class="download-igc-link"
+                                         data-entryseqid="${entrySeqID}"
+                                         data-igckey="${row.IGCKey}">
+                                        ${data}
+                                      </a>`;
                             }
                             return data;
                         }
                     },
-                    { data: 'Pilot', title: 'Pilot', name: 'Pilot' },
                     { data: 'GliderType', title: 'Glider', name: 'GliderType' },
                     { data: 'CompetitionClass', title: 'Class', name: 'CompetitionClass' },
                     {
@@ -1519,6 +1522,40 @@ class TaskBrowser {
                             return `${distance.toFixed(1)} ${unit}`;
                         }
                     },
+                    {
+                        data: null,
+                        title: 'Local time',
+                        render: function (data, type, row) {
+                            if (type === 'display') {
+                                // build a full ISO-like string “YYYY-MM-DD HH:MM:SS”
+                                const ymd = row.LocalDate;                        // e.g. "2025-07-29"
+                                const lt = row.LocalTime;                        // e.g. "224329"
+                                const hh = lt.slice(0, 2),
+                                    mm = lt.slice(2, 4),
+                                    ss = lt.slice(4, 6);
+                                const dt = `${ymd} ${hh}:${mm}:${ss}`;
+                                // now format it exactly like “Created on”
+                                return TB.formatSimDateTime(dt, false, false, false, true, true);
+                            }
+                            return data;
+                        }
+                    },
+                    {
+                        data: 'IGCRecordDateTimeUTC',
+                        title: 'Created on',
+                        name: 'IGCRecordDateTimeUTC',
+                        render: function (data, type, row, meta) {
+                            if (type === 'display') {
+                                // Format the date as before.
+                                var formattedDate = TB.formatSimDateTime(data, true, false, true, true, true);
+                                // Get the task EntrySeqID from the closure (assuming tb.currentTask is available).
+                                var entrySeqID = tb.currentTask.EntrySeqID;
+                                // Return a link that carries both EntrySeqID and IGCKey.
+                                return `${formattedDate}`;
+                            }
+                            return data;
+                        }
+                    },
                     { data: 'Sim', title: 'Sim', name: 'Sim' },
                     {
                         data: 'TPVersion',
@@ -1547,34 +1584,27 @@ class TaskBrowser {
                 columnDefs: [
                     { targets: 0, width: '15px' },
                     {
-                        targets: 1, // Created on
-                        width: '140px',
-                        createdCell: function (td /*, cellData, rowData, row, col*/) {
-                            $(td).css('min-width', '140px');
-                        }
-                    },
-                    {
-                        targets: 2, // Pilot
+                        targets: 1, // Pilot
                         createdCell: function (td /*, cellData, rowData, row, col*/) {
                             $(td).css('min-width', '100px');
                         }
                     },
                     {
-                        targets: 4, // Class
+                        targets: 3, // Class
                         width: '150px',
                         createdCell: function (td /*, cellData, rowData, row, col*/) {
                             $(td).css('min-width', '100px');
                         }
                     },
                     {
-                        targets: 5, // Flags
+                        targets: 4, // Flags
                         width: '80px',
                         createdCell: function (td /*, cellData, rowData, row, col*/) {
                             $(td).css('min-width', '80px');
                         }
                     },
                     {
-                        targets: 6, // Speed
+                        targets: 5, // Speed
                         width: '75px',
                         createdCell: function (td /*, cellData, rowData, row, col */) {
                             $(td)
@@ -1584,7 +1614,7 @@ class TaskBrowser {
                         }
                     },
                     {
-                        targets: 7, // Time
+                        targets: 6, // Time
                         width: '65px',
                         createdCell: function (td /*, cellData, rowData, row, col */) {
                             $(td)
@@ -1594,7 +1624,7 @@ class TaskBrowser {
                         }
                     },
                     {
-                        targets: 8, // Distance
+                        targets: 7, // Distance
                         width: '75px',
                         createdCell: function (td /*, cellData, rowData, row, col */) {
                             $(td)
@@ -1603,9 +1633,23 @@ class TaskBrowser {
                                 .css('padding-right', '10px');
                         }
                     },
-                    { targets: 9, width: '60px' },  // Sim
-                    { targets: 10, width: '80px' }, // Planner
-                    { targets: 11, width: '80px' }  // Logger
+                    {
+                        targets: 8, // Local time
+                        width: '110px',
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '110px');
+                        }
+                    },
+                    {
+                        targets: 9, // Created on
+                        width: '140px',
+                        createdCell: function (td /*, cellData, rowData, row, col*/) {
+                            $(td).css('min-width', '140px');
+                        }
+                    },
+                    { targets: 10, width: '60px' },  // Sim
+                    { targets: 11, width: '80px' }, // Planner
+                    { targets: 12, width: '80px' }  // Logger
                 ],
                 headerCallback: function (thead, data, start, end, display) {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
