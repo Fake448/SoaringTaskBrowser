@@ -449,22 +449,94 @@ function refreshIGCSubmissionsContent() {
                 ],
 
                 columnDefs: [
-                    { targets: 0, width: '140px' },
-                    { targets: 1, width: '1px' },
+                    {
+                        targets: 0,                 // Created on
+                        width: '140px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '140px',
+                                'max-width': '140px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
+                    {
+                        targets: 1,                 // Task ID
+                        width: '35px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '35px',
+                                'max-width': '35px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
                     { targets: 2, width: '100px' },
                     { targets: 3, width: '100px' },
                     { targets: 4, width: '40px' },
                     { targets: 5, width: '80px' },
-                    { targets: 6, width: '80px' },
+                    {
+                        targets: 6,                 // Flags
+                        width: '80px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '80px',
+                                'max-width': '80px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
                     { targets: 7, width: '65px' },
                     { targets: 8, width: '75px' },
                     { targets: 9, width: '75px' },
                     { targets: 10, width: '110px' },
                     { targets: 11, width: '80px' },
-                    { targets: 12, width: '80px' },
-                    { targets: 13, width: '40px' },
-                    { targets: 14, width: 'auto' },
-                    { targets: 15, width: '110px' }
+                    {
+                        targets: 12,                 // Planner
+                        width: '1px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '1px',
+                                'max-width': '1px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
+                    {
+                        targets: 13,                 // Logger
+                        width: '1px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '1px',
+                                'max-width': '1px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
+                    { targets: 14, width: '50px' },
+                    {
+                        targets: 15,                 // Comments
+                        width: '140px',
+                        createdCell: function (td) {
+                            $(td).css({
+                                'min-width': '100px',
+                                'overflow': 'hidden',
+                                'text-overflow': 'ellipsis',
+                                'white-space': 'nowrap'
+                            });
+                        }
+                    },
+                    { targets: 16, width: '100px' }
                 ],
 
                 searching: true,
