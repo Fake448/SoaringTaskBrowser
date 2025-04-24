@@ -874,6 +874,7 @@ class TaskBrowser {
             ✈️ ${task.RecommendedGliders}<br>
             🎚 ${tb.formatDifficultyRating(task.DifficultyRating, task.DifficultyExtraInfo)}
             <p>${task.Credits}</p>
+            <p><em>Don't forget to upload your IGC log after flying this task!</em></p>
             <p>
               <div style="display:flex; justify-content:space-between; align-items:center; margin:0;">
                 <span>${lastUpdateInfo}</span>

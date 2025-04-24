@@ -978,6 +978,7 @@ function displayEvents(events) {
             <p>${eventComments}</p>
             ${tableHTML}
             ${reviewTaskDetails}
+            <p><em>Don't forget to upload your IGC log after flying this task!</em></p>
             <p><a href="${moreInfoLink}" target="_blank">Go to this group event's home</a></p>
             ${taskButton}
             ${shareButton}
