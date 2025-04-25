@@ -181,10 +181,10 @@ class TaskBrowser {
         const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
 
         collapsibleSections.forEach(section => {
-            // Grab the full text, e.g. "📑 IGC Records"
+            // Grab the full text, e.g. "🏆 Leader Board"
             const rawTitle = (section.querySelector(".title span")?.textContent || "").trim();
 
-            // Remove leading emoji(s) and space, leaving e.g. "IGC Records"
+            // Remove leading emoji(s) and space, leaving e.g. "Leader Board"
             const title = rawTitle.includes(" ")
                 ? rawTitle.substring(rawTitle.indexOf(" ") + 1)
                 : rawTitle;
@@ -1373,7 +1373,7 @@ class TaskBrowser {
         // Build the HTML for the collapsible section
         // including an empty <tbody> for #igcRecordsTable
         let igcContent = `
-            <p><strong>${task.Title}</strong></p>
+            <p><strong>${task.EntrySeqID} ${task.Title}</strong></p>
             <table id="igcRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                 <thead>
                     <tr>
@@ -1403,7 +1403,7 @@ class TaskBrowser {
 
         // Insert as a collapsible section
         const container = document.getElementById("taskDetailContainer");
-        tb.generateCollapsibleSection("📑 IGC Records", igcContent, container, null, null, callbackButton, null, null, null, "Copy link");
+        tb.generateCollapsibleSection("🏆 Leader Board", igcContent, container, null, null, callbackButton, null, null, null, "Copy link");
 
         // Now that the HTML is in the DOM, call the population function
         tb.populateIGCRecordsTable(task.IGCRecords);
@@ -1880,15 +1880,15 @@ class TaskBrowser {
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
-            if (data.igcRecords && data.igcRecords.length > 0) {
-                content += `<h3>Your IGC Records</h3><ul>`;
-                data.igcRecords.forEach(record => {
-                    content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
-                });
-                content += `</ul>`;
-            } else {
-                content += `<p>No IGC records found for this task.</p>`;
-            }
+            //if (data.igcRecords && data.igcRecords.length > 0) {
+            //    content += `<h3>Your IGC Records</h3><ul>`;
+            //    data.igcRecords.forEach(record => {
+            //        content += `<li>${record.IGCRecordDateTimeUTC} - Pilot: ${record.Pilot || "N/A"}</li>`;
+            //    });
+            //    content += `</ul>`;
+            //} else {
+            //    content += `<p>No IGC records found for this task.</p>`;
+            //}
 
             // --- Generate the collapsible section ---
             tb.generateCollapsibleSection(

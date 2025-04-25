@@ -1097,16 +1097,16 @@ function handleParams(params) {
     }
     if (params.task) {
         TB.switchTab('mapTab');
-        // if “results” is present, only expand IGC Records,
+        // if “results” is present, only expand Leader Board,
         let sections = [];
         if (params.results !== undefined) {
-            sections = ['IGC Records'];
+            sections = ['Leader Board'];
         }
         // Pass that array as the 3rd argument
         TB.tbm.selectTaskFromURL(
             params.task,
             false,          // doNotExpand = false → we do want expansion
-            sections        // [] → all, ['IGC Records'] → just that one
+            sections        // [] → all, ['Leader Board'] → just that one
         );
 
     } else if (params.event) {
