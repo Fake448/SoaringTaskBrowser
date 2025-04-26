@@ -2509,6 +2509,10 @@ class TaskBrowser {
     downloadDPHXFile(theTaskID, EntrySeqID, Title, source = "map") {
         let tb = this;
 
+        if (source === "map") {
+            tb.tbm.showLoadingSpinner("Preparing DPHX download...");
+        }
+
         // Increment download count
         tb.incrementDownloadCount(EntrySeqID);
 
@@ -2522,6 +2526,9 @@ class TaskBrowser {
                 alert("Download successful! The DPHX file should now be opened in your local application.");
                 if (source === "discord") {
                     window.close();
+                }
+                else {
+                    tb.tbm.hideLoadingSpinner();
                 }
             })
             .catch(err => {
@@ -2547,6 +2554,9 @@ class TaskBrowser {
                                 //alert("Download was started! Click to close.");
                                 window.close();
                             }, 3000); // Delay to allow the browser's download prompt to appear
+                        }
+                        else {
+                            tb.tbm.hideLoadingSpinner();
                         }
                     })
                     .catch(err2 => console.error("Error downloading file as fallback:", err2));
