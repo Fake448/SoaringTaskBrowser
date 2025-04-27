@@ -100,6 +100,39 @@ try {
         }
     }
 
+    // STEP 3: If still no task found, try again ignoring departure & arrival
+    if (!$foundTask) {
+        // get all waypoint IDs in order
+        $wpIDs = array_keys($igcWaypoints);
+
+        // only proceed if there are more than 2 waypoints
+        if (count($wpIDs) > 2) {
+            // drop the first and last IDs
+            array_shift($wpIDs);
+            array_pop($wpIDs);
+
+            // rebuild the LIKE clauses & params exactly as in Step 2
+            $likeClauses = [];
+            $params      = [];
+            foreach ($wpIDs as $wpID) {
+                $likeClauses[] = "PLNXML LIKE ?";
+                $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
+            }
+            $whereClause = implode(" AND ", $likeClauses);
+            $wpQuery     = "SELECT * FROM Tasks WHERE " . $whereClause;
+            $stmt        = $pdo->prepare($wpQuery);
+            $stmt->execute($params);
+            $wpResults   = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            foreach ($wpResults as $candidate) {
+                if (validateCandidate($candidate, $igcWaypoints)) {
+                    $foundTask = $candidate;
+                    break;
+                }
+            }
+        }
+    }
+
     if ($foundTask) {
         // Build the IGCKey using the new format:
         // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
