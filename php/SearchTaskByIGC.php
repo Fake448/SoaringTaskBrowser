@@ -19,37 +19,25 @@ try {
     if (empty($data)) {
         throw new Exception("No POST data received.");
     }
-
-    // Decode igcWaypoints JSON array
-    if (!isset($data['igcWaypoints']) || !is_string($data['igcWaypoints'])) {
-        throw new Exception("Missing or invalid igcWaypoints");
+    // If igcWaypoints is sent as a JSON string, decode it.
+    if (isset($data['igcWaypoints']) && is_string($data['igcWaypoints'])) {
+        $data['igcWaypoints'] = json_decode($data['igcWaypoints'], true);
     }
-    $rawWp = json_decode($data['igcWaypoints'], true);
-    if (!is_array($rawWp)) {
-        throw new Exception("igcWaypoints must be a JSON array of {id,coord}");
+    if (
+        !isset($data['igcTitle']) || 
+        !isset($data['igcWaypoints']) || 
+        !isset($data['pilot']) || 
+        !isset($data['gliderType']) || 
+        !isset($data['competitionID']) || 
+        !isset($data['IGCRecordDateTimeUTC'])
+    ) {
+        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, competitionID, IGCRecordDateTimeUTC.");
     }
-    $igcWaypoints = [];
-    foreach ($rawWp as $entry) {
-        if (!isset($entry['id'], $entry['coord'])) {
-            throw new Exception("Each waypoint entry must have 'id' and 'coord'");
-        }
-        $igcWaypoints[] = [
-            'id'    => (string)$entry['id'],
-            'coord' => (string)$entry['coord'],
-        ];
-    }
-
-    // Validate and extract required input fields
-    foreach (['igcTitle','pilot','gliderType','competitionID','IGCRecordDateTimeUTC'] as $key) {
-        if (empty($data[$key])) {
-            throw new Exception("Missing required field: $key");
-        }
-    }
-    $igcTitle             = trim($data['igcTitle']);
-    $pilot                = trim($data['pilot']);
-    $gliderType           = trim($data['gliderType']);
-    $competitionID        = trim($data['competitionID']);
-    $recordDateTimeUTC    = trim($data['IGCRecordDateTimeUTC']);
+    
+    $igcTitle = trim($data['igcTitle']);
+    $igcWaypoints = $data['igcWaypoints']; // associative array: waypointID => coordinate string
+    // logMessage("IGC Title: " . $igcTitle);
+    // logMessage("IGC Waypoints: " . print_r($igcWaypoints, true));
 
     // Validate that the IGC file has been provided as an upload.
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
@@ -87,26 +75,26 @@ try {
 
     // STEP 2: If no title match found, search by waypoint IDs.
     if (!$foundTask) {
-        // Extract just the IDs from our numeric waypoint array
+        // pull the real IDs out of our numeric array
         $ids = array_column($igcWaypoints, 'id');
-
+    
         $likeClauses = [];
         $params      = [];
         foreach ($ids as $wpID) {
             $likeClauses[] = "PLNXML LIKE ?";
             $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
         }
-
+    
         if (!empty($likeClauses)) {
             $sql  = "SELECT * FROM Tasks WHERE " . implode(' AND ', $likeClauses);
             // logMessage("Waypoint Query: " . $sql);
             // logMessage("Waypoint Query Params: " . print_r($params, true));
-
+    
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
             $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
             // logMessage("Waypoint Results Count: " . count($wpResults));
-
+    
             foreach ($wpResults as $candidate) {
                 // logMessage("Validating candidate (waypoint search) with EntrySeqID: " . $candidate['EntrySeqID']);
                 if (validateCandidate($candidate, $igcWaypoints)) {
@@ -118,42 +106,51 @@ try {
         }
     }
 
-    // STEP 3: If still no task found, search by interior waypoint IDs only
+    // STEP 3: match by interior waypoint names only, then validate all coords
     if (!$foundTask) {
-        // 1) pull out just the IDs in order
+        // pull the real IDs out of the list
         $ids = array_column($igcWaypoints, 'id');
-
-        // 2) need at least 3 to drop first+last
+        // logMessage("Step 3: raw IGC waypoint IDs: " . implode(',', $ids));
+    
+        // need at least 3 to drop first+last
         if (count($ids) > 2) {
-            // drop the first and last IDs
-            $interior = array_slice($ids, 1, -1);
-
-            // build the SQL LIKE … AND … for each interior ID
+            // grab only the middle IDs
+            $interiorIDs = array_slice($ids, 1, -1);
+            // logMessage("Step 3: interior waypoint IDs (dropping first & last): " . implode(',', $interiorIDs));
+    
+            // build WHERE PLNXML LIKE ? AND … for each interior ID
             $likeClauses = [];
             $params      = [];
-            foreach ($interior as $wpID) {
+            foreach ($interiorIDs as $wpID) {
                 $likeClauses[] = "PLNXML LIKE ?";
                 $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
             }
-
-            if (!empty($likeClauses)) {
-                $sql  = "SELECT * FROM Tasks WHERE " . implode(' AND ', $likeClauses);
-                // logMessage("Step 3 SQL: $sql | params: " . print_r($params, true));
-
-                $stmt = $pdo->prepare($sql);
-                $stmt->execute($params);
-                $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                // 3) full coordinate check on the original list (including first+last)
-                foreach ($wpResults as $candidate) {
-                    // logMessage("Step 3 validating EntrySeqID: " . $candidate['EntrySeqID']);
-                    if (validateCandidate($candidate, $igcWaypoints)) {
-                        $foundTask = $candidate;
-                        // logMessage("Step 3 match found: EntrySeqID " . $foundTask['EntrySeqID']);
-                        break;
-                    }
+    
+            $sql = "SELECT * FROM Tasks WHERE " . implode(" AND ", $likeClauses);
+            // logMessage("Step 3: SQL query: " . $sql . " | params: " . print_r($params, true));
+    
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $cands = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // logMessage("Step 3: fetched " . count($cands) . " candidate(s)");
+    
+            foreach ($cands as $candidate) {
+                $eid = $candidate['EntrySeqID'] ?? 'unknown';
+                // logMessage("Step 3: validating candidate EntrySeqID: " . $eid);
+                if (validateCandidate($candidate, $igcWaypoints)) {
+                    // logMessage("Step 3: candidate validated successfully: EntrySeqID " . $eid);
+                    $foundTask = $candidate;
+                    break;
+                } else {
+                    // logMessage("Step 3: candidate failed coordinate validation: EntrySeqID " . $eid);
                 }
             }
+    
+            if (!$foundTask) {
+                // logMessage("Step 3: no valid candidate found in interior-only search");
+            }
+        } else {
+            // logMessage("Step 3: skipped interior search—only " . count($ids) . " waypoint(s) present");
         }
     }
 
@@ -481,91 +478,117 @@ function compareCoordinates($coord1, $coord2, $tolerance = 0.001) {
 }
 
 /**
- * Updated validateCandidate function using normalization and tolerance with additional logging.
+ * Validate a candidate TASK against the ordered IGC waypoints.
+ * Skips id/name lookup for first & last waypoints, using position by index instead.
+ *
+ * @param array $candidate    The task row, must include ['PLNXML']
+ * @param array $igcWaypoints Numeric array of ['id'=>'…','coord'=>'…']
+ * @return bool               True if all waypoints pass tolerance check
  */
-function validateCandidate($candidate, $igcWaypoints) {
-    // logMessage("validateCandidate: Starting candidate validation for EntrySeqID: " . ($candidate['EntrySeqID'] ?? 'unknown'));
-    
-    if (!isset($candidate['PLNXML'])) {
-        // logMessage("validateCandidate: Candidate does not have PLNXML");
+function validateCandidate(array $candidate, array $igcWaypoints): bool {
+    $entrySeq = $candidate['EntrySeqID'] ?? 'unknown';
+    // logMessage("validateCandidate: *** START validation for EntrySeqID: {$entrySeq} ***");
+
+    // Build human list of IGC fixes
+    $igcList = array_map(fn($w)=> "{$w['id']}=>{$w['coord']}", $igcWaypoints);
+    // logMessage("validateCandidate: IGC waypoints: " . implode(', ', $igcList));
+
+    if (empty($candidate['PLNXML'])) {
+        // logMessage("validateCandidate: Missing PLNXML");
         return false;
     }
-    
-    $xmlString = $candidate['PLNXML'];
+
+    // Parse the PLNXML
     libxml_use_internal_errors(true);
-    $xml = simplexml_load_string($xmlString);
-    
+    $xml = simplexml_load_string($candidate['PLNXML']);
     if (!$xml) {
-        $errors = libxml_get_errors();
-        //foreach ($errors as $error) {
-            // logMessage("validateCandidate: XML parsing error: " . trim($error->message));
-        //}
+        // foreach (libxml_get_errors() as $err) {
+        //     logMessage("validateCandidate: XML parse error: " . trim($err->message));
+        // }
         libxml_clear_errors();
         return false;
     }
-    
-    $xmlWaypoints = [];
-    $xmlWpList = $xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint');
-    //if (!$xmlWpList) {
-        // logMessage("validateCandidate: No ATCWaypoint elements found in XML");
-    //}
-    
-    foreach ($xmlWpList as $wp) {
-        $id = (string)$wp['id'];
-        $worldPosRaw = trim((string)$wp->WorldPosition);
-        $normalized = normalizeXmlCoordinate($worldPosRaw);
-        if ($normalized) {
-            $position = $normalized[0] . "," . $normalized[1];
-        } else {
-            $position = $worldPosRaw;
-        }
-        $xmlWaypoints[$id] = $position;
-        // logMessage("validateCandidate: Extracted waypoint - ID: " . $id . ", Position: " . $position);
+
+    // Extract all ATCWaypoint elements in order
+    $nodes = $xml->xpath('/SimBase.Document/FlightPlan.FlightPlan/ATCWaypoint');
+    if (!$nodes) {
+        // logMessage("validateCandidate: No ATCWaypoint elements in PLNXML");
+        return false;
     }
-    
-    foreach ($igcWaypoints as $wpID => $igcCoord) {
-        // logMessage("validateCandidate: Checking IGC waypoint - ID: " . $wpID . ", Coord: " . $igcCoord);
-        
-        if (!isset($xmlWaypoints[$wpID])) {
-            // logMessage("validateCandidate: IGC waypoint " . $wpID . " not found in candidate XML.");
-            return false;
-        }
-        
-        $xmlParts = explode(',', $xmlWaypoints[$wpID]);
-        if (count($xmlParts) < 2) {
-            // logMessage("validateCandidate: XML waypoint " . $wpID . " has invalid coordinate format: " . $xmlWaypoints[$wpID]);
-            return false;
-        }
-        
-        $xmlLat = trim($xmlParts[0]);
-        $xmlLon = trim($xmlParts[1]);
-        
-        // Remove any spaces from the IGC coordinate
-        $igcCoordNoSpaces = str_replace(" ", "", $igcCoord);
-        $igcParts = explode(',', $igcCoordNoSpaces);
-        if (count($igcParts) < 2) {
-            // logMessage("validateCandidate: IGC waypoint " . $wpID . " has invalid coordinate format: " . $igcCoord);
-            return false;
-        }
-        
-        $igcLat = trim($igcParts[0]);
-        $igcLon = trim($igcParts[1]);
-        
-        // logMessage("validateCandidate: Comparing waypoint " . $wpID . " latitudes - IGC: " . $igcLat . " vs XML: " . $xmlLat);
-        $latMatch = compareCoordinates($igcLat, $xmlLat);
-        
-        // logMessage("validateCandidate: Comparing waypoint " . $wpID . " longitudes - IGC: " . $igcLon . " vs XML: " . $xmlLon);
-        $lonMatch = compareCoordinates($igcLon, $xmlLon);
-        
-        if (!$latMatch || !$lonMatch) {
-            // logMessage("validateCandidate: Coordinate mismatch for waypoint " . $wpID . ". latMatch: " . ($latMatch ? "true" : "false") . ", lonMatch: " . ($lonMatch ? "true" : "false"));
-            return false;
-        } else {
-            // logMessage("validateCandidate: Waypoint " . $wpID . " matches successfully.");
-        }
+
+    // Build two structures:
+    // 1) $orderedXmlPos[i] = "lat,lon" for waypoint at index i
+    // 2) $xmlMapById[name] = "lat,lon" for lookup by id (interior fixes)
+    $orderedXmlPos = [];
+    $xmlMapById    = [];
+    $dump = [];
+    foreach ($nodes as $i => $wp) {
+        $nameAttr = (string)$wp['id'];
+        $rawPos   = trim((string)$wp->WorldPosition);
+        $norm     = normalizeXmlCoordinate($rawPos);
+        $pos      = $norm ? "{$norm[0]},{$norm[1]}" : $rawPos;
+
+        $orderedXmlPos[$i]   = $pos;
+        $xmlMapById[$nameAttr] = $pos;
+        $dump[] = "{$i}:{$nameAttr}=>{$pos}";
     }
-    
-    // logMessage("validateCandidate: All IGC waypoints validated successfully for candidate.");
+    // logMessage("validateCandidate: PLNXML waypoints by index|id: " . implode(' | ', $dump));
+
+    $n = count($igcWaypoints);
+    // Compare each IGC fix to the corresponding XML position
+    foreach ($igcWaypoints as $i => $wp) {
+        $wpID    = $wp['id'];
+        $igcCoord= $wp['coord'];
+        // logMessage("validateCandidate: Checking IGC waypoint #{$i} ID='{$wpID}', Coord='{$igcCoord}'");
+
+        // First or last? use position by index, skip id lookup
+        if ($i === 0 || $i === $n - 1) {
+            $xmlPos = $orderedXmlPos[$i];
+            // logMessage("validateCandidate: First/last fix—using XML index {$i} => {$xmlPos}");
+        } else {
+            // interior: must exist by id
+            if (!isset($xmlMapById[$wpID])) {
+                // logMessage("validateCandidate: Interior waypoint '{$wpID}' not found by id");
+                return false;
+            }
+            $xmlPos = $xmlMapById[$wpID];
+            // logMessage("validateCandidate: Matched interior '{$wpID}' => {$xmlPos}");
+        }
+
+        // Split lat/lon from XML
+        [$xmlLat, $xmlLon] = explode(',', $xmlPos) + [null, null];
+        if ($xmlLat === null || $xmlLon === null) {
+            // logMessage("validateCandidate: Invalid XML coords for '{$wpID}': {$xmlPos}");
+            return false;
+        }
+        $xmlLat = trim($xmlLat);
+        $xmlLon = trim($xmlLon);
+
+        // Parse IGC coords (strip spaces)
+        $parts = explode(',', str_replace(' ', '', $igcCoord));
+        if (count($parts) < 2) {
+            // logMessage("validateCandidate: Invalid IGC coord for '{$wpID}': {$igcCoord}");
+            return false;
+        }
+        [$igcLat, $igcLon] = array_map('trim', $parts);
+
+        // Compare latitude
+        // logMessage("validateCandidate: Comparing LAT '{$wpID}' — IGC={$igcLat} vs XML={$xmlLat}");
+        $latOk = compareCoordinates($igcLat, $xmlLat);
+
+        // Compare longitude
+        // logMessage("validateCandidate: Comparing LON '{$wpID}' — IGC={$igcLon} vs XML={$xmlLon}");
+        $lonOk = compareCoordinates($igcLon, $xmlLon);
+
+        if (!($latOk && $lonOk)) {
+            // logMessage("validateCandidate: Mismatch for '{$wpID}': latOk=" . ($latOk?'true':'false') . ", lonOk=" . ($lonOk?'true':'false'));
+            return false;
+        }
+
+        // logMessage("validateCandidate: Waypoint #{$i} '{$wpID}' matches successfully");
+    }
+
+    // logMessage("validateCandidate: *** ALL WAYPOINTS MATCH for EntrySeqID {$entrySeq} ***");
     return true;
 }
 ?>
