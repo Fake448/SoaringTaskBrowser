@@ -19,25 +19,37 @@ try {
     if (empty($data)) {
         throw new Exception("No POST data received.");
     }
-    // If igcWaypoints is sent as a JSON string, decode it.
-    if (isset($data['igcWaypoints']) && is_string($data['igcWaypoints'])) {
-        $data['igcWaypoints'] = json_decode($data['igcWaypoints'], true);
+
+    // Decode igcWaypoints JSON array
+    if (!isset($data['igcWaypoints']) || !is_string($data['igcWaypoints'])) {
+        throw new Exception("Missing or invalid igcWaypoints");
     }
-    if (
-        !isset($data['igcTitle']) || 
-        !isset($data['igcWaypoints']) || 
-        !isset($data['pilot']) || 
-        !isset($data['gliderType']) || 
-        !isset($data['competitionID']) || 
-        !isset($data['IGCRecordDateTimeUTC'])
-    ) {
-        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, competitionID, IGCRecordDateTimeUTC.");
+    $rawWp = json_decode($data['igcWaypoints'], true);
+    if (!is_array($rawWp)) {
+        throw new Exception("igcWaypoints must be a JSON array of {id,coord}");
     }
-    
-    $igcTitle = trim($data['igcTitle']);
-    $igcWaypoints = $data['igcWaypoints']; // associative array: waypointID => coordinate string
-    // logMessage("IGC Title: " . $igcTitle);
-    // logMessage("IGC Waypoints: " . print_r($igcWaypoints, true));
+    $igcWaypoints = [];
+    foreach ($rawWp as $entry) {
+        if (!isset($entry['id'], $entry['coord'])) {
+            throw new Exception("Each waypoint entry must have 'id' and 'coord'");
+        }
+        $igcWaypoints[] = [
+            'id'    => (string)$entry['id'],
+            'coord' => (string)$entry['coord'],
+        ];
+    }
+
+    // Validate and extract required input fields
+    foreach (['igcTitle','pilot','gliderType','competitionID','IGCRecordDateTimeUTC'] as $key) {
+        if (empty($data[$key])) {
+            throw new Exception("Missing required field: $key");
+        }
+    }
+    $igcTitle             = trim($data['igcTitle']);
+    $pilot                = trim($data['pilot']);
+    $gliderType           = trim($data['gliderType']);
+    $competitionID        = trim($data['competitionID']);
+    $recordDateTimeUTC    = trim($data['IGCRecordDateTimeUTC']);
 
     // Validate that the IGC file has been provided as an upload.
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
@@ -75,59 +87,71 @@ try {
 
     // STEP 2: If no title match found, search by waypoint IDs.
     if (!$foundTask) {
+        // Extract just the IDs from our numeric waypoint array
+        $ids = array_column($igcWaypoints, 'id');
+
         $likeClauses = [];
-        $params = [];
-        foreach (array_keys($igcWaypoints) as $wpID) {
+        $params      = [];
+        foreach ($ids as $wpID) {
             $likeClauses[] = "PLNXML LIKE ?";
-            $params[] = '%<ATCWaypoint id="' . $wpID . '">%';
+            $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
         }
-        $whereClause = implode(" AND ", $likeClauses);
-        $wpQuery = "SELECT * FROM Tasks WHERE " . $whereClause;
-        // logMessage("Waypoint Query: " . $wpQuery);
-        // logMessage("Waypoint Query Params: " . print_r($params, true));
-        $stmt = $pdo->prepare($wpQuery);
-        $stmt->execute($params);
-        $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        // logMessage("Waypoint Results Count: " . count($wpResults));
-        
-        foreach ($wpResults as $candidate) {
-            // logMessage("Validating candidate (waypoint search) with EntrySeqID: " . $candidate['EntrySeqID']);
-            if (validateCandidate($candidate, $igcWaypoints)) {
-                $foundTask = $candidate;
-                // logMessage("Candidate validated successfully in waypoint search.");
-                break;
+
+        if (!empty($likeClauses)) {
+            $sql  = "SELECT * FROM Tasks WHERE " . implode(' AND ', $likeClauses);
+            // logMessage("Waypoint Query: " . $sql);
+            // logMessage("Waypoint Query Params: " . print_r($params, true));
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->execute($params);
+            $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            // logMessage("Waypoint Results Count: " . count($wpResults));
+
+            foreach ($wpResults as $candidate) {
+                // logMessage("Validating candidate (waypoint search) with EntrySeqID: " . $candidate['EntrySeqID']);
+                if (validateCandidate($candidate, $igcWaypoints)) {
+                    $foundTask = $candidate;
+                    // logMessage("Candidate validated successfully in waypoint search.");
+                    break;
+                }
             }
         }
     }
 
-    // STEP 3: If still no task found, try again ignoring departure & arrival
+    // STEP 3: If still no task found, search by interior waypoint IDs only
     if (!$foundTask) {
-        // get all waypoint IDs in order
-        $wpIDs = array_keys($igcWaypoints);
+        // 1) pull out just the IDs in order
+        $ids = array_column($igcWaypoints, 'id');
 
-        // only proceed if there are more than 2 waypoints
-        if (count($wpIDs) > 2) {
+        // 2) need at least 3 to drop first+last
+        if (count($ids) > 2) {
             // drop the first and last IDs
-            array_shift($wpIDs);
-            array_pop($wpIDs);
+            $interior = array_slice($ids, 1, -1);
 
-            // rebuild the LIKE clauses & params exactly as in Step 2
+            // build the SQL LIKE … AND … for each interior ID
             $likeClauses = [];
             $params      = [];
-            foreach ($wpIDs as $wpID) {
+            foreach ($interior as $wpID) {
                 $likeClauses[] = "PLNXML LIKE ?";
                 $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
             }
-            $whereClause = implode(" AND ", $likeClauses);
-            $wpQuery     = "SELECT * FROM Tasks WHERE " . $whereClause;
-            $stmt        = $pdo->prepare($wpQuery);
-            $stmt->execute($params);
-            $wpResults   = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-            foreach ($wpResults as $candidate) {
-                if (validateCandidate($candidate, $igcWaypoints)) {
-                    $foundTask = $candidate;
-                    break;
+            if (!empty($likeClauses)) {
+                $sql  = "SELECT * FROM Tasks WHERE " . implode(' AND ', $likeClauses);
+                // logMessage("Step 3 SQL: $sql | params: " . print_r($params, true));
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->execute($params);
+                $wpResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                // 3) full coordinate check on the original list (including first+last)
+                foreach ($wpResults as $candidate) {
+                    // logMessage("Step 3 validating EntrySeqID: " . $candidate['EntrySeqID']);
+                    if (validateCandidate($candidate, $igcWaypoints)) {
+                        $foundTask = $candidate;
+                        // logMessage("Step 3 match found: EntrySeqID " . $foundTask['EntrySeqID']);
+                        break;
+                    }
                 }
             }
         }

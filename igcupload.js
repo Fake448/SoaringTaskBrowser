@@ -342,10 +342,16 @@
                 }
             }
 
+            // build as an array of pairs instead of an object
+            const wpArray = waypoints.map(wp => ({
+                id: wp.originalId,
+                coord: `${wp.latitude},${wp.longitude}`
+            }));
+
             // Prepare data to send to PHP.
             const igcData = {
                 igcTitle: headerData.taskTitle,
-                igcWaypoints: JSON.stringify({}),
+                igcWaypoints: JSON.stringify(wpArray),
                 pilot: this.pilot,
                 gliderType: this.gliderType,
                 IGCRecordDateTimeUTC: keyRecordDateTime,
@@ -359,13 +365,6 @@
                 NB21Version: this.nb21Version,
                 Sim: this.sim
             };
-
-            // Create an object for the waypoints.
-            const wpObj = {};
-            waypoints.forEach(wp => {
-                wpObj[wp.originalId] = `${wp.latitude}, ${wp.longitude}`;
-            });
-            igcData.igcWaypoints = JSON.stringify(wpObj);
 
             // Save igcData in the instance for later use.
             this.igcData = igcData;
