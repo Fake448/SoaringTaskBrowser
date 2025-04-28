@@ -129,8 +129,15 @@ try {
             T.LastUpdate,
             CASE WHEN UT.MarkedFlownDateUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFlown,
             CASE WHEN UT.MarkedFlyNextUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFlyNext,
-            CASE WHEN UT.MarkedFavoritesUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFavorites
+            CASE WHEN UT.MarkedFavoritesUTC IS NOT NULL THEN 1 ELSE 0 END AS MarkedFavorites,
+            COALESCE(IRCounts.IGCRecordCount, 0) AS IGCRecordCount
         FROM Tasks T
+        LEFT JOIN (
+            SELECT EntrySeqID, COUNT(*) AS IGCRecordCount
+              FROM IGCRecords
+             GROUP BY EntrySeqID
+        ) IRCounts
+          ON IRCounts.EntrySeqID = T.EntrySeqID
         LEFT JOIN UsersTasks UT
             ON UT.EntrySeqID = T.EntrySeqID 
             AND UT.WSGUserID = :wsgUserID

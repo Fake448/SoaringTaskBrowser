@@ -3416,6 +3416,7 @@ class TaskBrowser {
                     { data: 'SoaringType', title: 'Soaring Type', name: 'SoaringType' },
                     { data: 'Duration', title: 'Duration', name: 'Duration' },
                     { data: 'Difficulty', title: 'Difficulty', name: 'Difficulty' },
+                    { data: 'IGCRecordCount', title: 'IGC', name: 'IGCRecordCount' },
                     {
                         data: 'LastUpdate',
                         title: 'Updated',
