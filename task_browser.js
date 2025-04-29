@@ -1656,25 +1656,38 @@ class TaskBrowser {
                     $(thead).find('th').eq(0).html('<input type="checkbox" id="select-all">');
                 },
                 drawCallback: function (settings) {
-                    // Bind "select all" functionality
-                    $('#select-all').off('click').on('click', function () {
-                        const checked = this.checked;
-                        $('.igc-select-checkbox').prop('checked', checked);
-                        $('.igc-select-checkbox').each(function () {
-                            const igcKey = $(this).data('key');
-                            tb.tbm.processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, checked);
-                        });
-                    });
+                    const api = this.api();
+                    const entrySeqID = tb.currentTask.EntrySeqID;
 
-                    // Bind individual checkbox change event
-                    $('.igc-select-checkbox').off('change').on('change', function () {
-                        const igcKey = $(this).data('key');
-                        const isChecked = $(this).is(':checked');
-                        tb.tbm.processIGCRecordDisplay(tb.currentTask.EntrySeqID, igcKey, isChecked);
-                    });
+                    // “Select All” checkbox
+                    $('#select-all')
+                        .off('click')
+                        .on('click', function () {
+                            const checked = this.checked;
+                            $('.igc-select-checkbox').prop('checked', checked);
+                            $('.igc-select-checkbox').each(function () {
+                                const igcKey = $(this).data('key');
+                                const $row = $(this).closest('tr');
+                                $row.toggleClass('chkbx-selected', checked);
+                                tb.tbm.processIGCRecordDisplay(entrySeqID, igcKey, checked);
+                            });
+                        });
+
+                    // Individual row checkbox
+                    $('.igc-select-checkbox')
+                        .off('change')
+                        .on('change', function () {
+                            const igcKey = $(this).data('key');
+                            const isChecked = this.checked;
+                            const $row = $(this).closest('tr');
+
+                            $row.toggleClass('chkbx-selected', isChecked);
+                            tb.tbm.processIGCRecordDisplay(entrySeqID, igcKey, isChecked);
+                        });
                 },
                 initComplete: function () {
                     var api = this.api();
+                    var tableBody = $('#igcRecordsTable tbody');
 
                     // 1) Immediately adjust in case you're already visible:
                     api.columns.adjust();
@@ -1706,6 +1719,40 @@ class TaskBrowser {
                         'width': '100%'
                     });
 
+                    // 4) Row‐click
+                    tableBody
+                        .off('click.rowSelect')
+                        .on('click.rowSelect', 'tr', function (e) {
+                            // ignore clicks on the checkbox or download link
+                            if ($(e.target).is('input, a')) return;
+
+                            // DE‐SELECT old row & restyle its track back to normal
+                            const $old = tableBody.find('tr.selected');
+                            if ($old.length) {
+                                const oldData = api.row($old).data();
+                                const oldPoly = tb.tbm.igcTrackCache[oldData.IGCKey];
+                                if (oldPoly && tb.tbm.map.hasLayer(oldPoly)) {
+                                    oldPoly.setStyle({
+                                        color: tb.tbm.igcTrackNormalColor,
+                                        weight: tb.tbm.igcTrackNormalWeight
+                                    });
+                                }
+                                $old.removeClass('selected');
+                            }
+
+                            // SELECT the clicked row & restyle its track to “selected”
+                            const $row = $(this).addClass('selected');
+                            const rowData = api.row(this).data();
+                            const poly = tb.tbm.igcTrackCache[rowData.IGCKey];
+                            if (poly && tb.tbm.map.hasLayer(poly)) {
+                                poly.setStyle({
+                                    color: tb.tbm.igcTrackSelectedColor,
+                                    weight: tb.tbm.igcTrackSelectedWeight
+                                });
+                            }
+                        });
+
+                    // 5) Analyze button
                     const analyzeBtn = $('<button>')
                         .attr('id', 'analyzeIGCBtn')
                         .addClass('igc-button-style')
@@ -1723,6 +1770,7 @@ class TaskBrowser {
                         });
                     filterDiv.prepend(analyzeBtn);
 
+                    // 6) Download IGC link
                     $('#igcRecordsTable tbody').on('click', '.download-igc-link', function (e) {
                         e.preventDefault();
                         // Retrieve the custom data attributes.
@@ -1732,6 +1780,7 @@ class TaskBrowser {
                         tb.downloadIGCFile(entrySeqID, igcKey);
                     });
 
+                    // 7) Highlight tracklog on hover on a row
                     $('#igcRecordsTable tbody').on('mouseenter', 'tr', function () {
                         let rowData = dt.row(this).data();
                         if (rowData) {
@@ -1746,12 +1795,22 @@ class TaskBrowser {
                         }
                     });
 
+                    // 8) On hover out, restore to either “selected” or “normal” style
                     $('#igcRecordsTable tbody').on('mouseleave', 'tr', function () {
-                        let rowData = dt.row(this).data();
-                        if (rowData) {
-                            let igcKey = rowData.IGCKey;
-                            if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
-                                tb.tbm.igcTrackCache[igcKey].setStyle({
+                        const rowData = dt.row(this).data();
+                        if (!rowData) return;
+                        const poly = tb.tbm.igcTrackCache[rowData.IGCKey];
+                        if (poly && tb.tbm.map.hasLayer(poly)) {
+                            const $row = $(this);
+                            // if the row is selected, re-apply the selected style
+                            if ($row.hasClass('selected')) {
+                                poly.setStyle({
+                                    weight: tb.tbm.igcTrackSelectedWeight,
+                                    color: tb.tbm.igcTrackSelectedColor
+                                });
+                            } else {
+                                // otherwise restore the normal style
+                                poly.setStyle({
                                     weight: tb.tbm.igcTrackNormalWeight,
                                     color: tb.tbm.igcTrackNormalColor
                                 });

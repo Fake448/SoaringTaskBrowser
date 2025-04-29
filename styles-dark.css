@@ -1123,6 +1123,11 @@ table.dataTable thead .sorting {
     text-align: left !important;
 }
 
+.igcRecordsTable tbody tr.selected {
+    background-color: #0000ff !important; /* or your preferred highlight color */
+    color: #ffffff;
+}
+
 .igc-button-style {
     background-color: #7289da;
     color: white;

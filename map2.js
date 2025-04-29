@@ -173,7 +173,9 @@ class TaskBrowserMap {
         tbm.igcTrackNormalWeight = 2;
         tbm.igcTrackNormalColor = 'black';
         tbm.igcTrackHighlightedWeight = 4;
-        tbm.igcTrackHighlightedColor = 'red';
+        tbm.igcTrackHighlightedColor = '#9900cc';
+        tbm.igcTrackSelectedWeight = 4;
+        tbm.igcTrackSelectedColor = 'red';
         tbm.igcParser = {
             parse: function (igcText) {
                 const fixes = [];
@@ -946,65 +948,71 @@ class TaskBrowserMap {
     }
 
     processIGCRecordDisplay(entrySeqID, igcKey, isChecked, igcText) {
-        let tbm = this;
-        // Check if the cache belongs to the current task.
+        const tbm = this;
+
+        // 1) If we’ve switched tasks, clear out old layers & cache
         if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
-
-            // Remove any cached track layers from the map.
-            Object.keys(tbm.igcTrackCache).forEach(key => {
-                if (tbm.map.hasLayer(tbm.igcTrackCache[key])) {
-                    tbm.map.removeLayer(tbm.igcTrackCache[key]);
-                }
+            Object.values(tbm.igcTrackCache).forEach(poly => {
+                if (tbm.map.hasLayer(poly)) tbm.map.removeLayer(poly);
             });
-
-            // Clear the cache and update the current task identifier.
             tbm.igcTrackCache = {};
             tbm.currentIGCCacheEntrySeqID = entrySeqID;
         }
 
+        // helper to restyle a polyline based on row.selected
+        function stylePolyline(poly) {
+            const $row = $(
+                `#igcRecordsTable tbody input[data-key="${igcKey}"]`
+            ).closest('tr');
+            const selected = $row.hasClass('selected');
+            poly.setStyle({
+                color: selected ? tbm.igcTrackSelectedColor : tbm.igcTrackNormalColor,
+                weight: selected ? tbm.igcTrackSelectedWeight : tbm.igcTrackNormalWeight
+            });
+        }
+
         if (isChecked) {
+            // 2a) Already cached? just add + style
             if (tbm.igcTrackCache[igcKey]) {
-                if (!tbm.map.hasLayer(tbm.igcTrackCache[igcKey])) {
-                    tbm.map.addLayer(tbm.igcTrackCache[igcKey]);
-                }
+                const poly = tbm.igcTrackCache[igcKey];
+                if (!tbm.map.hasLayer(poly)) tbm.map.addLayer(poly);
+                stylePolyline(poly);
+
             } else {
-                // Function to process the IGC text: parse and add the polyline.
+                // 2b) Not cached → load & cache
                 const processIGC = (igcContent) => {
                     const igcData = tbm.igcParser.parse(igcContent);
-                    if (igcData.fixes.length > 0) {
-                        const polyline = L.polyline(
-                            igcData.fixes.map(fix => [fix.lat, fix.lon]),
-                            { color: tbm.igcTrackNormalColor, weight: tbm.igcTrackNormalWeight }
-                        );
-                        tbm.igcTrackCache[igcKey] = polyline;
-                        polyline.addTo(tbm.map);
-                    } else {
-                        console.warn(`No fixes found for IGCKey ${igcKey}.`);
+                    if (!igcData.fixes.length) {
+                        console.warn(`No fixes for IGCKey ${igcKey}`);
+                        return;
                     }
+                    const poly = L.polyline(
+                        igcData.fixes.map(fix => [fix.lat, fix.lon]),
+                        {
+                            color: tbm.igcTrackNormalColor,
+                            weight: tbm.igcTrackNormalWeight
+                        }
+                    );
+                    tbm.igcTrackCache[igcKey] = poly;
+                    poly.addTo(tbm.map);
+                    stylePolyline(poly);
                 };
 
-                // If igcText is provided, process it directly; otherwise, fetch it.
                 if (igcText) {
                     processIGC(igcText);
                 } else {
                     fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
-                        .then(response => {
-                            if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
-                            }
-                            return response.text();
-                        })
-                        .then(fetchedIgcText => {
-                            processIGC(fetchedIgcText);
-                        })
-                        .catch(error => {
-                            console.error(`Error processing IGC file for IGCKey ${igcKey}:`, error);
-                        });
+                        .then(r => r.ok ? r.text() : Promise.reject(r.status))
+                        .then(processIGC)
+                        .catch(err => console.error(`Error loading IGC ${igcKey}:`, err));
                 }
             }
+
         } else {
-            if (tbm.igcTrackCache[igcKey]) {
-                tbm.map.removeLayer(tbm.igcTrackCache[igcKey]);
+            // 3) Unchecked → remove layer
+            const poly = tbm.igcTrackCache[igcKey];
+            if (poly && tbm.map.hasLayer(poly)) {
+                tbm.map.removeLayer(poly);
             }
         }
     }
