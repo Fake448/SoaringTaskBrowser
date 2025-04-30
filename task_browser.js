@@ -3355,8 +3355,15 @@ class TaskBrowser {
 
             // Format difficulty rating
             if (task.DifficultyRating === "0. None / Custom") {
-                task.Difficulty = truncate(task.DifficultyExtraInfo, 30) || 'Custom';
+                if (task.DifficultyExtraInfo) {
+                    // “Custom” with extra info
+                    task.Difficulty = `Custom (${truncate(task.DifficultyExtraInfo, 30)})`;
+                } else {
+                    // “Custom” but no extra info
+                    task.Difficulty = 'Not specified';
+                }
             } else {
+                // Any other rating
                 task.Difficulty = task.DifficultyRating;
                 if (task.DifficultyExtraInfo) {
                     task.Difficulty += ` (${truncate(task.DifficultyExtraInfo, 30)})`;
