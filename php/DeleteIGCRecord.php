@@ -55,7 +55,9 @@ try {
     $stmt = $pdo->prepare($deleteQuery);
     $stmt->bindParam(':igcKey', $IGCKey, PDO::PARAM_STR);
     $stmt->execute();
-    
+
+    logMessage("***** DELETION ***** Deleted IGC Record {$IGCKey}");
+
     echo json_encode([
         'status' => 'success',
         'message' => 'IGC record and file deleted successfully.',
