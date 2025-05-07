@@ -17,61 +17,107 @@ try {
 
     if ($logEnabled) logMessage("SearchTaskByIGC.php: Script started.");
 
-    // Use POST data instead of reading JSON from php://input
+    // Grab all POST data
     $data = $_POST;
     if (empty($data)) {
         throw new Exception("No POST data received.");
     }
-    // If igcWaypoints is sent as a JSON string, decode it.
-    if (isset($data['igcWaypoints']) && is_string($data['igcWaypoints'])) {
-        $data['igcWaypoints'] = json_decode($data['igcWaypoints'], true);
-    }
-    if (
-        !isset($data['igcTitle']) || 
-        !isset($data['igcWaypoints']) || 
-        !isset($data['pilot']) || 
-        !isset($data['gliderType']) || 
-        !isset($data['competitionID']) || 
-        !isset($data['IGCRecordDateTimeUTC'])
-    ) {
-        throw new Exception("Invalid input data. Required keys: igcTitle, igcWaypoints, pilot, gliderType, competitionID, IGCRecordDateTimeUTC.");
-    }
-    
-    $igcTitle = trim($data['igcTitle']);
-    $igcWaypoints = $data['igcWaypoints']; // associative array: waypointID => coordinate string
-    if ($logEnabled) logMessage("IGC Title: " . $igcTitle);
-    if ($logEnabled) logMessage("IGC Waypoints: " . print_r($igcWaypoints, true));
 
-    // Validate that the IGC file has been provided as an upload.
+    // Detect forced‐match override
+    $forced = isset($data['forcedEntrySeqID']) 
+           && trim($data['forcedEntrySeqID']) !== '';
+
+    // These fields are always required, even in forced mode:
+    $alwaysRequired = [
+        'pilot',
+        'gliderType',
+        'competitionID',
+        'IGCRecordDateTimeUTC'
+    ];
+    foreach ($alwaysRequired as $field) {
+        if (!isset($data[$field]) || trim($data[$field]) === '') {
+            throw new Exception("Missing required field: $field");
+        }
+    }
+
+    // Only when NOT forced do we also require title + waypoints:
+    if (! $forced) {
+        if (!isset($data['igcTitle']) || trim($data['igcTitle']) === '') {
+            throw new Exception("Missing required field: igcTitle");
+        }
+        if (!isset($data['igcWaypoints']) || trim($data['igcWaypoints']) === '') {
+            throw new Exception("Missing required field: igcWaypoints");
+        }
+        // decode waypoints JSON
+        if (is_string($data['igcWaypoints'])) {
+            $data['igcWaypoints'] = json_decode($data['igcWaypoints'], true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new Exception("Could not decode igcWaypoints JSON: " . json_last_error_msg());
+            }
+        }
+    }
+
+    // now we can safely pull out our variables:
+    $pilot                = trim($data['pilot']);
+    $gliderType           = trim($data['gliderType']);
+    $competitionID        = trim($data['competitionID']);
+    $IGCRecordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']);
+    if (! $forced) {
+        $igcTitle     = trim($data['igcTitle']);
+        $igcWaypoints = $data['igcWaypoints'];
+    }
+
+    // Validate upload
     if (!isset($_FILES['igcFile']) || $_FILES['igcFile']['error'] !== UPLOAD_ERR_OK) {
         throw new Exception("IGC file not provided in the upload.");
     }
 
-    // Open the database connection
+    // Open database, etc.
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     $foundTask = null;
 
-    // STEP 1: Search by Title
-    $titleQuery = "SELECT * FROM Tasks WHERE PLNXML LIKE :titleClause";
-    $stmt = $pdo->prepare($titleQuery);
-    $titleClause = '%<Title>' . $igcTitle . '</Title>%';
-    $stmt->bindParam(':titleClause', $titleClause, PDO::PARAM_STR);
-    $stmt->execute();
-    $titleResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // ▶ Forced‐match override: if client passed forcedEntrySeqID, load that task and skip all searches
+    if ($forced) {
+        $forcedId = (int) trim($data['forcedEntrySeqID']);
+        $stmtForce = $pdo->prepare("SELECT EntrySeqID, SimDateTime, Title, PLNXML FROM Tasks WHERE EntrySeqID = :eid");
+        $stmtForce->bindValue(':eid', $forcedId, PDO::PARAM_INT);
+        $stmtForce->execute();
+        $foundTask = $stmtForce->fetch(PDO::FETCH_ASSOC);
+
+        if (! $foundTask) {
+            // forced ID not real → bail out immediately
+            echo json_encode([
+              'status'  => 'not_found',
+              'message' => "Forced task ID {$forcedId} not found."
+            ]);
+            exit;
+        }
+        // else: we have $foundTask, so Steps 1–3 below will be skipped
+    }
+
+    if (! $foundTask) {
+        // STEP 1: Search by Title
+        $titleQuery = "SELECT EntrySeqID, SimDateTime, Title, PLNXML FROM Tasks WHERE PLNXML LIKE :titleClause";
+        $stmt = $pdo->prepare($titleQuery);
+        $titleClause = '%<Title>' . $igcTitle . '</Title>%';
+        $stmt->bindParam(':titleClause', $titleClause, PDO::PARAM_STR);
+        $stmt->execute();
+        $titleResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    if ($logEnabled) logMessage("Title Query: " . $titleQuery);
-    if ($logEnabled) logMessage("Title Query Clause: " . $titleClause);
-    if ($logEnabled) logMessage("Title Results Count: " . count($titleResults));
+        if ($logEnabled) logMessage("Title Query: " . $titleQuery);
+        if ($logEnabled) logMessage("Title Query Clause: " . $titleClause);
+        if ($logEnabled) logMessage("Title Results Count: " . count($titleResults));
     
-    if (!empty($titleResults)) {
-        foreach ($titleResults as $candidate) {
-            if ($logEnabled) logMessage("Validating candidate with EntrySeqID: " . $candidate['EntrySeqID']);
-            if (validateCandidate($candidate, $igcWaypoints)) {
-                $foundTask = $candidate;
-                if ($logEnabled) logMessage("Candidate validated successfully.");
-                break;
+        if (!empty($titleResults)) {
+            foreach ($titleResults as $candidate) {
+                if ($logEnabled) logMessage("Validating candidate with EntrySeqID: " . $candidate['EntrySeqID']);
+                if (validateCandidate($candidate, $igcWaypoints)) {
+                    $foundTask = $candidate;
+                    if ($logEnabled) logMessage("Candidate validated successfully.");
+                    break;
+                }
             }
         }
     }
@@ -89,7 +135,7 @@ try {
         }
     
         if (!empty($likeClauses)) {
-            $sql  = "SELECT * FROM Tasks WHERE " . implode(' AND ', $likeClauses);
+            $sql  = "SELECT EntrySeqID, SimDateTime, Title, PLNXML FROM Tasks WHERE " . implode(' AND ', $likeClauses);
             if ($logEnabled) logMessage("Waypoint Query: " . $sql);
             if ($logEnabled) logMessage("Waypoint Query Params: " . print_r($params, true));
     
@@ -129,7 +175,7 @@ try {
                 $params[]      = '%<ATCWaypoint id="' . $wpID . '">%';
             }
     
-            $sql = "SELECT * FROM Tasks WHERE " . implode(" AND ", $likeClauses);
+            $sql = "SELECT EntrySeqID, SimDateTime, Title, PLNXML FROM Tasks WHERE " . implode(" AND ", $likeClauses);
             if ($logEnabled) logMessage("Step 3: SQL query: " . $sql . " | params: " . print_r($params, true));
     
             $stmt = $pdo->prepare($sql);
@@ -166,11 +212,12 @@ try {
         $gliderType = trim($data['gliderType']);
         $recordDateTimeUTC = trim($data['IGCRecordDateTimeUTC']); // expected in YYMMDDHHMMSS format
         
-        $IGCKey = $entrySeqID . "_" . $competitionID . "_" . $gliderType . "_" . $recordDateTimeUTC;
+        $IGCKey = strtoupper($entrySeqID . "_" . $competitionID . "_" . $gliderType . "_" . $recordDateTimeUTC);
+
         if ($logEnabled) logMessage("Constructed IGCKey: " . $IGCKey);
         
         // Check the IGCRecords table for a previous entry with the same key
-        $checkQuery = "SELECT * FROM IGCRecords WHERE IGCKey = :igcKey";
+        $checkQuery = "SELECT IGCKey FROM IGCRecords WHERE UPPER(IGCKey) = :igcKey";
         $stmt = $pdo->prepare($checkQuery);
         $stmt->bindParam(':igcKey', $IGCKey, PDO::PARAM_STR);
         $stmt->execute();
@@ -199,6 +246,11 @@ try {
             if (!move_uploaded_file($_FILES['igcFile']['tmp_name'], $targetFile)) {
                 throw new Exception("Failed to save the uploaded IGC file.");
             }
+
+            $plnFile = $igcKeyDir . '/' . $foundTask['EntrySeqID'] . '.pln';
+            if (file_put_contents($plnFile, $foundTask['PLNXML']) === false) {
+                throw new Exception("Failed to write temporary PLN file to $plnFile");
+            }
             
             // --- Begin Browserless Call Integration ---
             if (isset($blesstok) && !empty($blesstok)) {
@@ -207,31 +259,46 @@ try {
 
                 // Build the URL without including "https://"
                 $igcFileUrl = $rootWithoutProtocol . "/php/DPHXTemp/{$IGCKey}/" . urlencode($IGCKey . '.igc');
+                $plnFileUrl = $rootWithoutProtocol . "/php/DPHXTemp/{$IGCKey}/" . urlencode($foundTask['EntrySeqID'] . '.pln');
 
                 $url = "https://production-sfo.browserless.io/chrome/bql";
                 $endpoint = sprintf("%s?token=%s", $url, $blesstok);
 
                 // Build the GraphQL mutation, injecting the igcFileUrl in place of the placeholder.
                 $query = "mutation ExtractTracklogsOnly {
-                          goto(
-                            url: \"https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc={$igcFileUrl}\",
-                            waitUntil: networkIdle
-                          ) {
-                            status
-                          }
+                      goto(
+                        url: \"https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc={$igcFileUrl}&pln={$plnFileUrl}\",
+                        waitUntil: networkIdle
+                      ) {
+                        status
+                      }
 
-                          waitTracklogs: waitForSelector(selector: \"#tracklogs\", visible: true) {
-                            time
-                          }
+                      waitTabReady: waitForSelector(selector: \"#tab_tracklogs a\", visible: true, timeout: 10000) {
+                        time
+                      }
 
-                          tracklogsHTML: html(selector: \"#tracklogs\", visible: true) {
-                            html
-                          }
+                      clickTabTracklogs: click(
+                        selector: \"#tab_tracklogs a\",
+                        scroll: true,
+                        wait: true,
+                        visible: true,
+                        timeout: 10000
+                      ) {
+                        time
+                      }
 
-                          plannerVersion: html(selector: \"#b21_task_planner_version\", visible: true) {
-                            html
-                          }
-                        }";
+                      waitTracklogs: waitForSelector(selector: \"#tracklogs\", visible: true) {
+                        time
+                      }
+
+                      tracklogsHTML: html(selector: \"#tracklogs\", visible: true) {
+                        html
+                      }
+
+                      plannerVersion: html(selector: \"#b21_task_planner_version\", visible: true) {
+                        html
+                      }
+                    }";
 
                 $postData = json_encode([
                     'query' => $query,
@@ -296,6 +363,7 @@ try {
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 // 1. Extract the raw HTML for tracklogs...
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
+                if ($logEnabled) file_put_contents($igcKeyDir . '/tracklogs_html_dump.html', $htmlContent);
 
                 // 2. Extract the planner version (TPVersion)
                 $plannerVersion = '';
@@ -336,6 +404,7 @@ try {
 
                         // result details div
                         $resultDivCandidates = $xpath->query('.//div[contains(@class, "tracklogs_entry_finished")]', $nameDiv);
+
                         if ($resultDivCandidates->length > 0) {
                             $resultDiv = $resultDivCandidates->item(0);
                             $class = $resultDiv->getAttribute('class');
@@ -431,6 +500,8 @@ try {
  * @return float|null
  */
 function coordinateToDecimal($coord) {
+    global $logEnabled;
+
     $coord = trim($coord);
     $coord = str_replace(array("\xC2\xB0", "°"), "°", $coord);
     $coord = preg_replace('/\s+/', ' ', $coord);
@@ -489,6 +560,8 @@ function compareCoordinates($coord1, $coord2, $tolerance = 0.001) {
  * @return bool               True if all waypoints pass tolerance check
  */
 function validateCandidate(array $candidate, array $igcWaypoints): bool {
+    global $logEnabled;
+
     $entrySeq = $candidate['EntrySeqID'] ?? 'unknown';
     if ($logEnabled) logMessage("validateCandidate: *** START validation for EntrySeqID: {$entrySeq} ***");
 
