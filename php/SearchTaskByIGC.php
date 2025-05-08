@@ -23,7 +23,12 @@ try {
         throw new Exception("No POST data received.");
     }
 
-    // Detect forced‐match override
+    // if JS only sent EntrySeqID, treat it as a forced match
+    if (isset($data['EntrySeqID']) && !isset($data['forcedEntrySeqID'])) {
+        $data['forcedEntrySeqID'] = $data['EntrySeqID'];
+    }
+
+    // Detect forced-match override
     $forced = isset($data['forcedEntrySeqID']) 
            && trim($data['forcedEntrySeqID']) !== '';
 
@@ -264,8 +269,9 @@ try {
                 $url = "https://production-sfo.browserless.io/chrome/bql";
                 $endpoint = sprintf("%s?token=%s", $url, $blesstok);
 
-                // Build the GraphQL mutation, injecting the igcFileUrl in place of the placeholder.
-                $query = "mutation ExtractTracklogsOnly {
+                if ($forced) {
+                    // Forced‐match flow: no “load task” button
+                    $query = "mutation ExtractTracklogsOnly {
                       goto(
                         url: \"https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc={$igcFileUrl}&pln={$plnFileUrl}\",
                         waitUntil: networkIdle
@@ -273,25 +279,68 @@ try {
                         status
                       }
 
-                      waitTabReady: waitForSelector(selector: \"#tab_tracklogs a\", visible: true, timeout: 10000) {
+                      waitTabReady: waitForSelector(selector: \"#tab_tracklogs a\") {
                         time
                       }
 
-                      clickTabTracklogs: click(
-                        selector: \"#tab_tracklogs a\",
-                        scroll: true,
-                        wait: true,
-                        visible: true,
-                        timeout: 10000
+                      clickTabTracklogs: click(selector: \"#tab_tracklogs a\", wait: true) {
+                        time
+                      }
+
+                      waitTracklogsTable: waitForSelector(selector: \"#tracklogs_table\") {
+                        time
+                      }
+
+                      tracklogsHTML: html(selector: \"#tracklogs_table\") {
+                        html
+                      }
+
+                      plannerVersion: html(selector: \"#b21_task_planner_version\") {
+                        html
+                      }
+                    }";
+                } else {
+                    // Normal flow: “load task” button present
+                    $query = "mutation ExtractTracklogsOnly {
+                      goto(
+                        url: \"https://xp-soaring.github.io/tasks/b21_task_planner/index.html?igc={$igcFileUrl}&pln={$plnFileUrl}\",
+                        waitUntil: networkIdle
                       ) {
+                        status
+                      }
+
+                      waitTabReady: waitForSelector(selector: \"#tab_tracklogs a\", visible: true) {
+                        time
+                      }
+                      clickTabTracklogs1: click(selector: \"#tab_tracklogs a\", wait: true, visible: true) {
                         time
                       }
 
-                      waitTracklogs: waitForSelector(selector: \"#tracklogs\", visible: true) {
+                      waitTracklogRow: waitForSelector(selector: \"div.tracklogs_entry_name\", visible: true) {
+                        time
+                      }
+                      clickTracklogName: click(selector: \"div.tracklogs_entry_name\", wait: true, visible: true) {
                         time
                       }
 
-                      tracklogsHTML: html(selector: \"#tracklogs\", visible: true) {
+                      waitLoadTaskButton: waitForSelector(selector: \"#tracklog_info_load_task\", visible: true) {
+                        time
+                      }
+                      clickLoadTask: click(selector: \"#tracklog_info_load_task\", wait: true, visible: true) {
+                        time
+                      }
+
+                      waitTabReadyAgain: waitForSelector(selector: \"#tab_tracklogs a\", visible: true) {
+                        time
+                      }
+                      clickTabTracklogs2: click(selector: \"#tab_tracklogs a\", wait: true, visible: true) {
+                        time
+                      }
+
+                      waitTracklogsTable: waitForSelector(selector: \"#tracklogs_table\", visible: true) {
+                        time
+                      }
+                      tracklogsHTML: html(selector: \"#tracklogs_table\", visible: true) {
                         html
                       }
 
@@ -299,6 +348,7 @@ try {
                         html
                       }
                     }";
+                }
 
                 $postData = json_encode([
                     'query' => $query,
@@ -360,10 +410,20 @@ try {
             }
 
             // --- BEGIN: Parse Browserless Response to Extract IGC Results ---
+            if ($logEnabled) {
+                file_put_contents(
+                    $igcKeyDir . '/browserless_full_dump.json',
+                    json_encode($browserlessResult, JSON_PRETTY_PRINT)
+                );
+            }
             if (isset($browserlessResult['data']['tracklogsHTML']['html'])) {
                 // 1. Extract the raw HTML for tracklogs...
                 $htmlContent = $browserlessResult['data']['tracklogsHTML']['html'];
-                if ($logEnabled) file_put_contents($igcKeyDir . '/tracklogs_html_dump.html', $htmlContent);
+
+                // if it starts with "<tr", wrap in a dummy table
+                if (stripos(ltrim($htmlContent), '<tr') === 0) {
+                    $htmlContent = '<table id="tracklogs_table">'.$htmlContent.'</table>';
+                }
 
                 // 2. Extract the planner version (TPVersion)
                 $plannerVersion = '';

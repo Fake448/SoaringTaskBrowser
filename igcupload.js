@@ -242,7 +242,7 @@
             this.nb21Version = "";
             this.sim = "";
 
-            // Parse top lines (AXXX, HF...) before the first "C"
+            // top AXXX / HF lines
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim();
                 if (line.startsWith("C")) break;
@@ -251,230 +251,368 @@
                     this.nb21Version = aObj.nb21Version;
                     this.sim = aObj.sim;
                 } else if (line.startsWith("HF")) {
-                    const hfObj = this.parseHFLine(line);
-                    if (hfObj) {
-                        if (hfObj.key === "HFPLTPILOTINCHARGE") {
-                            this.pilot = hfObj.value;
-                        } else if (hfObj.key === "HFGIDGLIDERID") {
-                            this.gliderID = hfObj.value;
-                        } else if (hfObj.key === "HFCIDCOMPETITIONID") {
-                            this.competitionID = hfObj.value;
-                        } else if (hfObj.key === "HFCCLCOMPETITIONCLASS") {
-                            this.competitionClass = hfObj.value;
-                        } else if (hfObj.key === "HFGTYGLIDERTYPE") {
-                            this.gliderType = hfObj.value;
+                    const hf = this.parseHFLine(line);
+                    if (hf) {
+                        switch (hf.key) {
+                            case "HFPLTPILOTINCHARGE": this.pilot = hf.value; break;
+                            case "HFGIDGLIDERID": this.gliderID = hf.value; break;
+                            case "HFCIDCOMPETITIONID": this.competitionID = hf.value; break;
+                            case "HFCCLCOMPETITIONCLASS": this.competitionClass = hf.value; break;
+                            case "HFGTYGLIDERTYPE": this.gliderType = hf.value; break;
                         }
                     }
                 }
             }
 
-            // Normalize Glider Type
+            // normalize glider type
             if (this.gliderType) {
-                const normalized = B21_GLIDERS.find_glider_type(this.gliderType);
-                if (normalized) {
-                    this.gliderType = normalized;
-                }
+                const norm = B21_GLIDERS.find_glider_type(this.gliderType);
+                if (norm) this.gliderType = norm;
             }
 
-            // Parse header and waypoints from C-lines.
+            // collect C‐records
             for (const line of lines) {
-                if (line.startsWith("C")) {
-                    if (!headerData) {
-                        headerData = this.parseHeader(line);
-                        if (headerData) continue;
-                    }
-                    const wp = this.parseWaypoint(line);
-                    if (wp) {
-                        waypoints.push(wp);
-                    }
+                if (!line.startsWith("C")) continue;
+                if (!headerData) {
+                    headerData = this.parseHeader(line);
+                    if (headerData) continue;
                 }
+                const wp = this.parseWaypoint(line);
+                if (wp) waypoints.push(wp);
             }
 
-            let localDateRaw = "";
-            let bCount = 0;
-            for (const line of lines) {
-                if (line.startsWith("B")) {
+            // 2) LocalDate via LDAT
+            let localDateRaw = "", bCount = 0;
+            for (const l of lines) {
+                if (l.startsWith("B")) {
                     bCount++;
-                    // if we've already captured a date by the first B, stop
-                    if (bCount === 1 && localDateRaw) break;
-                    // or once we hit the second B, stop regardless
-                    if (bCount === 2) break;
+                    if ((bCount === 1 && localDateRaw) || bCount === 2) break;
                     continue;
                 }
-                // look for “LDAT <YYYYMMDD> <YYYYMMDD>”
-                const m = line.match(/LDAT\s+\d{8}\s+(\d{8})/);
-                if (m) {
-                    localDateRaw = m[1];  // overwrite so the last one is kept
-                }
+                const m = l.match(/LDAT\s+\d{8}\s+(\d{8})/);
+                if (m) localDateRaw = m[1];
             }
-
-            // format “YYYYMMDD” → “YYYY‑MM‑DD”
             let localDate = "";
             if (localDateRaw) {
-                const y = localDateRaw.slice(0, 4);
-                const mo = localDateRaw.slice(4, 6);
-                const d = localDateRaw.slice(6, 8);
-                localDate = `${y}-${mo}-${d}`;
+                localDate = `${localDateRaw.slice(0, 4)}-${localDateRaw.slice(4, 6)}-${localDateRaw.slice(6, 8)}`;
             }
 
-            // Parse the B record for Begin Time.
+            // 3) BeginTimeUTC from first B‐record
             const beginTimeUTC = this.parseBRecord(lines);
 
-            if (!headerData) {
-                alert("Could not load flight plan from IGC file!");
+            // ——————————————————————————————————————————————
+            // If C‐header present → normal path
+            // ——————————————————————————————————————————————
+            if (headerData) {
+                // build display + key
+                const formattedDate = this.formatUTCDate(headerData.utcDate);
+                const formattedUTCTime = this.formatTime(headerData.utcTime);
+                const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
+                const keyRecordDateTime = this.formatKeyDateTime(headerData.utcDate, headerData.utcTime);
+
+                // localTime fallback
+                let localTime = headerData.localTime;
+                if (localTime === "000000") {
+                    const ltim = lines.find(l => /\bLTIM\b/.test(l));
+                    const mm = ltim && ltim.match(/LTIM\s+\d{6}\s+(\d{6})/);
+                    if (mm) localTime = mm[1];
+                }
+
+                // package waypoints + igcData
+                const wpArray = waypoints.map(wp => ({
+                    id: wp.originalId,
+                    coord: `${wp.latitude},${wp.longitude}`
+                }));
+
+                const igcData = {
+                    igcTitle: headerData.taskTitle,
+                    igcWaypoints: JSON.stringify(wpArray),
+                    pilot: this.pilot,
+                    gliderType: this.gliderType,
+                    IGCRecordDateTimeUTC: keyRecordDateTime,
+                    EntrySeqID: "",
+                    LocalTime: localTime,
+                    LocalDate: localDate,
+                    BeginTimeUTC: beginTimeUTC,
+                    CombinedUTCDisplay: combinedUTCDisplay,
+                    gliderID: this.gliderID,
+                    competitionID: this.competitionID,
+                    competitionClass: this.competitionClass,
+                    NB21Version: this.nb21Version,
+                    Sim: this.sim
+                };
+
+                this.igcData = igcData;
+
+                // build formData + send
+                const formData = new FormData();
+                for (let k in igcData) formData.append(k, igcData[k]);
+                formData.append("igcFile", file);
+
+                this.taskBrowser.tbm.showLoadingSpinner("Processing IGC file...");
+                this.prepareIGCOnServer(formData, text);
                 return;
             }
 
-            const formattedDate = this.formatUTCDate(headerData.utcDate);
-            const formattedUTCTime = this.formatTime(headerData.utcTime);
-            const combinedUTCDisplay = `${formattedDate} ${formattedUTCTime}`;
-            // For key construction, date/time must be in YYMMDDHHMMSS format.
-            const keyRecordDateTime = this.formatKeyDateTime(headerData.utcDate, headerData.utcTime);
+            // ——————————————————————————————————————————————
+            // NO C-header → fallback via HFDTE + manual-match
+            // ——————————————————————————————————————————————
 
-            // take the C‑record’s localTime…
-            let localTime = headerData.localTime;
-            // …unless it’s “000000”, in which case grab the second 6‑digit field from the first LTIM line
-            if (localTime === '000000') {
-                const ltimLine = lines.find(l => /\bLTIM\b/.test(l));
-                if (ltimLine) {
-                    const m = ltimLine.match(/LTIM\s+\d{6}\s+(\d{6})/);
-                    if (m) localTime = m[1];
+            // 0) Must have a task loaded
+            const task = this.taskBrowser.currentTask;
+            if (!task || !task.EntrySeqID) {
+                alert("IGC missing C-header and no task selected → cannot match automatically.");
+                return;
+            }
+
+            // 1) Ensure the map is centred on that task & details panel open
+            this.taskBrowser.tbm.zoomToTask(task.EntrySeqID);
+            this.taskBrowser.TaskDetailsPanelVisible = true;
+            this.taskBrowser.showTaskDetailsPanel();
+
+            // 2) pull date from HFDTE
+            const hfdteLine = lines.find(l => l.startsWith("HFDTE"));
+            let fallbackDate = null;
+            if (hfdteLine) {
+                const m = hfdteLine.match(/^HFDTE(\d{2})(\d{2})(\d{2})$/);
+                if (m) {
+                    const [, dd, mo, yy] = m;
+                    fallbackDate = new Date(Date.UTC(
+                        2000 + parseInt(yy, 10),
+                        parseInt(mo, 10) - 1,
+                        parseInt(dd, 10)
+                    ));
                 }
             }
-
-            // build as an array of pairs instead of an object
-            const wpArray = waypoints.map(wp => ({
-                id: wp.originalId,
-                coord: `${wp.latitude},${wp.longitude}`
-            }));
-
-            // Prepare data to send to PHP.
-            const igcData = {
-                igcTitle: headerData.taskTitle,
-                igcWaypoints: JSON.stringify(wpArray),
-                pilot: this.pilot,
-                gliderType: this.gliderType,
-                IGCRecordDateTimeUTC: keyRecordDateTime,
-                EntrySeqID: "",
-                LocalTime: localTime,
-                LocalDate: localDate,
-                BeginTimeUTC: beginTimeUTC,
-                gliderID: this.gliderID,
-                competitionID: this.competitionID,
-                competitionClass: this.competitionClass,
-                NB21Version: this.nb21Version,
-                Sim: this.sim
-            };
-
-            // Save igcData in the instance for later use.
-            this.igcData = igcData;
-
-            // Build FormData and append each field.
-            const formData = new FormData();
-            for (let key in igcData) {
-                formData.append(key, igcData[key]);
+            if (!fallbackDate) {
+                alert("IGC missing C-header and invalid HFDTE → cannot determine UTC date.");
+                return;
             }
-            // Append the IGC file.
-            formData.append('igcFile', file);
 
-            // Query the server for a matching task.
-            this.taskBrowser.tbm.showLoadingSpinner("Processing IGC file...");
-            fetch('php/SearchTaskByIGC.php', {
-                method: 'POST',
-                body: formData,
-                credentials: 'include'
-            })
-                .then(response => response.json())
-                .then(data => {
+            // 3) pull time from first B-record
+            const B0 = lines.find(l => l.startsWith("B"));
+            if (B0) {
+                fallbackDate.setUTCHours(
+                    parseInt(B0.substr(1, 2), 10),
+                    parseInt(B0.substr(3, 2), 10),
+                    parseInt(B0.substr(5, 2), 10)
+                );
+            }
+
+            // localTime fallback
+            let localTime = "";
+            const ltim = lines.find(l => /\bLTIM\b/.test(l));
+            const mm = ltim && ltim.match(/LTIM\s+\d{6}\s+(\d{6})/);
+            if (mm) localTime = mm[1];
+
+            // 4) build key + display
+            const pad = n => String(n).padStart(2, "0");
+            const Y = fallbackDate.getUTCFullYear();
+            const keyRecordDateTime = [
+                String(Y).slice(2),
+                pad(fallbackDate.getUTCMonth() + 1),
+                pad(fallbackDate.getUTCDate()),
+                pad(fallbackDate.getUTCHours()),
+                pad(fallbackDate.getUTCMinutes()),
+                pad(fallbackDate.getUTCSeconds())
+            ].join("");
+            const combinedUTCDisplay =
+                `${Y}-${pad(fallbackDate.getUTCMonth() + 1)}-${pad(fallbackDate.getUTCDate())}` +
+                ` ${pad(fallbackDate.getUTCHours())}:${pad(fallbackDate.getUTCMinutes())}Z`;
+
+            // 5) Draw the IGC track temporarily to compute coverage
+            const tempKey = `manual_${Date.now()}`;
+            this.taskBrowser.tbm.processIGCRecordDisplay(
+                task.EntrySeqID,
+                tempKey,
+                true,    // show immediately
+                text     // full IGC so it can parse trackpoints
+            );
+
+            const bounds = this.taskBrowser.tbm.map.getBounds();
+            const latlngs = this.taskBrowser.tbm.igcTrackCache[tempKey].getLatLngs();
+            const inside = latlngs.filter(p => bounds.contains(p)).length;
+            const pct = inside / latlngs.length;
+
+            // 6) if under 50%, abort (and remove track)
+            if (pct < 0.5) {
+                // remove the temp track
+                const layer = this.taskBrowser.tbm.igcTrackCache[tempKey];
+                if (layer) {
+                    this.taskBrowser.tbm.map.removeLayer(layer);
+                    delete this.taskBrowser.tbm.igcTrackCache[tempKey];
+                }
+                this.taskBrowser.tbm.hideLoadingSpinner();
+                // Delay the alert so the map update and panel have time to render
+                setTimeout(() => {
+                    alert("IGC track does not sufficiently overlap the selected task → aborting.");
+                }, 300);
+                return;
+            }
+
+            // 7–9) delay the confirm + payload so the map & panel can finish rendering
+            setTimeout(() => {
+                // 7) ask user to confirm
+                if (!confirm(
+                    "This IGC lacks a C-header, but its track overlaps the loaded task.\n" +
+                    "Match it to this task?"
+                )) {
+                    // user said No → remove the temp track
+                    const layer = this.taskBrowser.tbm.igcTrackCache[tempKey];
+                    if (layer) {
+                        this.taskBrowser.tbm.map.removeLayer(layer);
+                        delete this.taskBrowser.tbm.igcTrackCache[tempKey];
+                    }
                     this.taskBrowser.tbm.hideLoadingSpinner();
-                    if (data.status === 'not_found') {
-                        alert("Task not found in the database.");
-                    }
-                    else if (data.status === 'duplicate') {
-                        alert("IGC file already exists in the database.");
-                    }
-                    else if (data.status === 'found') {
-                        igcData.EntrySeqID = data.EntrySeqID;
-                        // Construct the IGCKey using the new format:
-                        // EntrySeqID_CompetitionID_GliderType_IGCRecordDateTimeUTC
-                        const key = `${igcData.EntrySeqID}_${igcData.competitionID}_${igcData.gliderType}_${igcData.IGCRecordDateTimeUTC}`;
-                        igcData.IGCKey = key;
+                    return;
+                }
 
-                        // Build the matching details HTML.
-                        let resultsLine = "";
-                        if (data.browserless && data.browserless.parsedResults) {
-                            const r = data.browserless.parsedResults;
-                            // Build the prefix using emoji for validity, task status, and penalties.
-                            resultsLine += r.IGCValid ? "🔒" : "❗";
-                            resultsLine += r.TaskCompleted ? "🏁" : "❌";
-                            resultsLine += this.localDateTimeMatch(igcData.LocalDate, igcData.LocalTime, data.SimDateTime)
-                                ? "⌚"
-                                : "❌";
-                            resultsLine += r.Penalties ? "👮" : "✅";
+                // 8) build the forced payload
+                const wpArray = waypoints.map(wp => ({
+                    id: wp.originalId,
+                    coord: `${wp.latitude},${wp.longitude}`
+                }));
+                const igcData = {
+                    igcTitle: task.taskTitle,
+                    igcWaypoints: JSON.stringify(wpArray),
+                    pilot: this.pilot,
+                    gliderType: this.gliderType,
+                    IGCRecordDateTimeUTC: keyRecordDateTime,
+                    EntrySeqID: task.EntrySeqID,  // forced
+                    LocalTime: localTime,
+                    LocalDate: localDate,
+                    BeginTimeUTC: beginTimeUTC,
+                    CombinedUTCDisplay: combinedUTCDisplay,
+                    gliderID: this.gliderID,
+                    competitionID: this.competitionID,
+                    competitionClass: this.competitionClass,
+                    NB21Version: this.nb21Version,
+                    Sim: this.sim
+                };
+                this.igcData = igcData;
 
-                            // Build an array for the metrics (duration, distance, speed).
-                            let metrics = [];
-                            if (r.Duration) {
-                                metrics.push(r.Duration);
-                            }
-                            if (r.Distance) {
-                                metrics.push(`${r.Distance} km`);
-                            }
-                            if (r.Speed) {
-                                metrics.push(`${r.Speed} km/h`);
-                            }
+                // 9) clean up the temp track, then send via your helper
+                const layer = this.taskBrowser.tbm.igcTrackCache[tempKey];
+                if (layer) {
+                    this.taskBrowser.tbm.map.removeLayer(layer);
+                    delete this.taskBrowser.tbm.igcTrackCache[tempKey];
+                }
+                const formData = new FormData();
+                for (let k in igcData) formData.append(k, igcData[k]);
+                formData.append("igcFile", file);
+                this.taskBrowser.tbm.showLoadingSpinner("Matching IGC to task…");
+                this.prepareIGCOnServer(formData, text);
 
-                            // If any metrics exist, join them with commas and add as a suffix.
-                            if (metrics.length > 0) {
-                                resultsLine += " - " + metrics.join(", ");
-                            }
-
-                            // Finally, append TPVersion in parentheses if present
-                            if (r.TPVersion) {
-                                resultsLine += ` (${r.TPVersion})`;
-                            }
-                        }
-
-                        let html = `<h3>IGC Submission - Task Found!</h3>`;
-                        html += `<strong>UTC of IGC record:</strong> ${combinedUTCDisplay}</br>`;
-                        html += `<strong>UTC Begin Time:</strong> ${this.formatTime(beginTimeUTC)}</br>`;
-                        html += `<strong>Local Time of Recording:</strong> ${localDate} ${this.formatTime(localTime)}</br>`;
-                        html += `<strong>Pilot:</strong> ${this.pilot}</br>`;
-                        html += `<strong>Comp. ID:</strong> ${this.competitionID}</br>`;
-                        html += `<strong>Comp. Class:</strong> ${this.competitionClass}</br>`;
-                        html += `<strong>Glider Type:</strong> ${this.gliderType}</br>`;
-                        html += `<strong>Results:</strong> ${resultsLine}</br>`;
-                        html += `<strong>Comment:</strong> <input type="text" id="igcCommentField" placeholder="Enter your comment here"></br>`;
-                        html += `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open this IGC file on the B21 Task Planner</a></br>`;
-                        html += `<button id="submitIGCBtn" class="button-style">Submit</button>`;
-                        html += ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`;
-                        html += `<span style="color: white; font-weight: bold; animation: blink 1s steps(2, start) infinite;"> &larr; Select to continue</span>`;
-                        html += `</br><hr>`;
-
-                        this.taskBrowser.igcMatchData = html;
-
-                        // Select the task on the map.
-                        this.taskBrowser.tbm.deselectTask();
-                        this.taskBrowser.tbm.selectTaskFromURL(data.EntrySeqID, false, ["Leader Board"]);
-                        // Draw the IGC.
-                        this.taskBrowser.tbm.processIGCRecordDisplay(data.EntrySeqID, igcData.IGCKey, true, text);
-                    }
-                    else if (data.error) {
-                        this.taskBrowser.tbm.hideLoadingSpinner();
-                        alert("Error from server: " + data.error);
-                    }
-                    else {
-                        this.taskBrowser.tbm.hideLoadingSpinner();
-                        alert("Unexpected server response.");
-                    }
-                })
-                .catch(error => {
-                    this.taskBrowser.tbm.hideLoadingSpinner();
-                    console.error('Error:', error);
-                    alert("Error contacting the server: " + error);
-                });
+            }, 300);
         };
+
         reader.readAsText(file);
+    }
+
+    prepareIGCOnServer(formData, IGCAsText) {
+        const tbm = this.taskBrowser.tbm;
+        tbm.showLoadingSpinner("Processing IGC file...");
+
+        fetch('php/SearchTaskByIGC.php', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        })
+            .then(res => res.json())
+            .then(data => {
+                tbm.hideLoadingSpinner();
+
+                if (data.status === 'not_found') {
+                    alert("Task not found in the database.");
+                    return;
+                }
+                if (data.status === 'duplicate') {
+                    alert("IGC file already exists in the database.");
+                    return;
+                }
+                if (data.status === 'found') {
+                    // make sure we actually got Browserless results
+                    if (!(data.browserless && data.browserless.parsedResults)) {
+                        alert("An error occurred while processing the IGC file for results.");
+                        return;
+                    }
+
+                    // 1) stash the EntrySeqID & build IGCKey
+                    this.igcData.EntrySeqID = data.EntrySeqID;
+                    const key = [
+                        this.igcData.EntrySeqID,
+                        this.igcData.competitionID,
+                        this.igcData.gliderType,
+                        this.igcData.IGCRecordDateTimeUTC
+                    ].join('_');
+                    this.igcData.IGCKey = key;
+
+                    // 2) build the little resultsLine string
+                    const r = data.browserless.parsedResults;
+                    let resultsLine = "";
+                    resultsLine += r.IGCValid ? "🔒" : "❗";
+                    resultsLine += r.TaskCompleted ? "🏁" : "❌";
+                    resultsLine += this.localDateTimeMatch(
+                        this.igcData.LocalDate,
+                        this.igcData.LocalTime,
+                        data.SimDateTime
+                    ) ? "⌚" : "❌";
+                    resultsLine += r.Penalties ? "👮" : "✅";
+
+                    // if still empty something went wrong
+                    if (!resultsLine) {
+                        alert("An error occurred while processing the IGC file for results.");
+                        return;
+                    }
+
+                    const metrics = [];
+                    if (r.Duration) metrics.push(r.Duration);
+                    if (r.Distance) metrics.push(`${r.Distance} km`);
+                    if (r.Speed) metrics.push(`${r.Speed} km/h`);
+                    if (metrics.length) resultsLine += " – " + metrics.join(", ");
+
+                    if (r.TPVersion) resultsLine += ` (${r.TPVersion})`;
+
+                    // 3) render the HTML exactly as before
+                    const html = [
+                        `<h3>IGC Submission – Task Found!</h3>`,
+                        `<strong>UTC of IGC record:</strong> ${this.igcData.CombinedUTCDisplay}</br>`,
+                        `<strong>UTC Begin Time:</strong> ${this.formatTime(this.igcData.BeginTimeUTC)}</br>`,
+                        `<strong>Local Time of Recording:</strong> ${this.igcData.LocalDate} ${this.formatTime(this.igcData.LocalTime)}</br>`,
+                        `<strong>Pilot:</strong> ${this.igcData.pilot}</br>`,
+                        `<strong>Comp. ID:</strong> ${this.igcData.competitionID}</br>`,
+                        `<strong>Comp. Class:</strong> ${this.igcData.competitionClass}</br>`,
+                        `<strong>Glider Type:</strong> ${this.igcData.gliderType}</br>`,
+                        `<strong>Results:</strong> ${resultsLine}</br>`,
+                        `<strong>Comment:</strong> <input type="text" id="igcCommentField" placeholder="Enter your comment here"></br>`,
+                        `<a href="#" onclick="TB.IGCUpload.sendIGCToOnlinePlanner();">Open this IGC file on the B21 Task Planner</a></br>`,
+                        `<button id="submitIGCBtn" class="button-style">Submit</button>`,
+                        ` <button id="cancelIGCBtn" class="button-style">Cancel</button>`,
+                        `<span style="color:white;font-weight:bold;animation:blink 1s steps(2,start) infinite;"> ← Select to continue</span>`,
+                        `</br><hr>`
+                    ].join("");
+
+                    this.taskBrowser.igcMatchData = html;
+
+                    // 4) select & draw
+                    tbm.deselectTask();
+                    tbm.selectTaskFromURL(data.EntrySeqID, false, ["Leader Board"]);
+                    tbm.processIGCRecordDisplay(data.EntrySeqID, this.igcData.IGCKey, true, IGCAsText);
+                    return;
+                }
+
+                // any other case
+                if (data.error) {
+                    alert("Error from server: " + data.error);
+                } else {
+                    alert("Unexpected server response.");
+                }
+            })
+            .catch(err => {
+                tbm.hideLoadingSpinner();
+                console.error("Error:", err);
+                alert("Error contacting the server: " + err);
+            });
     }
 
     sendIGCToOnlinePlanner() {
