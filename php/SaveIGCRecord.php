@@ -3,7 +3,14 @@ require __DIR__ . '/CommonFunctions.php';
 
 header('Content-Type: application/json');
 
+// toggle this to turn debug logging on or off
+$loggingEnabled = false;
+
 try {
+    if ($loggingEnabled) {
+        logMessage("saveIGCRecord called with POST: " . print_r($_POST, true));
+    }
+
     // Check required POST parameters.
     $required = [
         'IGCKey',
@@ -48,10 +55,39 @@ try {
     $WSGUserID = (int) trim($_POST['WSGUserID']);
     
     // Instead of ensuring an uploaded file exists in $_FILES, 
-    // locate the previously saved IGC file in the temporary folder.
-    $tempDir = __DIR__ . '/DPHXTemp';
-    $sourceFolder = $tempDir . '/' . $IGCKey;
-    $sourceFilePath = $sourceFolder . '/' . $IGCKey . '.igc';
+    // locate the temp folder (case-insensitive)
+    $tempDir      = __DIR__ . '/DPHXTemp';
+    $sourceFolder = null;
+    foreach (scandir($tempDir) as $entry) {
+        if (strcasecmp($entry, $IGCKey) === 0 && is_dir("$tempDir/$entry")) {
+            $sourceFolder = "$tempDir/$entry";
+            break;
+        }
+    }
+    if (!$sourceFolder) {
+        throw new Exception("Temp folder not found for IGCKey: $IGCKey");
+    }
+
+    // locate the .igc file (case-insensitive)
+    $expected = $IGCKey . '.igc';
+    $found    = null;
+    foreach (scandir($sourceFolder) as $file) {
+        if (strcasecmp($file, $expected) === 0) {
+            $found = $file;
+            break;
+        }
+    }
+    if (!$found) {
+        throw new Exception("IGC file not found in $sourceFolder");
+    }
+    $sourceFilePath = "$sourceFolder/$found";
+
+    if ($loggingEnabled) {
+        logMessage("saveIGCRecord tempDir      = $tempDir");
+        logMessage("saveIGCRecord sourceFolder = $sourceFolder");
+        logMessage("saveIGCRecord sourceFile   = $sourceFilePath");
+    }
+
     if (!file_exists($sourceFilePath)) {
         throw new Exception("IGC file not found in temporary folder.");
     }
