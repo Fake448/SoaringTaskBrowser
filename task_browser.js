@@ -1374,6 +1374,82 @@ class TaskBrowser {
         // including an empty <tbody> for #igcRecordsTable
         let igcContent = `
             <p><strong>${task.EntrySeqID} - ${task.Title}</strong></p>
+            <div id="igcLegend" style="
+                 display: none;
+                 padding: 8px;
+                 background: #29292a;
+                 color: #dcdcdc;
+                 border-radius: 4px;
+                 margin-bottom: 8px;
+                 border: 1px solid #ffffff;
+               ">
+              <strong>Leader Board Legend</strong>
+              <table style="
+                  border-collapse: collapse;
+                  width: auto;            /* size to content */
+                  table-layout: auto;     /* auto column widths */
+                  margin-top: 6px;
+                ">
+                <colgroup>
+                  <col />                 <!-- subject -->
+                  <col />                 <!-- first emoji -->
+                  <col />                 <!-- second emoji -->
+                </colgroup>
+                <tr>
+                  <td style="padding:4px 6px; font-weight:bold; white-space:nowrap;">
+                    IGC validity:
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    🔒 Valid
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    ❗ Modified
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px; font-weight:bold; white-space:nowrap;">
+                    Completion:
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    🏁 Yes
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    ❌ No
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px; font-weight:bold; white-space:nowrap;">
+                    Local time:
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    ⌚ Ok
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    ❌ Different
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:4px 6px; font-weight:bold; white-space:nowrap;">
+                    Penalties:
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    ✅ None
+                  </td>
+                  <td style="padding:4px 6px; white-space:nowrap;">
+                    👮 Detected
+                  </td>
+                </tr>
+              </table>
+              <!-- Perfect task indicator and notes -->
+              <div style="margin-top:8px; white-space:normal; line-height:1.4;">
+                <strong>Perfect task:</strong> 🔒🏁⌚✅
+
+                <ul style="margin:12px 0 0 12px; padding-left:12px; list-style:disc;">
+                  <li>Local date and time are taken right after spawning, so changing them after spawning will still result in a wrong indicator.</li>
+                  <li>Click on the Pilot name to download the IGC file.</li>
+                </ul>
+              </div>
+            </div>
             <table id="igcRecordsTable" class="display igcRecordsTable" style="width: 100%;">
                 <thead>
                     <tr>
@@ -1751,6 +1827,29 @@ class TaskBrowser {
                                 });
                             }
                         });
+
+                    // find the DataTables “Search:” container
+                    const SearchIGCDiv = $(api.table().container()).find('div.dataTables_filter');
+
+                    //  • Legend toggle button
+                    const legendBtn = $('<button>')
+                        .attr('id', 'toggleLegendBtn')
+                        .addClass('igc-button-style')
+                        .css({ 'margin-right': '8px' })
+                        .text('Show Legend')               // initial label
+                        .on('click', function () {
+                            const legend = $('#igcLegend');
+                            if (legend.is(':visible')) {
+                                legend.slideUp(150);
+                                $(this).text('Show Legend');
+                            } else {
+                                legend.slideDown(150);
+                                $(this).text('Hide Legend');
+                            }
+                        });
+
+                    // put it immediately before the built-in search label/input
+                    SearchIGCDiv.prepend(legendBtn);
 
                     // 5) Analyze button
                     const analyzeBtn = $('<button>')
