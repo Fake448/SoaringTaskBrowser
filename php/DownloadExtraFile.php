@@ -25,7 +25,6 @@ try {
             'bmp' => 'image/bmp',
             'webp' => 'image/webp',
             'xml' => 'application/xml',
-            'pln' => 'application/xml',
             'zip' => 'application/zip',
             'pdf' => 'application/pdf',
             'txt' => 'text/plain'
