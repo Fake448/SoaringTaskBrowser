@@ -195,7 +195,6 @@ function loadTabContent(tabId) {
                 <div class="header-container">
                     <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Your User Account</h2>
-                    <button onclick="forceReload()" style="margin-top: 10px;">Force Reload (No Cache)</button>
                 </div>
                 <div id="account-content">
                     <p>Loading user info...</p>
