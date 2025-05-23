@@ -195,6 +195,7 @@ function loadTabContent(tabId) {
                 <div class="header-container">
                     <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Your User Account</h2>
+                    <button onclick="forceReload()" style="margin-top: 10px;">Force Reload (No Cache)</button>
                 </div>
                 <div id="account-content">
                     <p>Loading user info...</p>
@@ -244,6 +245,11 @@ function loadTabContent(tabId) {
     if (tabId === 'accountTab') {
         loadAccountInfo();
     }
+}
+
+function forceReload() {
+    const url = window.location.origin + window.location.pathname + '?reload=' + new Date().getTime();
+    window.location.href = url;
 }
 
 function forceDownload(url, filename) {
