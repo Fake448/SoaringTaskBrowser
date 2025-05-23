@@ -2514,8 +2514,10 @@ class TaskBrowser {
             });
     }
 
-    downloadExtraFile(filename, source = "map") {
-        const taskID = this.currentTask.TaskID;
+    downloadExtraFile(filename, source = "map", task = null) {
+        let tb = this;
+        const taskToUse = task || tb.currentTask;
+        const taskID = taskToUse.TaskID;
         const url = `php/DownloadExtraFile.php`;
 
         // List of image extensions
