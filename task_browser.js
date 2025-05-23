@@ -2686,6 +2686,7 @@ class TaskBrowser {
     }
 
     isIOSDevice() {
+        alert(navigator.userAgent);
         return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     }
 
