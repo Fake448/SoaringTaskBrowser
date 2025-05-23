@@ -2706,7 +2706,7 @@ class TaskBrowser {
         tb.incrementDownloadCount(taskToUse.EntrySeqID);
 
         if (tb.isIOSDevice()) {
-            tb.downloadExtraFile(fileName, source);
+            tb.downloadExtraFile(fileName, source, taskToUse);
         } else {
             tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
         }
@@ -2718,7 +2718,7 @@ class TaskBrowser {
         const fileName = tb.getFileNameFromPath(taskToUse.WPRFilename);
 
         if (tb.isIOSDevice()) {
-            tb.downloadExtraFile(fileName, source);
+            tb.downloadExtraFile(fileName, source, taskToUse);
         } else {
             tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
         }
