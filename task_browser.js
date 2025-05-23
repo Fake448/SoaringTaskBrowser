@@ -2704,10 +2704,8 @@ class TaskBrowser {
         tb.incrementDownloadCount(taskToUse.EntrySeqID);
 
         if (tb.isIOSDevice()) {
-            alert("iOS device");
             tb.downloadExtraFile(fileName, source);
         } else {
-            alert("Non iOS device");
             tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
         }
     }
@@ -2718,10 +2716,8 @@ class TaskBrowser {
         const fileName = tb.getFileNameFromPath(taskToUse.WPRFilename);
 
         if (tb.isIOSDevice()) {
-            alert("iOS device");
             tb.downloadExtraFile(fileName, source);
         } else {
-            alert("Non iOS device");
             tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
         }
     }
