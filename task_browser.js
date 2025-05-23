@@ -2514,7 +2514,7 @@ class TaskBrowser {
             });
     }
 
-    downloadExtraFile(filename) {
+    downloadExtraFile(filename, source = "map") {
         const taskID = this.currentTask.TaskID;
         const url = `php/DownloadExtraFile.php`;
 
@@ -2549,6 +2549,12 @@ class TaskBrowser {
                     a.click();
                     document.body.removeChild(a);
                     URL.revokeObjectURL(downloadUrl);
+                }
+
+                if (source === "discord") {
+                    setTimeout(() => {
+                        window.close();
+                    }, 3000);
                 }
             })
             .catch((error) => {
@@ -2679,22 +2685,35 @@ class TaskBrowser {
         return filePath.split('\\').pop().split('/').pop();
     }
 
+    isIOSDevice() {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    }
+
     downloadPLNFile(task = null, source = "map") {
         let tb = this;
         const taskToUse = task || tb.currentTask;
+        const fileName = tb.getFileNameFromPath(taskToUse.PLNFilename);
 
         // Increment download count
         tb.incrementDownloadCount(taskToUse.EntrySeqID);
-        const fileName = tb.getFileNameFromPath(taskToUse.PLNFilename);
-        tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
+
+        if (tb.isIOSDevice()) {
+            tb.downloadExtraFile(fileName, source);
+        } else {
+            tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
+        }
     }
 
     downloadWPRFile(task = null, source = "map") {
         let tb = this;
         const taskToUse = task || tb.currentTask;
-
         const fileName = tb.getFileNameFromPath(taskToUse.WPRFilename);
-        tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
+
+        if (tb.isIOSDevice()) {
+            tb.downloadExtraFile(fileName, source);
+        } else {
+            tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
+        }
     }
 
     async setSSCTracker(group, entrySeqID, URLInfo) {
