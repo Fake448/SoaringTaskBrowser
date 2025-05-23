@@ -2686,8 +2686,13 @@ class TaskBrowser {
     }
 
     isIOSDevice() {
-        alert(navigator.userAgent);
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        if (navigator.userAgentData) {
+            return navigator.userAgentData.platform === 'iOS';
+        }
+        return (
+            /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
+        );
     }
 
     downloadPLNFile(task = null, source = "map") {
