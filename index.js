@@ -99,10 +99,13 @@ function loadTabContent(tabId) {
                 <a href="discord://discord.com/channels/1022705603489042472/1258192556202922107" target="_blank">
                     <button class="button-style">Go to our Discord</button>
                 </a>
+                <hr>
                 <div class="latest-igc-leaders">
-                    <h2 style="margin-bottom: 10px;">🏆 Latest Top Performances</h2>
-                    <p>The most recently uploaded top-speed IGCs across all tasks:</p>
-                    <table class="igcRecordsTable" style="width: 100%; margin-top: 10px;">
+                    <div class="latest-igc-header">
+                        <h2>🏆 Last 10 Top Performances</h2>
+                        <p>The most recently uploaded top-speed IGCs across all tasks</p>
+                    </div>
+                    <table id="latestTopIGCTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
                         <thead>
                             <tr>
                                 <th>Pilot</th>
@@ -280,19 +283,41 @@ function loadHomeTab() {
                 return;
             }
 
-            data.forEach(entry => {
+            data.slice(0, 10).forEach(entry => {
                 const tr = document.createElement('tr');
-                const formattedDate = new Date(entry.IGCUploadDateTimeUTC).toLocaleString();
+                const formattedDate = TB.formatSimDateTime(entry.IGCUploadDateTimeUTC, true, false, true, true, true);
+                const safeTitle = entry.Title.replace(/'/g, "\\'");
+
+                const isImperial = TB.userSettings.distance === 'imperial';
+                let speed = parseFloat(entry.Speed) || 0;
+                if (isImperial) {
+                    speed *= 0.621371; // Convert from km/h to mph
+                }
+                const speedStr = `${speed.toFixed(1)} ${isImperial ? 'mph' : 'km/h'}`;
 
                 tr.innerHTML = `
-                <td>${entry.Pilot}</td>
-                <td>${entry.GliderType} (${entry.GliderID})</td>
-                <td>${entry.Speed} km/h</td>
-                <td><a href="?tab=taskDetails&task=${entry.EntrySeqID}" target="_blank">${entry.Title}</a></td>
-                <td>${formattedDate}</td>
-            `;
-
+                    <td>${entry.Pilot} (${entry.GliderID})</td>
+                    <td>${entry.GliderType}</td>
+                    <td>${speedStr}</td>
+                    <td>
+                        <a href="javascript:void(0)" class="download-igc-link"
+                            onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', true, ['Leader Board'])">
+                            (${entry.EntrySeqID}) ${safeTitle}
+                        </a>
+                    </td>
+                    <td>${formattedDate}</td>
+                `;
                 tbody.appendChild(tr);
+            });
+
+
+            // Initialize the table as a DataTable (after DOM is populated)
+            $('#latestTopIGCTable').DataTable({
+                paging: false,
+                searching: false,
+                info: false,
+                ordering: false,
+                order: [[4, 'desc']] // Sort by date descending
             });
         })
         .catch(error => {
@@ -329,9 +354,9 @@ function forceDownload(url, filename) {
         .catch(err => console.error('Download error:', err));
 }
 
-function switchToMapAndSelectTask(entrySeqID) {
+function switchToMapAndSelectTask(entrySeqID, doNotExpand = false, sectionsToExpand = []) {
     TB.switchTab('mapTab');
-    TB.tbm.selectTaskFromURL(entrySeqID);
+    TB.tbm.selectTaskFromURL(entrySeqID, doNotExpand, sectionsToExpand);
 }
 
 function loadAccountInfo() {

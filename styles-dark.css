@@ -1128,6 +1128,19 @@ table.dataTable thead .sorting {
     color: #ffffff;
 }
 
+.igcRecordsTable a {
+    color: #1da1f2;
+    text-decoration: none;
+}
+
+    .igcRecordsTable a:hover {
+        text-decoration: underline;
+    }
+
+    .igcRecordsTable a:visited {
+        color: #1da1f2;
+    }
+
 .igc-button-style {
     background-color: #7289da;
     color: white;
@@ -1171,4 +1184,20 @@ table.dataTable thead .sorting {
 
     .dataTables_wrapper .dataTables_filter input {
         color: white !important;
+    }
+
+.latest-igc-header {
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+    .latest-igc-header h2 {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 1px;
+    }
+
+    .latest-igc-header p {
+        font-size: 14px;
+        color: #cccccc;
     }
