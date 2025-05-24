@@ -99,6 +99,24 @@ function loadTabContent(tabId) {
                 <a href="discord://discord.com/channels/1022705603489042472/1258192556202922107" target="_blank">
                     <button class="button-style">Go to our Discord</button>
                 </a>
+                <div class="latest-igc-leaders">
+                    <h2 style="margin-bottom: 10px;">🏆 Latest Top Performances</h2>
+                    <p>The most recently uploaded top-speed IGCs across all tasks:</p>
+                    <table class="igcRecordsTable" style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Pilot</th>
+                                <th>Glider</th>
+                                <th>Speed</th>
+                                <th>Task</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latest-igc-leaders-body">
+                            <tr><td colspan="5">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
                 <hr>
                 <div class="community-section">
                     <h2>Featured Soaring Communities and Clubs</h2>
@@ -244,6 +262,44 @@ function loadTabContent(tabId) {
     if (tabId === 'accountTab') {
         loadAccountInfo();
     }
+    // If the user account tab is loaded, fetch and display user connection info
+    if (tabId === 'homeTab') {
+        loadHomeTab();
+    }
+}
+
+function loadHomeTab() {
+    fetch('/otherdata/latestTopIGCs.json')
+        .then(res => res.json())
+        .then(data => {
+            const tbody = document.getElementById('latest-igc-leaders-body');
+            tbody.innerHTML = '';
+
+            if (!data || data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5">No recent top performances found.</td></tr>';
+                return;
+            }
+
+            data.forEach(entry => {
+                const tr = document.createElement('tr');
+                const formattedDate = new Date(entry.IGCUploadDateTimeUTC).toLocaleString();
+
+                tr.innerHTML = `
+                <td>${entry.Pilot}</td>
+                <td>${entry.GliderType} (${entry.GliderID})</td>
+                <td>${entry.Speed} km/h</td>
+                <td><a href="?tab=taskDetails&task=${entry.EntrySeqID}" target="_blank">${entry.Title}</a></td>
+                <td>${formattedDate}</td>
+            `;
+
+                tbody.appendChild(tr);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching latest IGCs:', error);
+            document.getElementById('latest-igc-leaders-body').innerHTML =
+                '<tr><td colspan="5">Failed to load data.</td></tr>';
+        });
 }
 
 function forceReload() {
