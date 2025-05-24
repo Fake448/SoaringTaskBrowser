@@ -248,6 +248,17 @@ try {
         $stmt->execute();
     }
 
+    // === Trigger update of latest IGC leaders file, only if valid & completed ===
+    if ($taskCompletedInt === 1 && $igcValidInt === 1) {
+        $updateScript = __DIR__ . '/UpdateLatestIGCLeaders.php';
+        if (file_exists($updateScript)) {
+            shell_exec("php " . escapeshellarg($updateScript) . " > /dev/null 2>&1 &");
+            if ($loggingEnabled) {
+                logMessage("Triggered UpdateLatestIGCLeaders.php (valid + completed).");
+            }
+        }
+    }
+
     echo json_encode([
         'status' => 'success',
         'message' => 'IGC record saved successfully.',
