@@ -1206,9 +1206,9 @@ table.dataTable thead .sorting {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 24px;
+    gap: 15px;
     background-color: #2b2d31;
-    padding: 24px;
+    padding: 5px;
     border-radius: 8px;
     border-bottom: 1px solid #444;
 }
