@@ -86,6 +86,7 @@ function loadTabContent(tabId) {
                             <ul class="hero-values">
                                 <li>→ Explore</li>
                                 <li>→ Connect</li>
+                                <li>→ Share</li>
                                 <li>→ Compete</li>
                             </ul>
                         </div>
