@@ -294,7 +294,7 @@ function loadHomeTab() {
             data.slice(0, 10).forEach(entry => {
                 const tr = document.createElement('tr');
                 const formattedDate = TB.formatSimDateTime(entry.IGCUploadDateTimeUTC, true, false, true, true, true);
-                const safeTitle = entry.Title.replace(/'/g, "\\'");
+                const escapedTitle = entry.Title.replace(/'/g, "\\'");
 
                 const isImperial = TB.userSettings.distance === 'imperial';
                 let speed = parseFloat(entry.Speed) || 0;
@@ -310,7 +310,7 @@ function loadHomeTab() {
                     <td>
                         <a href="javascript:void(0)" class="download-igc-link"
                             onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', true, ['Leader Board'])">
-                            (${entry.EntrySeqID}) ${safeTitle}
+                            (${entry.EntrySeqID}) ${entry.Title}
                         </a>
                     </td>
                     <td>${formattedDate}</td>
