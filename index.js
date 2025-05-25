@@ -82,11 +82,11 @@ function loadTabContent(tabId) {
                         <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="hero-logo-img-large">
                         <div class="hero-branding">
                             <h1>WeSimGlide.org</h1>
-                            <p class="hero-subtagline">Your virtual soaring hub</p>
+                            <p class="hero-subtagline">Your Virtual MSFS Soaring Home</p>
                             <ul class="hero-values">
-                                <li>→ Fly</li>
-                                <li>→ Compete</li>
+                                <li>→ Explore</li>
                                 <li>→ Connect</li>
+                                <li>→ Compete</li>
                             </ul>
                         </div>
                     </div>
