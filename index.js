@@ -77,28 +77,35 @@ function loadTabContent(tabId) {
     switch (tabId) {
         case 'homeTab':
             content = `
-                <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
-                    <h2>Our home is always a work in progress!</h2>
+                <div class="hero-container">
+                    <div class="hero-left">
+                        <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="hero-logo-img-large">
+                        <div class="hero-branding">
+                            <h1>WeSimGlide.org</h1>
+                            <p class="hero-subtagline">Your virtual soaring hub</p>
+                            <ul class="hero-values">
+                                <li>→ Fly</li>
+                                <li>→ Compete</li>
+                                <li>→ Connect</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="hero-right">
+                        <p class="hero-prompt">🌤️ Where do you want to go today?</p>
+                        <div class="hero-actions">
+                            <div class="nav-tile" onclick="TB.switchTab('eventsTab')">📅 Events</div>
+                            <div class="nav-tile" onclick="TB.switchTab('mapTab')">🌍 Map</div>
+                            <div class="nav-tile" onclick="TB.switchTab('toolsTab')">🛠️ Tools</div>
+                            <div class="nav-tile" onclick="TB.switchTab('settingsTab')">⚙️ Settings</div>
+                            <div class="nav-tile" onclick="TB.switchTab('accountTab')">👤 Account</div>
+                            <div class="nav-tile" onclick="TB.switchTab('aboutTab')">ℹ️ About</div>
+                        </div>
+                    </div>
                 </div>
-                <p>Currently, you can use the tabs above to access the available features that are ready:</p>
-                <ul class="all-links">
-                    <li><a href="#" onclick="TB.switchTab('eventsTab')">📆 Discover group flight events happening soon</a></li>
-                    <li><a href="#" onclick="TB.switchTab('mapTab')">🌐 Explore tasks on the world map</a></li>
-                    <li><a href="#" onclick="TB.switchTab('toolsTab')">🛠️ View a list of useful tools and other resources for soaring in MSFS</a></li>
-                    <li><a href="#" onclick="TB.switchTab('settingsTab')">⚙️ Adjust your display settings here</a></li>
-                    <li>
-                        <a href="#" onclick="TB.switchTab('accountTab')">
-                            <img src="images/user_account_connected.png" alt="User Account" style="width: 20px; height: 20px; vertical-align: middle;">
-                            Manage your account
-                        </a>
-                    </li>
-                    <li><a href="#" onclick="TB.switchTab('aboutTab')">ℹ️ Learn a bit more about WeSimGlide.org</a></li>
-                </ul>
-                <p>Tell us what else you would like to see on the home page!</p>
-                <a href="discord://discord.com/channels/1022705603489042472/1258192556202922107" target="_blank">
-                    <button class="button-style">Go to our Discord</button>
-                </a>
+                <div class="hero-discord-cta">
+                    <span>💬 Want to help shape WeSimGlide?</span>
+                    <a href="https://discord.gg/aW8YYe3HJF" target="_blank">Join us on Discord</a>
+                </div>
                 <hr>
                 <div class="latest-igc-leaders">
                     <div class="latest-igc-header">
