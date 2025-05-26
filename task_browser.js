@@ -596,6 +596,32 @@ class TaskBrowser {
     switchTab(tabId) {
         const tb = this;
 
+        // 🟢 Home tab: start polling if first time or coming back
+        if (tabId === 'homeTab') {
+            // First time: load and start polling
+            if (!homeTabWasLoaded) {
+                loadTabContent(tabId); // Inject HTML
+                loadHomeTab(true);     // Force first load
+                homeTabWasLoaded = true;
+
+                // Begin polling every 60 seconds (check for updates)
+                homeTabPollingInterval = setInterval(() => {
+                    if (document.getElementById('homeTab').classList.contains('active')) {
+                        loadHomeTab(false); // Only update if new data
+                    }
+                }, 60000); // 60,000 ms = 60 seconds
+            } else {
+                // Coming back to tab → refresh immediately
+                loadHomeTab(true);
+            }
+        } else {
+            // 🔴 Leaving home tab: stop polling if active
+            if (homeTabPollingInterval) {
+                clearInterval(homeTabPollingInterval);
+                homeTabPollingInterval = null;
+            }
+        }
+
         // Load content if it hasn't been loaded yet
         const tabContent = document.getElementById(tabId);
         if (!tabContent.innerHTML) {

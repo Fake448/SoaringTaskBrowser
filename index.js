@@ -9,6 +9,10 @@ if (!TB.isDownloadPage) {
 // Add event listeners for resizing
 window.addEventListener('resize', TB.resizeMap);
 
+let lastTopIGCKey = null;
+let homeTabPollingInterval = null;
+let homeTabWasLoaded = false;
+
 // Add resizer functionality
 let isResizing = false;
 const resizer = document.getElementById('resizer');
@@ -279,28 +283,30 @@ function loadTabContent(tabId) {
     }
 }
 
-function loadHomeTab() {
+function loadHomeTab(forceUpdate = false) {
     fetch('/otherdata/latestTopIGCs.json')
         .then(res => res.json())
         .then(data => {
-            const tbody = document.getElementById('latest-igc-leaders-body');
-            tbody.innerHTML = '';
+            if (!data || data.length === 0) return;
 
-            if (!data || data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="5">No recent top performances found.</td></tr>';
+            const newestKey = data[0]?.IGCKey || null;
+
+            // Skip updating table if the data hasn’t changed, unless forced
+            if (!forceUpdate && newestKey === lastTopIGCKey) {
                 return;
             }
+
+            lastTopIGCKey = newestKey; // Update tracker
+
+            const tbody = document.getElementById('latest-igc-leaders-body');
+            tbody.innerHTML = '';
 
             data.slice(0, 10).forEach(entry => {
                 const tr = document.createElement('tr');
                 const formattedDate = TB.formatSimDateTime(entry.IGCUploadDateTimeUTC, true, false, true, true, true);
-                const escapedTitle = entry.Title.replace(/'/g, "\\'");
-
                 const isImperial = TB.userSettings.distance === 'imperial';
                 let speed = parseFloat(entry.Speed) || 0;
-                if (isImperial) {
-                    speed *= 0.621371; // Convert from km/h to mph
-                }
+                if (isImperial) speed *= 0.621371;
                 const speedStr = `${speed.toFixed(1)} ${isImperial ? 'mph' : 'km/h'}`;
 
                 tr.innerHTML = `
@@ -318,6 +324,9 @@ function loadHomeTab() {
                 tbody.appendChild(tr);
             });
 
+            // Reset DataTable if already initialized
+            const table = $('#latestTopIGCTable').DataTable();
+            if (table) table.destroy();
 
             // Initialize the table as a DataTable (after DOM is populated)
             $('#latestTopIGCTable').DataTable({
@@ -325,7 +334,7 @@ function loadHomeTab() {
                 searching: false,
                 info: false,
                 ordering: false,
-                order: [[4, 'desc']] // Sort by date descending
+                order: [[4, 'desc']]
             });
         })
         .catch(error => {
