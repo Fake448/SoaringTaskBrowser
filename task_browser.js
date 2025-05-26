@@ -609,7 +609,7 @@ class TaskBrowser {
                     if (document.getElementById('homeTab').classList.contains('active')) {
                         loadHomeTab(false); // Only update if new data
                     }
-                }, 5000);
+                }, 60000);
             } else {
                 // Coming back to tab → refresh immediately
                 loadHomeTab(true);
