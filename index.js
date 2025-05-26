@@ -324,10 +324,6 @@ function loadHomeTab(forceUpdate = false) {
                 tbody.appendChild(tr);
             });
 
-            // Reset DataTable if already initialized
-            const table = $('#latestTopIGCTable').DataTable();
-            if (table) table.destroy();
-
             // Initialize the table as a DataTable (after DOM is populated)
             $('#latestTopIGCTable').DataTable({
                 paging: false,
