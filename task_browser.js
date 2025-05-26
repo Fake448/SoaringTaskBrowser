@@ -165,7 +165,7 @@ class TaskBrowser {
         });
     }
 
-    expandAllCollapsibleSections() {
+    expandAllCollapsibleSections(waitingForIGCException = false) {
         const tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         if (!taskDetailContainer) {
@@ -211,8 +211,8 @@ class TaskBrowser {
             }
         });
 
-        // Scroll the first matched section into view after a short delay
-        if (firstMatchedSection) {
+        // Scroll the first matched section into view after a short delay - unless we're standing by for IGC submit
+        if (firstMatchedSection && !waitingForIGCException) {
             setTimeout(() => {
                 firstMatchedSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
             }, 200); // enough for DOM updates to settle
@@ -2273,6 +2273,7 @@ class TaskBrowser {
             }
         };
 
+        const isWaitingForIGC = (tb.igcMatchData && tb.igcMatchData !== "")
         // Set up the button event listeners
         if (tb.igcMatchData && tb.igcMatchData !== "") {
             tb.disableMapInteractions();
@@ -2292,7 +2293,7 @@ class TaskBrowser {
         tb.updateTaskHeaderMarkings();
 
         if (tb.fromURL) {
-            tb.expandAllCollapsibleSections();
+            tb.expandAllCollapsibleSections(isWaitingForIGC);
         }
 
     }
