@@ -298,45 +298,55 @@ function loadHomeTab(forceUpdate = false) {
 
             lastTopIGCKey = newestKey; // Update tracker
 
-            const tbody = document.getElementById('latest-igc-leaders-body');
-            tbody.innerHTML = '';
-
-            data.slice(0, 10).forEach(entry => {
-                const tr = document.createElement('tr');
+            const isImperial = TB.userSettings.distance === 'imperial';
+            const rows = data.slice(0, 10).map(entry => {
                 const formattedDate = TB.formatSimDateTime(entry.IGCUploadDateTimeUTC, true, false, true, true, true);
-                const isImperial = TB.userSettings.distance === 'imperial';
                 let speed = parseFloat(entry.Speed) || 0;
                 if (isImperial) speed *= 0.621371;
                 const speedStr = `${speed.toFixed(1)} ${isImperial ? 'mph' : 'km/h'}`;
 
-                tr.innerHTML = `
-                    <td>${entry.Pilot} (${entry.GliderID})</td>
-                    <td>${entry.GliderType}</td>
-                    <td>${speedStr}</td>
-                    <td>
-                        <a href="javascript:void(0)" class="download-igc-link"
-                            onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
-                            (${entry.EntrySeqID}) ${entry.Title}
-                        </a>
-                    </td>
-                    <td>${formattedDate}</td>
-                `;
-                tbody.appendChild(tr);
+                return [
+                    `${entry.Pilot} (${entry.GliderID})`,
+                    entry.GliderType,
+                    speedStr,
+                    `<a href="javascript:void(0)" class="download-igc-link"
+                        onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
+                        (${entry.EntrySeqID}) ${entry.Title}
+                    </a>`,
+                    formattedDate
+                ];
             });
 
-            // Initialize the table as a DataTable (after DOM is populated)
-            $('#latestTopIGCTable').DataTable({
-                paging: false,
-                searching: false,
-                info: false,
-                ordering: false,
-                order: [[4, 'desc']]
-            });
+            // If table already exists, just clear + re-add rows
+            if ($.fn.DataTable.isDataTable('#latestTopIGCTable')) {
+                const table = $('#latestTopIGCTable').DataTable();
+                table.clear();
+                table.rows.add(rows);
+                table.draw();
+            } else {
+                $('#latestTopIGCTable').DataTable({
+                    data: rows,
+                    columns: [
+                        { title: "Pilot" },
+                        { title: "Glider" },
+                        { title: "Speed" },
+                        { title: "Task" },
+                        { title: "Date" }
+                    ],
+                    paging: false,
+                    searching: false,
+                    info: false,
+                    ordering: false,
+                    order: [[4, 'desc']]
+                });
+            }
         })
         .catch(error => {
             console.error('Error fetching latest IGCs:', error);
-            document.getElementById('latest-igc-leaders-body').innerHTML =
-                '<tr><td colspan="5">Failed to load data.</td></tr>';
+            const tbody = document.getElementById('latest-igc-leaders-body');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="5">Failed to load data.</td></tr>';
+            }
         });
 }
 
