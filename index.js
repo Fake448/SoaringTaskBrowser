@@ -309,7 +309,7 @@ function loadHomeTab() {
                     <td>${speedStr}</td>
                     <td>
                         <a href="javascript:void(0)" class="download-igc-link"
-                            onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', true, ['Leader Board'])">
+                            onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
                             (${entry.EntrySeqID}) ${entry.Title}
                         </a>
                     </td>
@@ -1134,10 +1134,7 @@ function displayEvents(events) {
             eventElement.classList.remove('collapsed');
         }
         // Add this function to handle the tab switch and task selection
-        window.switchToMapAndSelectTask = function (entrySeqID) {
-            TB.switchTab('mapTab'); // Switch to the map tab
-            TB.tbm.selectTaskFromURL(entrySeqID); // Select the task on the map
-        };
+        window.switchToMapAndSelectTask = switchToMapAndSelectTask;
 
         // Check URL params for an event ID and expand it if found
         const params = new URLSearchParams(window.location.search);

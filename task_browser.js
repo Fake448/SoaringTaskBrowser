@@ -180,6 +180,8 @@ class TaskBrowser {
 
         const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
 
+        let firstMatchedSection = null;
+
         collapsibleSections.forEach(section => {
             // Grab the full text, e.g. "🏆 Leader Board"
             const rawTitle = (section.querySelector(".title span")?.textContent || "").trim();
@@ -194,6 +196,11 @@ class TaskBrowser {
                 if (toExpand.includes(title)) {
                     section.classList.remove("collapsed");
                     section.style.display = "block";
+
+                    // Save the first one that matches for scrolling
+                    if (!firstMatchedSection) {
+                        firstMatchedSection = section;
+                    }
                 } else {
                     section.classList.add("collapsed");
                 }
@@ -203,6 +210,13 @@ class TaskBrowser {
                 section.style.display = "block";
             }
         });
+
+        // Scroll the first matched section into view after a short delay
+        if (firstMatchedSection) {
+            setTimeout(() => {
+                firstMatchedSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 200); // enough for DOM updates to settle
+        }
 
         // Clear it so future calls expand all by default
         tb.sectionsToExpandFromURL = [];
