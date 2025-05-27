@@ -7,28 +7,50 @@ try {
 
     // SQL query to find top IGC records by task
     $stmt = $pdo->query("
+        WITH ValidIGCs AS (
+            SELECT 
+                IGC.*,
+                T.SimDateTime,
+                datetime(
+                    substr(T.SimDateTime, 1, 4) || '-' || 
+                    substr(IGC.LocalDate, 6, 5) || ' ' || 
+                    substr(IGC.LocalTime, 1, 2) || ':' || 
+                    substr(IGC.LocalTime, 3, 2) || ':' || 
+                    substr(IGC.LocalTime, 5, 2)
+                ) AS ReconstructedLocalDT
+            FROM IGCRecords IGC
+            JOIN Tasks T ON IGC.EntrySeqID = T.EntrySeqID
+            WHERE IGC.IGCValid = 1 AND IGC.TaskCompleted = 1
+        ),
+        FilteredValidIGCs AS (
+            SELECT *
+            FROM ValidIGCs
+            WHERE abs(strftime('%s', SimDateTime) - strftime('%s', ReconstructedLocalDT)) <= 1800
+        ),
+        TopValidIGCs AS (
+            SELECT *
+            FROM FilteredValidIGCs
+            WHERE (EntrySeqID, Speed) IN (
+                SELECT EntrySeqID, MAX(Speed)
+                FROM FilteredValidIGCs
+                GROUP BY EntrySeqID
+            )
+        )
         SELECT 
-            IGC.IGCKey,
-            IGC.EntrySeqID,
-            IGC.IGCUploadDateTimeUTC,
-            IGC.Pilot,
-            IGC.GliderID,
-            IGC.GliderType,
-            IGC.CompetitionClass,
-            IGC.Speed,
+            V.IGCKey,
+            V.EntrySeqID,
+            V.IGCUploadDateTimeUTC,
+            V.Pilot,
+            V.GliderID,
+            V.GliderType,
+            V.CompetitionClass,
+            V.Speed,
             T.Title
-        FROM IGCRecords IGC
-        JOIN (
-            SELECT EntrySeqID, MAX(Speed) AS TopSpeed
-            FROM IGCRecords
-            WHERE IGCValid = 1 AND TaskCompleted = 1
-            GROUP BY EntrySeqID
-        ) Best ON IGC.EntrySeqID = Best.EntrySeqID AND IGC.Speed = Best.TopSpeed
-        JOIN Tasks T ON IGC.EntrySeqID = T.EntrySeqID
-        WHERE IGC.IGCValid = 1 AND IGC.TaskCompleted = 1
-        GROUP BY IGC.EntrySeqID
-        ORDER BY IGC.IGCUploadDateTimeUTC DESC
-        LIMIT 25
+        FROM TopValidIGCs V
+        JOIN Tasks T ON V.EntrySeqID = T.EntrySeqID
+        GROUP BY V.EntrySeqID
+        ORDER BY V.IGCUploadDateTimeUTC DESC
+        LIMIT 10;
     ");
 
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
