@@ -284,7 +284,7 @@ function loadTabContent(tabId) {
 }
 
 function loadHomeTab(forceUpdate = false) {
-    fetch('/otherdata/latestTopIGCs.json')
+    fetch('/otherdata/latestTopIGCs.json?nocache=${Date.now()}')
         .then(res => res.json())
         .then(data => {
             if (!data || data.length === 0) return;
