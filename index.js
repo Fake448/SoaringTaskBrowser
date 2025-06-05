@@ -114,7 +114,7 @@ function loadTabContent(tabId) {
                 <hr>
                 <div class="latest-igc-leaders">
                     <div class="latest-igc-header">
-                        <h2>🏆 Last 10 Top Performances</h2>
+                        <h2>🏆 Last 10 Top Performances 🏆</h2>
                         <p>The most recently uploaded top-speed IGCs across all tasks</p>
                     </div>
                     <table id="latestTopIGCTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
@@ -135,8 +135,8 @@ function loadTabContent(tabId) {
                 <hr>
                 <div class="top-igc-contributors">
                     <div class="latest-igc-header">
-                        <h2>🏅 Top 10 Contributors (Last 30 Days)</h2>
-                        <p>Pilots with most IGC uploads in the last 30 days</p>
+                        <h2>Top 10 Contributors (Last 7 Days)</h2>
+                        <p>Pilots with most IGC uploads in the last 7 days</p>
                     </div>
                     <table id="topContributorsTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
                         <thead>
