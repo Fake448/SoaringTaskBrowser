@@ -5,6 +5,7 @@ try {
     $pdo = new PDO("sqlite:$databasePath");
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+    // === Top Performances ===
     $sql = "
         SELECT 
             IGC.IGCKey,
@@ -67,4 +68,30 @@ try {
     echo "✔ Top IGC data written to latestTopIGCs.json\n";
 } catch (Exception $e) {
     echo "❌ Error: " . $e->getMessage();
+}
+
+// === Top Contributors (Last 30 Days) ===
+try {
+    $stmt = $pdo->query("
+        SELECT 
+            Pilot,
+            COUNT(*) AS UploadCount
+        FROM IGCRecords
+        WHERE 
+            IGCUploadDateTimeUTC >= datetime('now', '-7 days')
+            AND Pilot IS NOT NULL
+            AND TRIM(Pilot) <> ''
+        GROUP BY Pilot
+        ORDER BY UploadCount DESC, Pilot ASC
+        LIMIT 5;
+    ");
+
+    $contribResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $jsonPathContrib = __DIR__ . '/../otherdata/topIGCContributors.json';
+    file_put_contents($jsonPathContrib, json_encode($contribResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+
+    echo "✔ Top contributors written to topIGCContributors.json\n";
+} catch (Exception $e) {
+    echo "❌ Error generating top contributors: " . $e->getMessage();
 }

@@ -133,6 +133,24 @@ function loadTabContent(tabId) {
                     </table>
                 </div>
                 <hr>
+                <div class="top-igc-contributors">
+                    <div class="top-contrib-header">
+                        <h2>🏅 Top 10 Contributors (Last 30 Days)</h2>
+                        <p>Pilots with most IGC uploads in the last 30 days</p>
+                    </div>
+                    <table id="topContributorsTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Pilot</th>
+                                <th>Uploads</th>
+                            </tr>
+                        </thead>
+                        <tbody id="top-contributors-body">
+                            <tr><td colspan="2">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr>
                 <div class="community-section">
                     <h2>Featured Soaring Communities and Clubs</h2>
                     <div class="community-navigation left">
@@ -340,12 +358,68 @@ function loadHomeTab(forceUpdate = false) {
                     order: [[4, 'desc']]
                 });
             }
+            // AFTER updating top-IGC table, load/update the contributors table
+            loadTopContributors();
+
         })
         .catch(error => {
             console.error('Error fetching latest IGCs:', error);
             const tbody = document.getElementById('latest-igc-leaders-body');
             if (tbody) {
                 tbody.innerHTML = '<tr><td colspan="5">Failed to load data.</td></tr>';
+            }
+            // Even if top-IGC fetch fails, attempt to load contributors
+            loadTopContributors();
+        });
+}
+
+function loadTopContributors() {
+    fetch('/otherdata/topIGCContributors.json?nocache=' + Date.now())
+        .then(res => res.json())
+        .then(data => {
+            if (!data || data.length === 0) {
+                // Show “no data” row if needed
+                const tbody = document.getElementById('top-contributors-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">No contributors in the last 30 days.</td></tr>';
+                }
+                return;
+            }
+
+            // Build an array of [Pilot, UploadCount] rows
+            const rows = data.map(entry => {
+                return [
+                    entry.Pilot,
+                    entry.UploadCount
+                ];
+            });
+
+            // If the DataTable already exists, clear & re-add rows
+            if ($.fn.DataTable.isDataTable('#topContributorsTable')) {
+                const table = $('#topContributorsTable').DataTable();
+                table.clear();
+                table.rows.add(rows);
+                table.draw();
+            } else {
+                // Initialize DataTable for the first time
+                $('#topContributorsTable').DataTable({
+                    data: rows,
+                    columns: [
+                        { title: "Pilot" },
+                        { title: "Uploads" }
+                    ],
+                    paging: false,
+                    searching: false,
+                    info: false,
+                    ordering: false
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error fetching top contributors:', error);
+            const tbody = document.getElementById('top-contributors-body');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="2">Failed to load data.</td></tr>';
             }
         });
 }
