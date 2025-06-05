@@ -135,7 +135,7 @@ function loadTabContent(tabId) {
                 <hr>
                 <div class="top-igc-contributors">
                     <div class="latest-igc-header">
-                        <h2>Top 10 Contributors (Last 7 Days)</h2>
+                        <h2>Top 5 Contributors (Last 7 Days)</h2>
                         <p>Pilots with most IGC uploads in the last 7 days</p>
                     </div>
                     <table id="topContributorsTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
