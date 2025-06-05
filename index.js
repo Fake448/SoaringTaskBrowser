@@ -133,22 +133,59 @@ function loadTabContent(tabId) {
                     </table>
                 </div>
                 <hr>
-                <div class="top-igc-contributors">
-                    <div class="latest-igc-header">
-                        <h2>Top 5 Contributors (Last 7 Days)</h2>
-                        <p>Pilots with most IGC uploads in the last 7 days</p>
+                <div class="latest-igc-header">
+                    <h2>In the last 7 days</h3>
+                </div>
+                <div class="home-stats-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <!-- Top 5 Contributors (Last 7 Days) -->
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>Top 5 Contributors</h3>
+                        </div>
+                        <table id="topContrib7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Pilot</th>
+                                    <th>Uploads</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-contrib-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
-                    <table id="topContributorsTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
-                        <thead>
-                            <tr>
-                                <th>Pilot</th>
-                                <th>Uploads</th>
-                            </tr>
-                        </thead>
-                        <tbody id="top-contributors-body">
-                            <tr><td colspan="2">Loading...</td></tr>
-                        </tbody>
-                    </table>
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>Top 5 Gliders</h3>
+                        </div>
+                        <table id="topGliders7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Glider Type</th>
+                                    <th>Flights</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-gliders-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>MSFS Versions</h3>
+                        </div>
+                        <table id="msfsVer7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody id="msfs‐ver-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
                 <hr>
                 <div class="community-section">
@@ -358,8 +395,9 @@ function loadHomeTab(forceUpdate = false) {
                     order: [[4, 'desc']]
                 });
             }
-            // AFTER updating top-IGC table, load/update the contributors table
-            loadTopContributors();
+            loadTopContrib7();
+            loadTopGliders7();
+            loadMsfsVer7();
 
         })
         .catch(error => {
@@ -368,45 +406,48 @@ function loadHomeTab(forceUpdate = false) {
             if (tbody) {
                 tbody.innerHTML = '<tr><td colspan="5">Failed to load data.</td></tr>';
             }
-            // Even if top-IGC fetch fails, attempt to load contributors
-            loadTopContributors();
+            loadTopContrib7();
+            loadTopGliders7();
+            loadMsfsVer7();
         });
 }
 
-function loadTopContributors() {
-    fetch('/otherdata/topIGCContributors.json?nocache=' + Date.now())
+/**
+ * Fetch /otherdata/topIGCContributors7Days.json and populate #topContrib7Table.
+ * Expected JSON schema: [ { "Pilot": "...", "UploadCount": 12 }, … ]
+ */
+function loadTopContrib7() {
+    fetch('/otherdata/topIGCContributors7Days.json?nocache=' + Date.now())
         .then(res => res.json())
         .then(data => {
-            if (!data || data.length === 0) {
-                // Show “no data” row if needed
-                const tbody = document.getElementById('top-contributors-body');
+            if (!Array.isArray(data) || data.length === 0) {
+                const tbody = document.getElementById('top-contrib-7-body');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="2">No contributors in the last 7 days.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
                 }
                 return;
             }
 
-            // Build an array of [Pilot, UploadCount] rows
-            const rows = data.map(entry => {
+            // Only keep top 5; JSON is assumed already sorted, but just in case:
+            const slice5 = data.slice(0, 5);
+            const rows = slice5.map(entry => {
                 return [
                     entry.Pilot,
                     entry.UploadCount
                 ];
             });
 
-            // If the DataTable already exists, clear & re-add rows
-            if ($.fn.DataTable.isDataTable('#topContributorsTable')) {
-                const table = $('#topContributorsTable').DataTable();
-                table.clear();
-                table.rows.add(rows);
-                table.draw();
+            if ($.fn.DataTable.isDataTable('#topContrib7Table')) {
+                const tbl = $('#topContrib7Table').DataTable();
+                tbl.clear();
+                tbl.rows.add(rows);
+                tbl.draw();
             } else {
-                // Initialize DataTable for the first time
-                $('#topContributorsTable').DataTable({
+                $('#topContrib7Table').DataTable({
                     data: rows,
                     columns: [
-                        { title: "Pilot" },
-                        { title: "Uploads" }
+                        { title: 'Pilot' },
+                        { title: 'Uploads' }
                     ],
                     paging: false,
                     searching: false,
@@ -415,11 +456,117 @@ function loadTopContributors() {
                 });
             }
         })
-        .catch(error => {
-            console.error('Error fetching top contributors:', error);
-            const tbody = document.getElementById('top-contributors-body');
+        .catch(err => {
+            console.error('Error fetching top‐5 contributors (7d):', err);
+            const tbody = document.getElementById('top-contrib-7-body');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="2">Failed to load data.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
+            }
+        });
+}
+
+/**
+ * Fetch /otherdata/topGliders7Days.json and populate #topGliders7Table.
+ * Expected JSON schema: [ { "GliderType": "...", "Count": 37 }, … ]
+ */
+function loadTopGliders7() {
+    fetch('/otherdata/topGliders7Days.json?nocache=' + Date.now())
+        .then(res => res.json())
+        .then(data => {
+            if (!Array.isArray(data) || data.length === 0) {
+                const tbody = document.getElementById('top-gliders-7-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
+                }
+                return;
+            }
+
+            // Only keep top 5
+            const slice5 = data.slice(0, 5);
+            const rows = slice5.map(entry => {
+                return [
+                    entry.GliderType,
+                    entry.Count
+                ];
+            });
+
+            if ($.fn.DataTable.isDataTable('#topGliders7Table')) {
+                const tbl = $('#topGliders7Table').DataTable();
+                tbl.clear();
+                tbl.rows.add(rows);
+                tbl.draw();
+            } else {
+                $('#topGliders7Table').DataTable({
+                    data: rows,
+                    columns: [
+                        { title: 'Glider Type' },
+                        { title: 'Flights' }
+                    ],
+                    paging: false,
+                    searching: false,
+                    info: false,
+                    ordering: false
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching top‐5 gliders (7d):', err);
+            const tbody = document.getElementById('top-gliders-7-body');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
+            }
+        });
+}
+
+/**
+ * Fetch /otherdata/msfsVersions7Days.json and populate #msfsVer7Table.
+ * Expected JSON schema: [ { "Version": "1.24.5.0", "Count": 42 }, … ]
+ */
+function loadMsfsVer7() {
+    fetch('/otherdata/msfsVersions7Days.json?nocache=' + Date.now())
+        .then(res => res.json())
+        .then(data => {
+            if (!Array.isArray(data) || data.length === 0) {
+                const tbody = document.getElementById('msfs‐ver-7-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
+                }
+                return;
+            }
+
+            // Only keep top 5
+            const slice5 = data.slice(0, 5);
+            const rows = slice5.map(entry => {
+                return [
+                    entry.Version,
+                    entry.Count
+                ];
+            });
+
+            if ($.fn.DataTable.isDataTable('#msfsVer7Table')) {
+                const tbl = $('#msfsVer7Table').DataTable();
+                tbl.clear();
+                tbl.rows.add(rows);
+                tbl.draw();
+            } else {
+                $('#msfsVer7Table').DataTable({
+                    data: rows,
+                    columns: [
+                        { title: 'Version' },
+                        { title: 'Count' }
+                    ],
+                    paging: false,
+                    searching: false,
+                    info: false,
+                    ordering: false
+                });
+            }
+        })
+        .catch(err => {
+            console.error('Error fetching MSFS versions (7d):', err);
+            const tbody = document.getElementById('msfs‐ver-7-body');
+            if (tbody) {
+                tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
             }
         });
 }

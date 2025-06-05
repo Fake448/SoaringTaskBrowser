@@ -50,48 +50,91 @@ try {
         ORDER BY IGC.IGCUploadDateTimeUTC DESC
         LIMIT 10
     ";
-
     $stmt = $pdo->prepare($sql);
     $stmt->execute();
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Format speed
+    // Format speed to one decimal place
     foreach ($results as &$row) {
         $row['Speed'] = number_format((float)$row['Speed'], 1, '.', '');
     }
     unset($row);
 
-    // Save to file
     $jsonPath = __DIR__ . '/../otherdata/latestTopIGCs.json';
     file_put_contents($jsonPath, json_encode($results, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
     echo "✔ Top IGC data written to latestTopIGCs.json\n";
 } catch (Exception $e) {
-    echo "❌ Error: " . $e->getMessage();
+    echo "❌ Error (Top Performances): " . $e->getMessage() . "\n";
 }
 
-// === Top Contributors (Last 30 Days) ===
+// === Top Contributors (Last 7 Days) ===
 try {
     $stmt = $pdo->query("
-        SELECT 
+        SELECT
             Pilot,
             COUNT(*) AS UploadCount
         FROM IGCRecords
-        WHERE 
+        WHERE
             IGCUploadDateTimeUTC >= datetime('now', '-7 days')
             AND Pilot IS NOT NULL
             AND TRIM(Pilot) <> ''
         GROUP BY Pilot
         ORDER BY UploadCount DESC, Pilot ASC
-        LIMIT 5;
+        LIMIT 5
     ");
-
     $contribResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $jsonPathContrib = __DIR__ . '/../otherdata/topIGCContributors.json';
+    $jsonPathContrib = __DIR__ . '/../otherdata/topIGCContributors7Days.json';
     file_put_contents($jsonPathContrib, json_encode($contribResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
-
-    echo "✔ Top contributors written to topIGCContributors.json\n";
+    echo "✔ Top contributors (7d) written to topIGCContributors7Days.json\n";
 } catch (Exception $e) {
-    echo "❌ Error generating top contributors: " . $e->getMessage();
+    echo "❌ Error (Top Contributors): " . $e->getMessage() . "\n";
+}
+
+// === Top Gliders (Last 7 Days) ===
+try {
+    $stmt = $pdo->query("
+        SELECT
+            GliderType,
+            COUNT(*) AS FlightCount
+        FROM IGCRecords
+        WHERE
+            IGCUploadDateTimeUTC >= datetime('now', '-7 days')
+            AND GliderType IS NOT NULL
+            AND TRIM(GliderType) <> ''
+        GROUP BY GliderType
+        ORDER BY FlightCount DESC, GliderType ASC
+        LIMIT 5
+    ");
+    $gliderResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $jsonPathGliders = __DIR__ . '/../otherdata/topGliders7Days.json';
+    file_put_contents($jsonPathGliders, json_encode($gliderResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    echo "✔ Top gliders (7d) written to topGliders7Days.json\n";
+} catch (Exception $e) {
+    echo "❌ Error (Top Gliders): " . $e->getMessage() . "\n";
+}
+
+// === MSFS Versions (Last 7 Days) ===
+try {
+    $stmt = $pdo->query("
+        SELECT
+            Sim AS Version,
+            COUNT(*) AS VersionCount
+        FROM IGCRecords
+        WHERE
+            IGCUploadDateTimeUTC >= datetime('now', '-7 days')
+            AND Sim IS NOT NULL
+            AND TRIM(Sim) <> ''
+        GROUP BY Sim
+        ORDER BY VersionCount DESC, Version ASC
+        LIMIT 5
+    ");
+    $versionResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    $jsonPathVersions = __DIR__ . '/../otherdata/msfsVersions7Days.json';
+    file_put_contents($jsonPathVersions, json_encode($versionResults, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE));
+    echo "✔ MSFS versions (7d) written to msfsVersions7Days.json\n";
+} catch (Exception $e) {
+    echo "❌ Error (MSFS Versions): " . $e->getMessage() . "\n";
 }
