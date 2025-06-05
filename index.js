@@ -467,7 +467,7 @@ function loadTopContrib7() {
 
 /**
  * Fetch /otherdata/topGliders7Days.json and populate #topGliders7Table.
- * Expected JSON schema: [ { "GliderType": "...", "Count": 37 }, … ]
+ * Expected JSON schema: [ { "GliderType": "...", "FlightCount": 37 }, … ]
  */
 function loadTopGliders7() {
     fetch('/otherdata/topGliders7Days.json?nocache=' + Date.now())
@@ -486,7 +486,7 @@ function loadTopGliders7() {
             const rows = slice5.map(entry => {
                 return [
                     entry.GliderType,
-                    entry.Count
+                    entry.FlightCount   // ← use “FlightCount” (not “Count”)
                 ];
             });
 
@@ -520,14 +520,14 @@ function loadTopGliders7() {
 
 /**
  * Fetch /otherdata/msfsVersions7Days.json and populate #msfsVer7Table.
- * Expected JSON schema: [ { "Version": "1.24.5.0", "Count": 42 }, … ]
+ * Expected JSON schema: [ { "Version": "1.24.5.0", "VersionCount": 42 }, … ]
  */
 function loadMsfsVer7() {
     fetch('/otherdata/msfsVersions7Days.json?nocache=' + Date.now())
         .then(res => res.json())
         .then(data => {
             if (!Array.isArray(data) || data.length === 0) {
-                const tbody = document.getElementById('msfs‐ver-7-body');
+                const tbody = document.getElementById('msfs-ver-7-body'); // make sure this matches your <tbody> id
                 if (tbody) {
                     tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
                 }
@@ -539,7 +539,7 @@ function loadMsfsVer7() {
             const rows = slice5.map(entry => {
                 return [
                     entry.Version,
-                    entry.Count
+                    entry.VersionCount   // ← use “VersionCount” (not “Count”)
                 ];
             });
 
@@ -564,7 +564,7 @@ function loadMsfsVer7() {
         })
         .catch(err => {
             console.error('Error fetching MSFS versions (7d):', err);
-            const tbody = document.getElementById('msfs‐ver-7-body');
+            const tbody = document.getElementById('msfs-ver-7-body'); // match your actual ID
             if (tbody) {
                 tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
             }
