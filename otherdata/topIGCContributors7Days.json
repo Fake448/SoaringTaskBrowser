@@ -1,1 +1,22 @@
-[]
+[
+    {
+        "Pilot": "Cliffhanger",
+        "UploadCount": 4
+    },
+    {
+        "Pilot": "ADCK",
+        "UploadCount": 3
+    },
+    {
+        "Pilot": "GARY",
+        "UploadCount": 3
+    },
+    {
+        "Pilot": "ALEX",
+        "UploadCount": 2
+    },
+    {
+        "Pilot": "Axel",
+        "UploadCount": 2
+    }
+]

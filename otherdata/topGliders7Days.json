@@ -1,1 +1,18 @@
-[]
+[
+    {
+        "GliderType": "JS3-18",
+        "FlightCount": 15
+    },
+    {
+        "GliderType": "JS3-15",
+        "FlightCount": 12
+    },
+    {
+        "GliderType": "AS-33",
+        "FlightCount": 11
+    },
+    {
+        "GliderType": "AS7",
+        "FlightCount": 6
+    }
+]
