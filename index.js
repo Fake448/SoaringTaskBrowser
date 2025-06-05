@@ -134,7 +134,7 @@ function loadTabContent(tabId) {
                 </div>
                 <hr>
                 <div class="top-igc-contributors">
-                    <div class="top-contrib-header">
+                    <div class="latest-igc-header">
                         <h2>🏅 Top 10 Contributors (Last 30 Days)</h2>
                         <p>Pilots with most IGC uploads in the last 30 days</p>
                     </div>
@@ -381,7 +381,7 @@ function loadTopContributors() {
                 // Show “no data” row if needed
                 const tbody = document.getElementById('top-contributors-body');
                 if (tbody) {
-                    tbody.innerHTML = '<tr><td colspan="2">No contributors in the last 30 days.</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="2">No contributors in the last 7 days.</td></tr>';
                 }
                 return;
             }
