@@ -7,14 +7,13 @@ header('Content-Type: application/json');
 // 1) Auth checks
 if (empty($_SESSION['user']['id'])) {
     http_response_code(401);
-    echo json_encode(array('success' => false, 'message' => 'User not authenticated'));
+    echo json_encode(array('success'=>false,'message'=>'User not authenticated'));
     exit;
 }
-
 $wsgUserID = (int) $_SESSION['user']['id'];
 if ($wsgUserID <= 0) {
     http_response_code(400);
-    echo json_encode(array('success' => false, 'message' => 'Invalid user ID'));
+    echo json_encode(array('success'=>false,'message'=>'Invalid user ID'));
     exit;
 }
 
@@ -23,17 +22,16 @@ $raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
 if (!is_array($data)) {
     http_response_code(400);
-    echo json_encode(array('success' => false, 'message' => 'Invalid JSON'));
+    echo json_encode(array('success'=>false,'message'=>'Invalid JSON'));
     exit;
 }
-
 $pilotName = trim($data['pilotName'] ?? '');
 $compId    = trim($data['compId']    ?? '');
 if ($pilotName === '' || $compId === '') {
     http_response_code(400);
     echo json_encode(array(
-        'success' => false,
-        'message' => 'Both Pilot Name and Competition ID are required'
+        'success'=>false,
+        'message'=>'Both Pilot Name and Competition ID are required'
     ));
     exit;
 }
@@ -51,20 +49,28 @@ try {
          WHERE WSGUserID = :uid
     ');
     $upd->execute(array(
-        ':pilot' => $pilotName,
-        ':comp'  => $compId,
-        ':uid'   => $wsgUserID
+        ':pilot'=>$pilotName,
+        ':comp' =>$compId,
+        ':uid'  =>$wsgUserID
     ));
-
-    // 5) Sync session
     $_SESSION['user']['pilotName'] = $pilotName;
     $_SESSION['user']['compId']    = $compId;
 
-    // 6) Prepare match-finding statements
+    // 5) Prepare statements to find matches with extra fields
     $selUnassigned = $pdo->prepare('
-        SELECT IGCKey, Pilot, CompetitionID
-          FROM IGCRecords
-         WHERE WSGUserID = 0
+        SELECT
+            I.IGCKey,
+            I.Pilot,
+            I.CompetitionID,
+            I.EntrySeqID,
+            T.Title,
+            I.GliderType,
+            I.GliderID,
+            I.CompetitionClass
+          FROM IGCRecords AS I
+          JOIN Tasks        AS T
+            ON I.EntrySeqID = T.EntrySeqID
+         WHERE I.WSGUserID = 0
     ');
     $findBoth = $pdo->prepare('
         SELECT 1
@@ -76,7 +82,7 @@ try {
     $findByComp  = $pdo->prepare('SELECT WSGUserID FROM Users WHERE CompID    = :comp');
     $findByPilot = $pdo->prepare('SELECT WSGUserID FROM Users WHERE PilotName = :pilot');
 
-    // 7) Scan unassigned records
+    // 6) Scan unassigned records
     $selUnassigned->execute();
     $matches = array();
 
@@ -85,17 +91,17 @@ try {
 
         // a) exact pilot+comp match
         $findBoth->execute(array(
-            ':pilot' => $rec['Pilot'],
-            ':comp'  => $rec['CompetitionID']
+            ':pilot'=>$rec['Pilot'],
+            ':comp' =>$rec['CompetitionID']
         ));
         if ($findBoth->fetch()) {
             $matched = true;
         } else {
             // b) fallbacks
-            $findByComp->execute(array(':comp'  => $rec['CompetitionID']));
-            $compRows  = $findByComp->fetchAll(PDO::FETCH_COLUMN, 0);
+            $findByComp->execute(array(':comp'=>$rec['CompetitionID']));
+            $compRows = $findByComp->fetchAll(PDO::FETCH_COLUMN, 0);
 
-            $findByPilot->execute(array(':pilot' => $rec['Pilot']));
+            $findByPilot->execute(array(':pilot'=>$rec['Pilot']));
             $pilotRows = $findByPilot->fetchAll(PDO::FETCH_COLUMN, 0);
 
             // unique-comp -> this user?
@@ -109,22 +115,28 @@ try {
         }
 
         if ($matched) {
+            // include exactly the fields you wanted
             $matches[] = array(
-                'IGCKey'        => $rec['IGCKey'],
-                'Pilot'         => $rec['Pilot'],
-                'CompetitionID' => $rec['CompetitionID']
+                'entrySeqId'       => $rec['EntrySeqID'],
+                'title'            => $rec['Title'],
+                'pilot'            => $rec['Pilot'],
+                'gliderType'       => $rec['GliderType'],
+                'gliderId'         => $rec['GliderID'],
+                'competitionId'    => $rec['CompetitionID'],
+                'competitionClass' => $rec['CompetitionClass'],
+                'igcKey'           => $rec['IGCKey']
             );
         }
     }
 
-    // 8) Respond
+    // 7) Respond
     echo json_encode(array(
-        'success' => true,
-        'matches' => $matches
+        'success'=>true,
+        'matches'=>$matches
     ));
 }
 catch (Exception $e) {
     logMessage('updateUserInfo error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(array('success' => false, 'message' => 'Database error'));
+    echo json_encode(array('success'=>false,'message'=>'Database error'));
 }
