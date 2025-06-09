@@ -1,5 +1,5 @@
 <?php
-header('Content-Type: application/json');
+require_once __DIR__ . '/session_restore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
 // Ensure the user is logged in.
