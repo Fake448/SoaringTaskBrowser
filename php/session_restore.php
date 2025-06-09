@@ -39,7 +39,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['WSGUserID'])) {
             FROM Users
             WHERE WSGUserID = ?
         ");
-        $stmt->execute([ $_COOKIE['WSGUserID'] ]);
+        $stmt->execute([$_COOKIE['WSGUserID'] ]);
         $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($userRow) {
