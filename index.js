@@ -606,25 +606,77 @@ function loadAccountInfo() {
     TB.getUserConnectionInfo().then(info => {
         const accountContent = document.getElementById('account-content');
         if (info.loggedIn) {
+            // Destructure existing values (you’ll need to fetch PilotName & CompID in info.user)
+            const { displayName, avatar, pilotName = '', compId = '' } = info.user;
+
             accountContent.innerHTML = `
-                <h3>Welcome, ${info.user.displayName}!</h3>
-                <p>Avatar:<br>
-                    <img src="${info.user.avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
-                </p>
-                <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
-            `;
+        <h3>Welcome, ${displayName}!</h3>
+        <p>Avatar:<br>
+          <img src="${avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
+        </p>
 
-            // Create the skeleton for the IGC Submissions section.
+        <div class="user-info-form">
+          <label for="pilotName">Pilot Name</label><br>
+          <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
+
+          <label for="compId">Competition ID</label><br>
+          <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
+
+          <button class="button-style" id="updateUserInfo">Update</button>
+        </div>
+
+        <hr>
+
+        <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
+      `;
+
+            // wire up Update button
+            document
+                .getElementById('updateUserInfo')
+                .addEventListener('click', () => {
+                    const pilotNameInput = document.getElementById('pilotName').value.trim();
+                    const compIdInput = document.getElementById('compId').value.trim();
+
+                    // basic validation
+                    if (!pilotNameInput || !compIdInput) {
+                        alert('Please fill in both Pilot Name and Competition ID.');
+                        return;
+                    }
+
+                    // send to server
+                    fetch('php/updateUserInfo.php', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            pilotName: pilotNameInput,
+                            compId: compIdInput
+                        })
+                    })
+                        .then(r => r.json())
+                        .then(({ success, message }) => {
+                            if (success) {
+                                alert('Profile updated successfully!');
+                                // Optionally refresh TB.getUserConnectionInfo cache & UI
+                                loadAccountInfo();
+                            } else {
+                                alert('Update failed: ' + message);
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('An error occurred while updating.');
+                        });
+                });
+
+            // rest of your sections…
             createSectionSkeleton("IGC Submissions", "igc-submissions", "igc-submissions-content", accountContent);
-            // Load data into that section.
             refreshIGCSubmissionsContent();
-
 
         } else {
             accountContent.innerHTML = `
-                <p>You are not logged in.</p>
-                <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
-            `;
+        <p>You are not logged in.</p>
+        <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
+      `;
         }
     });
 }

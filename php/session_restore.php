@@ -2,11 +2,10 @@
 require_once __DIR__ . '/CommonFunctions.php';
 
 // Set session and cookie parameters to persist for 30 days
-// If you need the cookie to be available on all subdomains, adjust the domain accordingly.
 ini_set('session.gc_maxlifetime', 86400 * 30);
 
 $domain = preg_replace('#^https?://#', '', $wsgRoot);
-$domain = rtrim($domain, '/');  // Remove trailing slash if present
+$domain = rtrim($domain, '/');
 
 session_set_cookie_params([
     'lifetime' => 86400 * 30,
@@ -17,36 +16,42 @@ session_set_cookie_params([
     'samesite' => 'Lax'
 ]);
 
-// Start the session if it is not already active.
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
-// If session data isn't set but the WSGUserID cookie exists, restore the session.
 if (!isset($_SESSION['user']) && isset($_COOKIE['WSGUserID'])) {
-    // Load configuration directly to get $databasePath (adjust the path as necessary).
-    $config = include __DIR__ . '/config.php';
+    $config       = include __DIR__ . '/config.php';
     $databasePath = $config['databasePath'];
 
     try {
         $pdo = new PDO("sqlite:$databasePath");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE', PDO::ERRMODE_EXCEPTION);
 
         // Prepare and execute query to fetch user data.
-        $stmt = $pdo->prepare("SELECT WSGUserID, WSGDisplayName, AvatarURL FROM Users WHERE WSGUserID = ?");
-        $stmt->execute([$_COOKIE['WSGUserID']]);
+        $stmt = $pdo->prepare("
+            SELECT 
+                WSGUserID,
+                WSGDisplayName,
+                AvatarURL,
+                PilotName,
+                CompID
+            FROM Users
+            WHERE WSGUserID = ?
+        ");
+        $stmt->execute([ $_COOKIE['WSGUserID'] ]);
         $userRow = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($userRow) {
             $_SESSION['user'] = [
                 'id'          => $userRow['WSGUserID'],
                 'displayName' => $userRow['WSGDisplayName'],
-                'discordID'   => null,  // Set accordingly if available.
-                'avatar'      => $userRow['AvatarURL']
+                'avatar'      => $userRow['AvatarURL'],
+                'pilotName'   => $userRow['PilotName']   ?? '',
+                'compId'      => $userRow['CompID']      ?? ''
             ];
         }
     } catch (Exception $e) {
-        // Log the error (or handle as needed) without outputting anything.
         logMessage("Error restoring session: " . $e->getMessage());
     }
 }
