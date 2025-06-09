@@ -607,88 +607,176 @@ function loadAccountInfo() {
         const accountContent = document.getElementById('account-content');
         accountContent.innerHTML = ''; // clear first
 
-        if (info.loggedIn) {
-            // welcome + avatar
-            const { displayName, avatar, pilotName = '', compId = '' } = info.user;
-            const header = document.createElement('div');
-            header.innerHTML = `
-        <h3>Welcome, ${displayName}!</h3>
-      `;
-            accountContent.appendChild(header);
-
-            // --- PROFILE SECTION ---
-            createSectionSkeleton(
-                "Profile",
-                "user-profile-section",      // section id
-                "user-profile-content",      // inner content id
-                accountContent
-            );
-            // build your form inside that content pane
-            const profilePane = document.getElementById('user-profile-content');
-            profilePane.innerHTML = `
-        <p>
-            <img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;">
-        </p>
-        <p><span style="font-style:italic;">To update your Discord avatar, please logout and then log back in.</span></p>
-        <div class="user-info-form">
-          <label for="pilotName">Pilot Name</label><br>
-          <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
-
-          <label for="compId">Pilot ID (SSC-Tracker / NB21 Logger)</label><br>
-          <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
-
-          <button class="button-style" id="updateUserInfo">Save</button>
-          <span id="update-status" style="margin-left:8px; font-style:italic; color:green;"></span>
-        </div>
-      `;
-
-            // wire up the update button
-            document.getElementById('updateUserInfo').onclick = () => {
-                const p = document.getElementById('pilotName').value.trim();
-                const c = document.getElementById('compId').value.trim();
-                if (!p || !c) return alert('Both fields are required.');
-                fetch('php/updateUserInfo.php', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ pilotName: p, compId: c })
-                })
-                    .then(r => r.json())
-                    .then(({ success, message }) => {
-                        const statusEl = document.getElementById('update-status');
-                        if (success) {
-                            statusEl.textContent = 'Profile info updated!';
-                            // clear after 3 seconds
-                            setTimeout(() => { statusEl.textContent = ''; }, 3000);
-                        } else {
-                            alert('Error: ' + message);
-                        }
-                    })
-                    .catch(e => { console.error(e); alert('Update failed'); });
-            };
-
-            // --- IGC SUBMISSIONS SECTION ---
-            createSectionSkeleton(
-                "IGC Submissions",
-                "igc-submissions",
-                "igc-submissions-content",
-                accountContent
-            );
-            refreshIGCSubmissionsContent();
-
-            // finally logout button
-            const logout = document.createElement('button');
-            logout.className = 'button-style';
-            logout.textContent = 'Logout';
-            logout.onclick = () => window.location.href = 'php/logout.php';
-            accountContent.appendChild(logout);
-
-        } else {
+        if (!info.loggedIn) {
             accountContent.innerHTML = `
         <p>You are not logged in.</p>
         <button class="button-style" onclick="window.location.href='php/login.php'">
           Login with Discord
         </button>
       `;
+            return;
+        }
+
+        const { displayName, avatar, pilotName = '', compId = '' } = info.user;
+
+        // Header
+        const header = document.createElement('div');
+        header.innerHTML = `<h3>Welcome, ${displayName}!</h3>`;
+        accountContent.appendChild(header);
+
+        // Profile section
+        createSectionSkeleton("Profile", "user-profile-section", "user-profile-content", accountContent);
+        const profilePane = document.getElementById('user-profile-content');
+        profilePane.innerHTML = `
+      <p><img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;"></p>
+      <p><em>To update your Discord avatar, please logout and then log back in.</em></p>
+      <div class="user-info-form">
+        <label for="pilotName">Pilot Name</label><br>
+        <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
+        <label for="compId">Competition ID</label><br>
+        <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
+        <button class="button-style" id="updateUserInfo">Save & Check matching unassigned IGC</button>
+        <span id="update-status" style="margin-left:8px;font-style:italic;color:green;"></span>
+      </div>
+      <div id="match-results" style="margin-top:1em;"></div>
+    `;
+
+        // Handle Save click
+        document.getElementById('updateUserInfo').onclick = () => {
+            const p = document.getElementById('pilotName').value.trim();
+            const c = document.getElementById('compId').value.trim();
+            if (!p || !c) return alert('Both fields are required.');
+
+            fetch('php/updateUserInfo.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ pilotName: p, compId: c })
+            })
+                .then(r => r.json())
+                .then(({ success, matches = [], message }) => {
+                    const statusEl = document.getElementById('update-status');
+                    if (!success) {
+                        return alert('Error: ' + message);
+                    }
+                    statusEl.textContent = 'Profile updated!';
+                    setTimeout(() => { statusEl.textContent = ''; }, 3000);
+
+                    // render matches table (or clear if none)
+                    renderMatchTable(matches);
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Update failed');
+                });
+        };
+
+        // IGC submissions...
+        createSectionSkeleton("IGC Submissions", "igc-submissions", "igc-submissions-content", accountContent);
+        refreshIGCSubmissionsContent();
+
+        // Logout
+        const logout = document.createElement('button');
+        logout.className = 'button-style';
+        logout.textContent = 'Logout';
+        logout.onclick = () => window.location.href = 'php/logout.php';
+        accountContent.appendChild(logout);
+    });
+}
+
+// Renders (or clears) the match-results div
+function renderMatchTable(matches) {
+    const container = document.getElementById('match-results');
+    container.innerHTML = ''; // clear old
+
+    if (!matches.length) return;
+
+    // Section heading
+    const heading = document.createElement('h4');
+    heading.textContent = 'Matching IGC Records';
+    container.appendChild(heading);
+
+    // Table placeholder
+    container.innerHTML += `
+    <table id="matchRecordsTable"
+           class="display igcRecordsTable"
+           style="width:100%; margin-top:8px;">
+    </table>
+  `;
+
+    // Build DataTable
+    const dt = $('#matchRecordsTable').DataTable({
+        data: matches,
+        autoWidth: false,
+        scrollX: true,
+        scrollCollapse: true,
+        paging: false,
+        ordering: true,
+        info: true,
+        dom: '"top"rt<"bottom"lip><"clear">',
+        columns: [
+            {
+                data: 'igcKey',
+                title: '<input type="checkbox" id="match-select-all">',
+                orderable: false,
+                width: '30px',
+                className: 'dt-center',
+                render: (d, t) => t === 'display'
+                    ? `<input type="checkbox" class="match-chk" value="${d}">`
+                    : d
+            },
+            {
+                data: null,
+                title: 'Task',
+                render: (row, t) => t === 'display'
+                    ? `(${row.entrySeqId}) ${row.title}`
+                    : row.entrySeqId
+            },
+            { data: 'pilot', title: 'Pilot' },
+            { data: 'gliderType', title: 'Glider' },
+            { data: 'gliderId', title: 'Glider ID' },
+            { data: 'competitionId', title: 'Comp ID' },
+            { data: 'competitionClass', title: 'Comp Class' },
+            { data: 'igcKey', title: 'File' }
+        ],
+        initComplete() {
+            const api = this.api();
+            api.columns.adjust();
+
+            // wire up select-all
+            $('#match-select-all').on('click', function () {
+                const checked = this.checked;
+                $('.match-chk').prop('checked', checked);
+            });
+
+            // add Claim button below
+            const claimBtn = $(
+                '<button class="button-style" style="margin:8px 0;">Claim all selected</button>'
+            ).on('click', () => {
+                const selected = $('.match-chk:checked')
+                    .map((i, el) => el.value)
+                    .get();
+                if (!selected.length) {
+                    return alert('No records selected.');
+                }
+                fetch('php/claimIgcRecords.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ igcKeys: selected })
+                })
+                    .then(r => r.json())
+                    .then(resp => {
+                        if (resp.success) {
+                            alert(`Claimed ${selected.length} record(s).`);
+                            loadAccountInfo(); // refresh everything
+                        } else {
+                            alert('Error: ' + resp.message);
+                        }
+                    })
+                    .catch(() => alert('Claim failed'));
+            });
+
+            // insert button just below the table
+            $(api.table().container()).after(claimBtn);
         }
     });
 }

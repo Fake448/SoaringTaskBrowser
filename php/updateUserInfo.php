@@ -40,6 +40,29 @@ if ($pilotName === '' || $compId === '') {
 $pdo = new PDO('sqlite:' . $databasePath);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
+// 3.1) Uniqueness check (case-insensitive)
+$chk = $pdo->prepare('
+    SELECT WSGUserID
+      FROM Users
+     WHERE lower(PilotName) = lower(:pilot)
+       AND lower(CompID)    = lower(:comp)
+       AND WSGUserID       != :uid
+     LIMIT 1
+');
+$chk->execute(array(
+    ':pilot'=> $pilotName,
+    ':comp' => $compId,
+    ':uid'  => $wsgUserID
+));
+if ($chk->fetch()) {
+    http_response_code(409);  // Conflict
+    echo json_encode(array(
+        'success'=>false,
+        'message'=>'That Pilot Name and Competition ID are already taken by another user.'
+    ));
+    exit;
+}
+
 try {
     // 4) Update profile
     $upd = $pdo->prepare('
