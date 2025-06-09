@@ -605,77 +605,85 @@ function switchToMapAndSelectTask(entrySeqID, doNotExpand = false, sectionsToExp
 function loadAccountInfo() {
     TB.getUserConnectionInfo().then(info => {
         const accountContent = document.getElementById('account-content');
+        accountContent.innerHTML = ''; // clear first
+
         if (info.loggedIn) {
-            // Destructure existing values (you’ll need to fetch PilotName & CompID in info.user)
+            // welcome + avatar
             const { displayName, avatar, pilotName = '', compId = '' } = info.user;
-
-            accountContent.innerHTML = `
+            const header = document.createElement('div');
+            header.innerHTML = `
         <h3>Welcome, ${displayName}!</h3>
-        <p>Avatar:<br>
-          <img src="${avatar}" alt="Avatar" style="border-radius: 50%; width: 100px; height: 100px;">
-        </p>
+      `;
+            accountContent.appendChild(header);
 
+            // --- PROFILE SECTION ---
+            createSectionSkeleton(
+                "Profile",
+                "user-profile-section",      // section id
+                "user-profile-content",      // inner content id
+                accountContent
+            );
+            // build your form inside that content pane
+            const profilePane = document.getElementById('user-profile-content');
+            profilePane.innerHTML = `
+        <p>Avatar:<br>
+          <img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;">
+        </p>
         <div class="user-info-form">
           <label for="pilotName">Pilot Name</label><br>
           <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
 
-          <label for="compId">Competition ID</label><br>
+          <label for="compId">Pilot ID (SSC-Tracker / NB21 Logger)</label><br>
           <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
 
-          <button class="button-style" id="updateUserInfo">Update</button>
+          <button class="button-style" id="updateUserInfo">Save</button>
         </div>
-
-        <hr>
-
-        <button class="button-style" onclick="window.location.href='php/logout.php'">Logout</button>
       `;
 
-            // wire up Update button
-            document
-                .getElementById('updateUserInfo')
-                .addEventListener('click', () => {
-                    const pilotNameInput = document.getElementById('pilotName').value.trim();
-                    const compIdInput = document.getElementById('compId').value.trim();
-
-                    // basic validation
-                    if (!pilotNameInput || !compIdInput) {
-                        alert('Please fill in both Pilot Name and Competition ID.');
-                        return;
-                    }
-
-                    // send to server
-                    fetch('php/updateUserInfo.php', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            pilotName: pilotNameInput,
-                            compId: compIdInput
-                        })
+            // wire up the update button
+            document.getElementById('updateUserInfo').onclick = () => {
+                const p = document.getElementById('pilotName').value.trim();
+                const c = document.getElementById('compId').value.trim();
+                if (!p || !c) return alert('Both fields are required.');
+                fetch('php/updateUserInfo.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ pilotName: p, compId: c })
+                })
+                    .then(r => r.json())
+                    .then(({ success, message }) => {
+                        if (success) {
+                            alert('Profile updated');
+                            loadAccountInfo();
+                        } else {
+                            alert('Error: ' + message);
+                        }
                     })
-                        .then(r => r.json())
-                        .then(({ success, message }) => {
-                            if (success) {
-                                alert('Profile updated successfully!');
-                                // Optionally refresh TB.getUserConnectionInfo cache & UI
-                                loadAccountInfo();
-                            } else {
-                                alert('Update failed: ' + message);
-                            }
-                        })
-                        .catch(err => {
-                            console.error(err);
-                            alert('An error occurred while updating.');
-                        });
-                });
+                    .catch(e => { console.error(e); alert('Update failed'); });
+            };
 
-            // rest of your sections…
-            createSectionSkeleton("IGC Submissions", "igc-submissions", "igc-submissions-content", accountContent);
+            // --- IGC SUBMISSIONS SECTION ---
+            createSectionSkeleton(
+                "IGC Submissions",
+                "igc-submissions",
+                "igc-submissions-content",
+                accountContent
+            );
             refreshIGCSubmissionsContent();
+
+            // finally logout button
+            const logout = document.createElement('button');
+            logout.className = 'button-style';
+            logout.textContent = 'Logout';
+            logout.onclick = () => window.location.href = 'php/logout.php';
+            accountContent.appendChild(logout);
 
         } else {
             accountContent.innerHTML = `
         <p>You are not logged in.</p>
-        <button class="button-style" onclick="window.location.href='php/login.php'">Login with Discord</button>
+        <button class="button-style" onclick="window.location.href='php/login.php'">
+          Login with Discord
+        </button>
       `;
         }
     });
