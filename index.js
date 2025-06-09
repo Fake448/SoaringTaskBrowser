@@ -626,9 +626,10 @@ function loadAccountInfo() {
             // build your form inside that content pane
             const profilePane = document.getElementById('user-profile-content');
             profilePane.innerHTML = `
-        <p>Avatar:<br>
-          <img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;">
+        <p>
+            <img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;">
         </p>
+        <p><span style="font-style:italic;">To update your Discord avatar, please logout and then log back in.</span></p>
         <div class="user-info-form">
           <label for="pilotName">Pilot Name</label><br>
           <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
@@ -637,6 +638,7 @@ function loadAccountInfo() {
           <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
 
           <button class="button-style" id="updateUserInfo">Save</button>
+          <span id="update-status" style="margin-left:8px; font-style:italic; color:green;"></span>
         </div>
       `;
 
@@ -652,9 +654,11 @@ function loadAccountInfo() {
                 })
                     .then(r => r.json())
                     .then(({ success, message }) => {
+                        const statusEl = document.getElementById('update-status');
                         if (success) {
-                            alert('Profile updated');
-                            loadAccountInfo();
+                            statusEl.textContent = 'Profile info updated!';
+                            // clear after 3 seconds
+                            setTimeout(() => { statusEl.textContent = ''; }, 3000);
                         } else {
                             alert('Error: ' + message);
                         }
