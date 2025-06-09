@@ -2,10 +2,20 @@
 header('Content-Type: application/json');
 require_once __DIR__ . '/CommonFunctions.php';
 
-// 1) Ensure user is logged in
-if (empty($_SESSION['user']['id'])) {
+// Ensure the user is logged in.
+if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
     http_response_code(401);
-    echo json_encode(['success' => false, 'message' => 'Not authenticated']);
+    echo json_encode(["error" => "User not authenticated"]);
+    exit;
+}
+
+$wsgUserID = $_SESSION['user']['id'];
+
+// Validate that the user ID is a valid positive integer.
+if ($wsgUserID <= 0) {
+    http_response_code(400);
+    error_log("Invalid WSGUserID: $wsgUserID");
+    echo json_encode(["error" => "Invalid user ID"]);
     exit;
 }
 
