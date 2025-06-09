@@ -16,6 +16,7 @@ try {
             IGC.GliderType,
             IGC.CompetitionClass,
             IGC.Speed,
+            IGC.Sim,
             T.Title
         FROM IGCRecords IGC
         JOIN Tasks T ON IGC.EntrySeqID = T.EntrySeqID
@@ -70,17 +71,21 @@ try {
 // === Top Contributors (Last 7 Days) ===
 try {
     $stmt = $pdo->query("
-        SELECT
-            Pilot,
-            COUNT(*) AS UploadCount
-        FROM IGCRecords
-        WHERE
-            IGCUploadDateTimeUTC >= datetime('now', '-7 days')
-            AND Pilot IS NOT NULL
-            AND TRIM(Pilot) <> ''
-        GROUP BY Pilot
-        ORDER BY UploadCount DESC, Pilot ASC
-        LIMIT 5
+      SELECT
+        Pilot,
+        COUNT(*)              AS UploadCount,
+        MAX(IGCUploadDateTimeUTC) AS LastUpload
+      FROM IGCRecords
+      WHERE
+        IGCUploadDateTimeUTC >= datetime('now', '-7 days')
+        AND Pilot IS NOT NULL
+        AND TRIM(Pilot) <> ''
+      GROUP BY Pilot
+      ORDER BY
+        UploadCount DESC,
+        LastUpload  DESC,
+        Pilot       ASC
+      LIMIT 5
     ");
     $contribResults = $stmt->fetchAll(PDO::FETCH_ASSOC);
 

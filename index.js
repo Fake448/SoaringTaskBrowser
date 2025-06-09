@@ -125,6 +125,7 @@ function loadTabContent(tabId) {
                                 <th>Speed</th>
                                 <th>Task</th>
                                 <th>Date</th>
+                                <th>Sim</th>
                             </tr>
                         </thead>
                         <tbody id="latest-igc-leaders-body">
@@ -339,40 +340,37 @@ function loadTabContent(tabId) {
 }
 
 function loadHomeTab(forceUpdate = false) {
-    fetch('/otherdata/latestTopIGCs.json?nocache=${Date.now()}')
+    fetch(`/otherdata/latestTopIGCs.json?nocache=${Date.now()}`)   // ← use backticks so ${Date.now()} works
         .then(res => res.json())
         .then(data => {
             if (!data || data.length === 0) return;
 
             const newestKey = data[0]?.IGCKey || null;
-
-            // Skip updating table if the data hasn’t changed, unless forced
-            if (!forceUpdate && newestKey === lastTopIGCKey) {
-                return;
-            }
-
-            lastTopIGCKey = newestKey; // Update tracker
+            if (!forceUpdate && newestKey === lastTopIGCKey) return;
+            lastTopIGCKey = newestKey;
 
             const isImperial = TB.userSettings.distance === 'imperial';
             const rows = data.slice(0, 10).map(entry => {
-                const formattedDate = TB.formatSimDateTime(entry.IGCUploadDateTimeUTC, true, false, true, true, true);
+                const formattedDate = TB.formatSimDateTime(
+                    entry.IGCUploadDateTimeUTC, true, false, true, true, true
+                );
                 let speed = parseFloat(entry.Speed) || 0;
                 if (isImperial) speed *= 0.621371;
                 const speedStr = `${speed.toFixed(1)} ${isImperial ? 'mph' : 'km/h'}`;
 
                 return [
-                    `${entry.Pilot} (${entry.GliderID})`,
-                    entry.GliderType,
-                    speedStr,
+                    `${entry.Pilot} (${entry.GliderID})`, // 0
+                    entry.GliderType,                     // 1
+                    speedStr,                             // 2
                     `<a href="javascript:void(0)" class="download-igc-link"
-                        onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
-                        (${entry.EntrySeqID}) ${entry.Title}
-                    </a>`,
-                    formattedDate
+                      onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
+                      (${entry.EntrySeqID}) ${entry.Title}
+                   </a>`,                              // 3
+                    formattedDate,                        // 4
+                    entry.Sim                            // 5 ← make sure you include this!
                 ];
             });
 
-            // If table already exists, just clear + re-add rows
             if ($.fn.DataTable.isDataTable('#latestTopIGCTable')) {
                 const table = $('#latestTopIGCTable').DataTable();
                 table.clear();
@@ -386,7 +384,8 @@ function loadHomeTab(forceUpdate = false) {
                         { title: "Glider" },
                         { title: "Speed" },
                         { title: "Task" },
-                        { title: "Date" }
+                        { title: "Date" },
+                        { title: "Sim" }    // sixth column
                     ],
                     paging: false,
                     searching: false,
@@ -395,16 +394,16 @@ function loadHomeTab(forceUpdate = false) {
                     order: [[4, 'desc']]
                 });
             }
+
             loadTopContrib7();
             loadTopGliders7();
             loadMsfsVer7();
-
         })
         .catch(error => {
             console.error('Error fetching latest IGCs:', error);
             const tbody = document.getElementById('latest-igc-leaders-body');
             if (tbody) {
-                tbody.innerHTML = '<tr><td colspan="5">Failed to load data.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="6">Failed to load data.</td></tr>';
             }
             loadTopContrib7();
             loadTopGliders7();
