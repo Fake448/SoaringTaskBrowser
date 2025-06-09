@@ -26,7 +26,7 @@ if (!isset($_SESSION['user']) && isset($_COOKIE['WSGUserID'])) {
 
     try {
         $pdo = new PDO("sqlite:$databasePath");
-        $pdo->setAttribute(PDO::ATTR_ERRMODE', PDO::ERRMODE_EXCEPTION);
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
         // Prepare and execute query to fetch user data.
         $stmt = $pdo->prepare("
