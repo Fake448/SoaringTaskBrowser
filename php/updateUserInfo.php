@@ -2,72 +2,129 @@
 require_once __DIR__ . '/session_restore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
-// Ensure the user is logged in.
-if (!isset($_SESSION['user']) || !isset($_SESSION['user']['id'])) {
+header('Content-Type: application/json');
+
+// 1) Auth checks
+if (empty($_SESSION['user']['id'])) {
     http_response_code(401);
-    echo json_encode(["error" => "User not authenticated"]);
+    echo json_encode(array('success' => false, 'message' => 'User not authenticated'));
     exit;
 }
 
-$wsgUserID = $_SESSION['user']['id'];
-
-// Validate that the user ID is a valid positive integer.
+$wsgUserID = (int) $_SESSION['user']['id'];
 if ($wsgUserID <= 0) {
     http_response_code(400);
-    error_log("Invalid WSGUserID: $wsgUserID");
-    echo json_encode(["error" => "Invalid user ID"]);
+    echo json_encode(array('success' => false, 'message' => 'Invalid user ID'));
     exit;
 }
 
-// 2) Read & decode JSON body
-$raw = file_get_contents('php://input');
+// 2) Decode input
+$raw  = file_get_contents('php://input');
 $data = json_decode($raw, true);
 if (!is_array($data)) {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Invalid JSON']);
+    echo json_encode(array('success' => false, 'message' => 'Invalid JSON'));
     exit;
 }
 
 $pilotName = trim($data['pilotName'] ?? '');
 $compId    = trim($data['compId']    ?? '');
-
 if ($pilotName === '' || $compId === '') {
     http_response_code(400);
-    echo json_encode(['success' => false, 'message' => 'Both Pilot Name and Competition ID are required']);
+    echo json_encode(array(
+        'success' => false,
+        'message' => 'Both Pilot Name and Competition ID are required'
+    ));
     exit;
 }
 
-// 3) Connect to database
-// CommonFunctions.php should define $databasePath
-$pdo = new PDO("sqlite:$databasePath");
+// 3) DB connection
+$pdo = new PDO('sqlite:' . $databasePath);
 $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
 try {
-    // 4) Update the Users table
-    $stmt = $pdo->prepare("
+    // 4) Update profile
+    $upd = $pdo->prepare('
         UPDATE Users
            SET PilotName = :pilot,
                CompID    = :comp
          WHERE WSGUserID = :uid
-    ");
-    $stmt->execute([
+    ');
+    $upd->execute(array(
         ':pilot' => $pilotName,
         ':comp'  => $compId,
-        ':uid'   => $_SESSION['user']['id']
-    ]);
+        ':uid'   => $wsgUserID
+    ));
 
-    // 5) Sync session values so front-end reload shows new data
+    // 5) Sync session
     $_SESSION['user']['pilotName'] = $pilotName;
     $_SESSION['user']['compId']    = $compId;
 
-    echo json_encode(['success' => true]);
-} catch (Exception $e) {
-    // Log error server-side if you wish:
-    logMessage("updateUserInfo error: " . $e->getMessage());
+    // 6) Prepare match-finding statements
+    $selUnassigned = $pdo->prepare('
+        SELECT IGCKey, Pilot, CompetitionID
+          FROM IGCRecords
+         WHERE WSGUserID = 0
+    ');
+    $findBoth = $pdo->prepare('
+        SELECT 1
+          FROM Users
+         WHERE PilotName = :pilot
+           AND CompID    = :comp
+         LIMIT 1
+    ');
+    $findByComp  = $pdo->prepare('SELECT WSGUserID FROM Users WHERE CompID    = :comp');
+    $findByPilot = $pdo->prepare('SELECT WSGUserID FROM Users WHERE PilotName = :pilot');
 
+    // 7) Scan unassigned records
+    $selUnassigned->execute();
+    $matches = array();
+
+    while ($rec = $selUnassigned->fetch(PDO::FETCH_ASSOC)) {
+        $matched = false;
+
+        // a) exact pilot+comp match
+        $findBoth->execute(array(
+            ':pilot' => $rec['Pilot'],
+            ':comp'  => $rec['CompetitionID']
+        ));
+        if ($findBoth->fetch()) {
+            $matched = true;
+        } else {
+            // b) fallbacks
+            $findByComp->execute(array(':comp'  => $rec['CompetitionID']));
+            $compRows  = $findByComp->fetchAll(PDO::FETCH_COLUMN, 0);
+
+            $findByPilot->execute(array(':pilot' => $rec['Pilot']));
+            $pilotRows = $findByPilot->fetchAll(PDO::FETCH_COLUMN, 0);
+
+            // unique-comp -> this user?
+            if (count($compRows) === 1 && $compRows[0] == $wsgUserID && count($pilotRows) === 0) {
+                $matched = true;
+            }
+            // unique-pilot -> this user?
+            elseif (count($pilotRows) === 1 && $pilotRows[0] == $wsgUserID && count($compRows) === 0) {
+                $matched = true;
+            }
+        }
+
+        if ($matched) {
+            $matches[] = array(
+                'IGCKey'        => $rec['IGCKey'],
+                'Pilot'         => $rec['Pilot'],
+                'CompetitionID' => $rec['CompetitionID']
+            );
+        }
+    }
+
+    // 8) Respond
+    echo json_encode(array(
+        'success' => true,
+        'matches' => $matches
+    ));
+}
+catch (Exception $e) {
+    logMessage('updateUserInfo error: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => 'Database error'
-    ]);
+    echo json_encode(array('success' => false, 'message' => 'Database error'));
 }
