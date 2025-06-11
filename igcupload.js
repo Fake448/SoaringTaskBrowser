@@ -517,6 +517,7 @@
 
     prepareIGCOnServer(formData, IGCAsText) {
         const tbm = this.taskBrowser.tbm;
+        const tb = this.taskBrowser;
         tbm.showLoadingSpinner("Processing IGC file...");
 
         fetch('php/SearchTaskByIGC.php', {
@@ -545,6 +546,7 @@
 
                     // 1) stash the EntrySeqID & build IGCKey
                     this.igcData.EntrySeqID = data.EntrySeqID;
+                    this.igcData.WSGUserID = data.WSGUserID;
                     const key = [
                         this.igcData.EntrySeqID,
                         this.igcData.competitionID,
@@ -579,6 +581,24 @@
 
                     if (r.TPVersion) resultsLine += ` (${r.TPVersion})`;
 
+                    // ─────────────────────────────────────────────
+                    //  new: build a WSG User line based on data.WSGUserID
+                    // ─────────────────────────────────────────────
+                    let wsgLine = '';
+                    const returnedUid = data.WSGUserID;
+                    if (returnedUid === tb.user.id) {
+                        wsgLine = `<strong>WSG User:</strong> You (${tb.user.displayName})</br>`;
+                    }
+                    else if (returnedUid !== 0) {
+                        wsgLine = `<strong>WSG User:</strong> Not you, but match found</br>`;
+                    }
+                    else {
+                        wsgLine = `<strong>WSG User:</strong> Is it yours? ` +
+                            `<label><input type="radio" name="wsgUserConfirm" value="yes"> Yes</label> ` +
+                            `<label><input type="radio" name="wsgUserConfirm" value="no" checked> No</label>` +
+                            `<span style="color:white;font-weight:bold;animation:blink 1s steps(2,start) infinite;"> ← Attention</span></br>`;
+                    }
+
                     // 3) render the HTML exactly as before
                     const html = [
                         `<h3>IGC Submission – Task Found!</h3>`,
@@ -587,6 +607,7 @@
                         `<strong>Local Time of Recording:</strong> ${this.igcData.LocalDate} ${this.formatTime(this.igcData.LocalTime)}</br>`,
                         `<strong>Pilot:</strong> ${this.igcData.pilot}</br>`,
                         `<strong>Comp. ID:</strong> ${this.igcData.competitionID}</br>`,
+                        wsgLine,
                         `<strong>Comp. Class:</strong> ${this.igcData.competitionClass}</br>`,
                         `<strong>Glider Type:</strong> ${this.igcData.gliderType}</br>`,
                         `<strong>Results:</strong> ${resultsLine}</br>`,
@@ -691,10 +712,16 @@
         const igcComment = commentField ? commentField.value : "";
         formData.append('IGCComment', igcComment);
 
-        // Append the internal user ID (WSGUserID) from the TB object.
-        if (this.taskBrowser.user && this.taskBrowser.user.id) {
-            formData.append('WSGUserID', this.taskBrowser.user.id);
+        // Determine final WSGUserID:
+        let finalUid = igcData.WSGUserID;      // from the search step
+        if (finalUid === 0) {
+            // if “No match” case, see if user clicked “Yes”
+            const choice = document.querySelector('input[name="wsgUserConfirm"]:checked');
+            if (choice && choice.value === 'yes') {
+                finalUid = this.taskBrowser.user.id;
+            }
         }
+        formData.append('WSGUserID', finalUid);
 
         fetch('php/SaveIGCRecord.php', {
             method: 'POST',
