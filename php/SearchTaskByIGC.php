@@ -529,19 +529,62 @@ try {
             }
             // --- END: Parsing Browserless Response ---
     
-            // Return the found task details along with the Browserless task results.
+            // ————————————————
+            // Identify the WSGUserID from the Users table
+            // ————————————————
+            $wsgUserId = 0;
+            // 1) Try exact PilotName + CompID
+            $stmt = $pdo->prepare("
+                SELECT WSGUserID
+                  FROM Users
+                 WHERE PilotName = :pilot
+                   AND CompID    = :comp
+                 LIMIT 1
+            ");
+            $stmt->execute([
+                ':pilot' => $pilot,
+                ':comp'  => $competitionID
+            ]);
+            if ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                $wsgUserId = $row['WSGUserID'];
+            } else {
+                // 2) Fallback: single-match on CompID or PilotName
+                $compStmt  = $pdo->prepare("SELECT WSGUserID FROM Users WHERE CompID    = :comp");
+                $pilotStmt = $pdo->prepare("SELECT WSGUserID FROM Users WHERE PilotName = :pilot");
+
+                $compStmt->execute([':comp'  => $competitionID]);
+                $pilotStmt->execute([':pilot' => $pilot]);
+
+                $compRows  = $compStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+                $pilotRows = $pilotStmt->fetchAll(PDO::FETCH_COLUMN, 0);
+
+                if (count($compRows) === 1 && count($pilotRows) === 0) {
+                    $wsgUserId = $compRows[0];
+                }
+                elseif (count($pilotRows) === 1 && count($compRows) === 0) {
+                    $wsgUserId = $pilotRows[0];
+                }
+                // otherwise leave at 0
+            }
+
+            // —————————————
+            // Send JSON response
+            // —————————————
             echo json_encode([
-                'status' => 'found',
-                'EntrySeqID' => $foundTask['EntrySeqID'],
+                'status'      => 'found',
+                'EntrySeqID'  => $foundTask['EntrySeqID'],
                 'SimDateTime' => $foundTask['SimDateTime'],
-                'Title' => $foundTask['Title'],
+                'Title'       => $foundTask['Title'],
+                'WSGUserID'   => $wsgUserId,
                 'browserless' => $browserlessResult
             ]);
+
         }
     } else {
         if ($logEnabled) logMessage("No matching task found.");
         echo json_encode([
             'status' => 'not_found',
+            'WSGUserID' => 0,
             'message' => 'No matching task was found.'
         ]);
     }
