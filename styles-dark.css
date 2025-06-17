@@ -509,6 +509,7 @@ body {
 
 #searchAndFilters {
     width: 300px; /* Fixed width */
+    padding-left: 5px;
 }
 
 #searchFiltersButton {
