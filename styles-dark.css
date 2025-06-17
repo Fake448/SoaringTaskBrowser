@@ -29,14 +29,18 @@ body {
 }
 
 .tabButton {
+    display: flex;
     flex-grow: 1;
-    padding: 8px;
+    padding: 4.5px;
+    font-size: 20px;
     cursor: pointer;
     text-align: center;
     background-color: #2c2f33;
     border: 1px solid #99aab5;
     border-bottom: none;
     color: #ffffff;
+    align-items: center;
+    justify-content: center;
 }
 
     .tabButton:first-child {

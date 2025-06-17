@@ -3710,11 +3710,11 @@ class TaskBrowser {
         const userImg = document.getElementById('userAccountImage');
         if (userImg) {
             if (tb.isUserConnected) {
-                userImg.src = "images/user_account_connected.png";
+                userImg.src = "images/user_account_connected.svg";
                 userImg.title = "You are currently logged in as " + tb.user.displayName;
             }
             else {
-                userImg.src = "images/user_account_disconnected.png";
+                userImg.src = "images/user_account_disconnected.svg";
                 userImg.title = "You are NOT currently logged in.";
             }
         }
