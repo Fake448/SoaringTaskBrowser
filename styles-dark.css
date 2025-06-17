@@ -66,6 +66,7 @@ body {
     display: none;
     flex-grow: 1;
     padding: 5px;
+    padding-top: 0px;
     overflow-y: auto;
     background-color: #23272a;
     border: 1px solid #99aab5;
@@ -75,6 +76,10 @@ body {
     .tabContent.active {
         display: block;
     }
+
+#mapTab.tabContent.active {
+    padding: 0 !important;
+}
 
 #mapContainer {
     display: flex;
