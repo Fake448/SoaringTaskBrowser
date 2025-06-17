@@ -1380,7 +1380,7 @@ function displayEvents(events) {
         }
 
         if (event.Credits) {
-            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.png"));
+            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.svg"));
         }
 
         if (event.EligibleAward && event.EligibleAward != 'None') {
