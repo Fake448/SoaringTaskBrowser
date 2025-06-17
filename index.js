@@ -917,7 +917,7 @@ function refreshIGCSubmissionsContent() {
                 <img src="images/IGCDownload.svg" alt="Download" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style save-comment" data-entry="${row.IGCKey}" disabled title="Save comment">
-                <img src="images/ApplyChanges.png" alt="Save" style="height:20px;vertical-align:middle;">
+                <img src="images/ApplyChanges.svg" alt="Save" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style delete-igc" data-entry="${row.IGCKey}" title="Delete this IGC record">🗑️</button>
             `
