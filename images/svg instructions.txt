@@ -1,0 +1,3 @@
+After converting and editing the SVG file with Inkscape, run the following command to optimize it:
+
+svgo input.svg -o output.svg --multipass --precision=3
