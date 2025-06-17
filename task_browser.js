@@ -2036,7 +2036,7 @@ class TaskBrowser {
                 null, // resetCallback
                 null, // countdownSection
                 null, // backgroundImageUrl
-                "images/user_account_connected.png" // iconImageUrl
+                "images/user_account_connected.svg" // iconImageUrl
             );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
@@ -2049,7 +2049,7 @@ class TaskBrowser {
                 null,
                 null,
                 null,
-                "images/user_account_connected.png"
+                "images/user_account_connected.svg"
             );
         }
     }
