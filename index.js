@@ -917,7 +917,7 @@ function refreshIGCSubmissionsContent() {
                 <img src="images/IGCDownload.svg" alt="Download" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style save-comment" data-entry="${row.IGCKey}" disabled title="Save comment">
-                <img src="images/ApplyChanges.png" alt="Save" style="height:20px;vertical-align:middle;">
+                <img src="images/ApplyChanges.svg" alt="Save" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style delete-igc" data-entry="${row.IGCKey}" title="Delete this IGC record">🗑️</button>
             `
@@ -1411,7 +1411,7 @@ function displayEvents(events) {
         reviewTaskDetails = "";
         if (taskPublished && taskAvailable) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
-                <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
+                <img src="images/World.svg" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
 
             dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile('${event.TaskID}', ${event.EntrySeqID}, '${event.TaskTitle}','event')" title="Download DPHX file">
