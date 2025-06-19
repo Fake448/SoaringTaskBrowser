@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <mask id="lineMask" maskUnits="userSpaceOnUse">
+      <rect width="200" height="200" fill="white"/>
+      <path d="M 55 55 L 145 145" stroke="black" stroke-width="27" fill="none" stroke-linecap="round"/>
+      <path d="M 145 55 L 55 145" stroke="black" stroke-width="27" fill="none" stroke-linecap="round"/>
+    </mask>
+  </defs>
+  <circle cx="100" cy="100" r="92" fill="#1e1e1c" mask="url(#lineMask)"/>
+</svg>

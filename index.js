@@ -1411,7 +1411,7 @@ function displayEvents(events) {
         reviewTaskDetails = "";
         if (taskPublished && taskAvailable) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
-                <img src="images/World.png" alt="View task on map" style="height: 20px; vertical-align: middle;">
+                <img src="images/World.svg" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
 
             dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile('${event.TaskID}', ${event.EntrySeqID}, '${event.TaskTitle}','event')" title="Download DPHX file">
