@@ -1,0 +1,17 @@
+{
+   "version": "2.0.0",
+   "tasks": [
+      {
+         "label": "Run Python HTTP Server",
+         "type": "shell",
+         "command": "python",
+         "args": ["serve.py"],
+         "group": {
+            "kind": "build",
+            "isDefault": true
+         },
+         "problemMatcher": [],
+         "detail": "This task runs the Python server with livereload."
+      }
+   ]
+}
