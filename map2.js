@@ -252,7 +252,13 @@ class TaskBrowserMap {
         tbm.clearPolylines();
 
         // Construct URL with query parameters
-        const url = new URL(DEBUG_LOCAL ? 'GetTasksForMap.php' : 'php/GetTasksForMap.php', window.location.href);
+        let url
+        if (DEBUG_LOCAL) {
+            url = new URL('otherdata/test_all_tasks.json', window.location.href);
+        } else {
+            url = new URL('php/GetTasksForMap.php', window.location.href);
+        }
+
         url.searchParams.append('taskCount', tbm.taskCount);
         url.searchParams.append('startDate', tbm.startDate);
         url.searchParams.append('endDate', tbm.endDate);
@@ -286,6 +292,8 @@ class TaskBrowserMap {
         fetch(url)
             .then(response => response.json())
             .then(data => {
+                console.log('Fetched tasks:', data);
+
                 const { tasks, totalTasks, oldestDate, newestDate } = data;
 
                 // Store all fetched tasks locally

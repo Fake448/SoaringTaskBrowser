@@ -2671,37 +2671,37 @@ export default class TaskBrowser {
 
         // Add event listener to the deselect button
         const deselectButton = document.getElementById('deselectTaskButton');
-        deselectButton.onclick = function () {
+        deselectButton.onclick = () =>{
             this.tbm.deselectTask();
         };
         // Add event listener to the copy to clipboard button
         const copyButton = document.getElementById('copyTaskLinkToClipboard');
-        copyButton.onclick = function () {
+        copyButton.onclick = () =>{
             this.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}`);
         };
 
         // Add event listener to the Discord task thread button
         const gotoDiscordThreadButton = document.getElementById('gotoDiscordThread');
-        gotoDiscordThreadButton.onclick = function () {
+        gotoDiscordThreadButton.onclick = () =>{
             this.incrementThreadAccess(task.EntrySeqID);
             window.open(`${this.discordTasksChannel}${task.DiscordPostID}`, '_blank');
         };
 
         // Add event listener to the download DPHX file button
         const directDPHXDownloadButton = document.getElementById('directDPHXDownload');
-        directDPHXDownloadButton.onclick = function () {
+        directDPHXDownloadButton.onclick = () =>{
             this.downloadDPHXFile(task.TaskID, task.EntrySeqID, task.Title);
         };
 
         // Add event listener to the send task to tracker button
         const sendTaskToTrackerButton = document.getElementById('sendTaskToTracker');
-        sendTaskToTrackerButton.onclick = function () {
+        sendTaskToTrackerButton.onclick = () =>{
             this.setSSCTracker("", task.EntrySeqID, `${this.discordTasksChannel}${task.DiscordPostID}`);
         };
 
         // Add event listener to the toggle task details button
         const toggleTaskDetailsPanelButton = document.getElementById('toggleTaskDetailsPanel');
-        toggleTaskDetailsPanelButton.onclick = function () {
+        toggleTaskDetailsPanelButton.onclick = () =>{
             const taskDetailContainer = document.getElementById('taskDetailContainer');
             if (this.TaskDetailsPanelVisible == false) {
                 this.TaskDetailsPanelVisible = true;
@@ -3239,22 +3239,35 @@ export default class TaskBrowser {
         }
     }
 
+    test_fetch_task_details(entrySeqID) {
+        return fetch('otherdata/test_all_tasks.json')
+            .then(res => res.json())
+            .then(data => {
+                const task = data.tasks.find(t => t.EntrySeqID == entrySeqID);
+                if (!task) {
+                    return { status: "not_found" };
+                }
+                return task;
+            });
+    }
+
+
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
         return new Promise((resolve, reject) => {
             let fetch_promise;
             if (DEBUG_LOCAL) {
-                fetch_promise = test_fetch_task_details(entrySeqID);
+                fetch_promise = this.test_fetch_task_details(entrySeqID);
             } else {
-                fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
+                fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error(`Failed to fetch task details: ${response.statusText}`);
+                        }
+                        return response.json();
+                    });
             }
 
             fetch_promise
-                .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch task details: ${response.statusText}`);
-                    }
-                    return response.json();
-                })
                 .then(task_details => {
                     // Check for errors
                     if (task_details.error) {
@@ -3896,11 +3909,10 @@ export default class TaskBrowser {
     }
 
     populateDataTable(tasks) {
-        // FIX: when no task is available, the height is calculated incorrect
-        // Ensure tasks is always an array and at least 1
-        // --> temporarily fix
+        const self = this; // Capture TaskBrowser instance
+        // // FIX: when no task is available, the height is calculated incorrect
         if (!Array.isArray(tasks)) {
-            tasks = [1];
+            tasks = [];
         }
 
 
@@ -4031,7 +4043,7 @@ export default class TaskBrowser {
             // 🔹 Adjust grid height dynamically when searching or updating the table
             table.on('search.dt draw.dt', function () {
                 let filteredRowCount = table.rows({ filter: 'applied' }).count(); // Get only visible rows
-                this.adjustGridHeight(filteredRowCount);
+                self.adjustGridHeight(filteredRowCount);
 
                 // Update info dynamically
                 $("#taskGridInfo").html($("#taskGridTable_info").html());
@@ -4039,7 +4051,7 @@ export default class TaskBrowser {
         }
         // Get row count and adjust height
         const rowCount = $('#taskGridTable tbody tr').length;
-        this.adjustGridHeight(rowCount);
+        self.adjustGridHeight(rowCount);
     }
 
 
