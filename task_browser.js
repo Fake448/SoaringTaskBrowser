@@ -841,12 +841,12 @@ export default class TaskBrowser {
                     <div class="hero-right">
                         <p class="hero-prompt">🌤️ Where do you want to go today?</p>
                         <div class="hero-actions">
-                            <div class="nav-tile" onclick="this.switchTab('eventsTab')">📅 Events</div>
-                            <div class="nav-tile" onclick="this.switchTab('mapTab')">🌍 Map</div>
-                            <div class="nav-tile" onclick="this.switchTab('toolsTab')">🛠️ Tools</div>
-                            <div class="nav-tile" onclick="this.switchTab('settingsTab')">⚙️ Settings</div>
-                            <div class="nav-tile" onclick="this.switchTab('accountTab')">👤 Account</div>
-                            <div class="nav-tile" onclick="this.switchTab('aboutTab')">ℹ️ About</div>
+                            <div class="nav-tile" data-tab="eventsTab">📅 Events</div>
+                            <div class="nav-tile" data-tab="mapTab">🌍 Map</div>
+                            <div class="nav-tile" data-tab="toolsTab">🛠️ Tools</div>
+                            <div class="nav-tile" data-tab="settingsTab">⚙️ Settings</div>
+                            <div class="nav-tile" data-tab="accountTab">👤 Account</div>
+                            <div class="nav-tile" data-tab="aboutTab">ℹ️ About</div>
                         </div>
                     </div>
                 </div>
@@ -1079,6 +1079,17 @@ export default class TaskBrowser {
         // If the user account tab is loaded, fetch and display user connection info
         if (tabId === 'homeTab') {
             this.loadHomeTab();
+        }
+
+        // --- Attach navigation tile event listeners (no global TB needed) ---
+        if (tabId === 'homeTab') {
+            const navTiles = document.querySelectorAll('.nav-tile[data-tab]');
+            navTiles.forEach(tile => {
+                tile.addEventListener('click', (e) => {
+                    const targetTab = tile.getAttribute('data-tab');
+                    this.switchTab(targetTab);
+                });
+            });
         }
     }
 
