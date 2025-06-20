@@ -3690,6 +3690,12 @@ export default class TaskBrowser {
         // Adjust mapContainer to occupy the remaining space
         mapContainer.style.flex = '1';
 
+        // Clear and re-setup panel content if empty
+        if (!searchFiltersPanel.innerHTML.trim()) {
+            this.searchPanelAlreadySetup = false;
+            this.setupSearchFiltersPanel();
+        }
+
         this.SearchFiltersPanelVisible = true;
         this.resizeMap(); // Ensure the map resizes correctly
     }
