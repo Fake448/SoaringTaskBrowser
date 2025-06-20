@@ -1319,25 +1319,39 @@ table.dataTable thead .sorting {
             background-color: #4752c4;
         }
 
-/* in styles-dark.css or your global stylesheet */
+/* Banner container */
 #scrollingBanner {
     position: relative;
     overflow: hidden;
-    white-space: nowrap;
     font-family: 'Roboto', sans-serif;
     font-size: 0.9rem;
+    /* top/bottom 6px, left 0, right 36px for close button */
     padding: 6px 0;
+    padding-right: 36px;
     border-top: 1px solid #444;
     border-bottom: 1px solid #444;
+    text-align: center;
     z-index: 1000;
 }
 
-.scrolling-banner-content {
-    display: inline-block;
-    padding-left: 100%;
-    animation: marquee linear infinite;
-}
+    /* Default content: ellipsis if too long */
+    #scrollingBanner .banner-content {
+        display: inline-block;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        vertical-align: middle;
+    }
 
+        /* When it fits: wrap & truly center */
+        #scrollingBanner .banner-content.centered {
+            white-space: normal;
+            overflow: visible;
+            text-overflow: clip;
+        }
+
+/* Marquee keyframes */
 @keyframes marquee {
     0% {
         transform: translateX(0);
@@ -1346,4 +1360,28 @@ table.dataTable thead .sorting {
     100% {
         transform: translateX(-100%);
     }
+}
+
+/* Scrolling state: remove ellipsis clamp then slide */
+#scrollingBanner .banner-content.scrolling {
+    /* undo the default clamp rules */
+    max-width: none;
+    overflow: visible;
+    text-overflow: clip;
+    /* marquee animation */
+    padding-left: 100%;
+    animation: marquee 20s linear infinite;
+}
+
+/* Close button always on top */
+#scrollingBanner .close-banner {
+    position: absolute;
+    top: 4px;
+    right: 8px;
+    z-index: 10;
+    cursor: pointer;
+    font-size: 1.2rem;
+    line-height: 1;
+    user-select: none;
+    color: inherit; /* matches banner text color */
 }

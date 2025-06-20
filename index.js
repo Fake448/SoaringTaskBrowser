@@ -38,52 +38,49 @@ if (!TB.isDownloadPage) {
         .then(cfg => {
             if (!cfg.text || !cfg.text.trim()) return;
 
-            // 1) Create the banner container
+            // 1) Build banner + content + close
             const tabs = document.getElementById('tabButtons');
             const banner = document.createElement('div');
             banner.id = 'scrollingBanner';
             banner.style.backgroundColor = cfg.backgroundColor || '#222';
             banner.style.color = cfg.textColor || '#ddd';
-            banner.style.position = 'relative';  // for absolute close button
 
-            // 2) Create the moving-text element
             const content = document.createElement('div');
-            content.className = 'scrolling-banner-content';
+            content.className = 'banner-content';
             content.textContent = cfg.text;
 
-            // choose duration in CSS format:
-            const duration = cfg.animationDuration ||
-                (cfg.duration ? `${cfg.duration}s` : '20s');
-
-            content.style.animation = `marquee ${duration} linear infinite`;
-
-            // 3) Create the close button
             const closeBtn = document.createElement('span');
             closeBtn.className = 'close-banner';
-            closeBtn.innerHTML = '&times;';       // ×
+            closeBtn.innerHTML = '&times;';
             closeBtn.title = 'Dismiss';
-            closeBtn.style.position = 'absolute';
-            closeBtn.style.top = '4px';
-            closeBtn.style.right = '8px';
-            closeBtn.style.cursor = 'pointer';
-            closeBtn.style.fontSize = '1.2rem';
-            closeBtn.style.lineHeight = '1';
-            closeBtn.style.userSelect = 'none';
+            closeBtn.addEventListener('click', () => banner.remove());
 
-            // 4) Wire up the dismiss
-            closeBtn.addEventListener('click', () => {
-                banner.remove();
-            });
-
-            // 5) Assemble
             banner.appendChild(content);
             banner.appendChild(closeBtn);
             tabs.parentNode.insertBefore(banner, tabs.nextSibling);
+
+            // 2) After insertion, check fit vs overflow
+            setTimeout(() => {
+                const fits = content.scrollWidth <= banner.clientWidth;
+                if (fits) {
+                    content.classList.add('centered');
+                } else {
+                    // overflow → scrolling marquee
+                    // optionally override duration:
+                    if (cfg.animationDuration || cfg.duration) {
+                        const dur = cfg.animationDuration
+                            || `${cfg.duration}s`;
+                        content.style.animationDuration = dur;
+                    }
+                    content.classList.add('scrolling');
+                }
+            }, 0);
         })
         .catch(err => {
             console.debug('Banner not loaded:', err);
         });
 })();
+
 function resize(e) {
     if (isResizing) {
         const containerWidth = mapContainer.offsetWidth + taskDetailContainer.offsetWidth;
