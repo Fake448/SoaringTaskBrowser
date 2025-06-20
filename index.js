@@ -51,6 +51,12 @@ if (!TB.isDownloadPage) {
             content.className = 'scrolling-banner-content';
             content.textContent = cfg.text;
 
+            // choose duration in CSS format:
+            const duration = cfg.animationDuration ||
+                (cfg.duration ? `${cfg.duration}s` : '20s');
+
+            content.style.animation = `marquee ${duration} linear infinite`;
+
             // 3) Create the close button
             const closeBtn = document.createElement('span');
             closeBtn.className = 'close-banner';
