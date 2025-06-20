@@ -8,24 +8,7 @@ if (!TB.isDownloadPage) {
     igcUpload.init();
 }
 
-// Add event listeners for tab switching
-document.querySelectorAll('.tabButton').forEach(btn => {
-    btn.addEventListener('click', function () {
-        const tab = btn.getAttribute('data-tab');
-        if (tab) TB.switchTab(tab);
-    });
-});
-
-// Add event listeners for buttons
-document.getElementById('fullWorldButton')?.addEventListener('click', () => TB.tbm.resetToFullWorld());
-document.getElementById('searchFiltersButton')?.addEventListener('click', () => TB.toggleSearchAndFiltersPanel());
-document.getElementById('tableToggleButton')?.addEventListener('click', () => TB.toggleTableVisibility());
-document.getElementById('zoomButton')?.addEventListener('click', () => TB.tbm.zoomToTask());
-document.getElementById('closeImageModalBtn')?.addEventListener('click', () => TB.closeImageModal());
-
-
-// Add event listeners for resizing
-window.addEventListener('resize', TB.resizeMap);
+setupEventListeners();
 
 let lastTopIGCKey = null;
 let homeTabWasLoaded = false;
@@ -287,6 +270,7 @@ function createSectionSkeleton(title, sectionId, contentId, parentContainer) {
     // TB.generateCollapsibleSection builds the collapsible UI with a placeholder.
     TB.generateCollapsibleSection(title, `<div id="${contentId}">Loading...</div>`, sectionContainer);
 }
+
 function refreshIGCSubmissionsContent() {
     const contentDiv = document.getElementById('igc-submissions-content');
     contentDiv.innerHTML = 'Loading...';
@@ -629,8 +613,6 @@ function refreshIGCSubmissionsContent() {
             console.error(err);
         });
 }
-
-
 
 function displayEvents(events) {
     const eventsTabEventsList = document.getElementById('eventsList');
@@ -1153,17 +1135,37 @@ function createCountdownSection(countdowns) {
     return countdownContainer;
 }
 
-// URL parameter handling
-document.addEventListener('DOMContentLoaded', function () {
-    const params = getUrlParams();
-    handleParams(params);
-});
+function setupEventListeners() {
+    // Tab switching
+    document.querySelectorAll('.tabButton').forEach(btn => {
+        btn.addEventListener('click', function () {
+            const tab = btn.getAttribute('data-tab');
+            if (tab) TB.switchTab(tab);
+        });
+    });
 
-// Handle browser back and forward buttons
-window.addEventListener('popstate', function () {
-    if (TB.shouldHandlePopState) {
+    // Buttons
+    document.getElementById('fullWorldButton')?.addEventListener('click', () => TB.tbm.resetToFullWorld());
+    document.getElementById('searchFiltersButton')?.addEventListener('click', () => TB.toggleSearchAndFiltersPanel());
+    document.getElementById('tableToggleButton')?.addEventListener('click', () => TB.toggleTableVisibility());
+    document.getElementById('zoomButton')?.addEventListener('click', () => TB.tbm.zoomToTask());
+    document.getElementById('closeImageModalBtn')?.addEventListener('click', () => TB.closeImageModal());
+
+    // Resizing
+    window.addEventListener('resize', TB.resizeMap);
+
+    // URL parameter handling
+    document.addEventListener('DOMContentLoaded', function () {
         const params = getUrlParams();
         handleParams(params);
-    }
-    TB.shouldHandlePopState = true;
-});
+    });
+
+    // Handle browser back and forward buttons
+    window.addEventListener('popstate', function () {
+        if (TB.shouldHandlePopState) {
+            const params = getUrlParams();
+            handleParams(params);
+        }
+        TB.shouldHandlePopState = true;
+    });
+}
