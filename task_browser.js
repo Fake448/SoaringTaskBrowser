@@ -1,88 +1,147 @@
 "use strict"
+let homeTabPollingInterval = null;
 
-class TaskBrowser {
+export default class TaskBrowser {
     constructor() {
-        let tb = this;
-        tb.shouldHandlePopState = true;
-        tb.fromURL = false;
-        tb.sectionsToExpandFromURL = [];
-        tb.isDownloadPage = false;
-        tb.discordPostHelperTaskBrowserPath = "";
-        tb.discordTasksChannel = "";
-        tb.wsgRoot = "";
-        tb.isUserConnected = false;
-        tb.currentUserTaskEntry = {};
+        this.shouldHandlePopState = true;
+        this.fromURL = false;
+        this.sectionsToExpandFromURL = [];
+        this.isDownloadPage = false;
+        this.discordPostHelperTaskBrowserPath = "";
+        this.discordTasksChannel = "";
+        this.wsgRoot = "";
+        this.isUserConnected = false;
+        this.currentUserTaskEntry = {};
+        this.homeTabWasLoaded = false;
+        this.lastTopIGCKey = null
     }
 
     init(igcUpload) {
-        let tb = this;
-
         // Store the reference to the TaskBrowser instance.
-        tb.IGCUpload = igcUpload;
-        tb.getUserConnectionInfo();
+        this.IGCUpload = igcUpload;
+        this.getUserConnectionInfo();
 
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
-        tb.isDownloadPage = currentPath.includes("download.html");
+        this.isDownloadPage = currentPath.includes("download.html");
         if (window.location.origin.includes("wesimglide.org")) {
-            tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
-            tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1155511739799060552/";
-            tb.wsgRoot = "https://wesimglide.org/";
+            this.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelper/TaskBrowser/";
+            this.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1155511739799060552/";
+            this.wsgRoot = "https://wesimglide.org/";
         }
         else {
-            tb.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
-            tb.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1067288937527246868/";
-            tb.wsgRoot = "https://soaring.siglr.com/";
+            this.discordPostHelperTaskBrowserPath = "https://siglr.com/DiscordPostHelperTest/TaskBrowser/";
+            this.discordTasksChannel = "discord://discord.com/channels/1022705603489042472/1067288937527246868/";
+            this.wsgRoot = "https://soaring.siglr.com/";
         }
 
-        if (tb.isDownloadPage) {
+        if (this.isDownloadPage) {
             // Light initialization for download purposes
             console.log("Initializing TaskBrowser in light mode for download page.");
-            tb.userSettings = tb.loadUserSettings();
+            this.userSettings = this.loadUserSettings();
             return;
         }
 
-        tb.countryCodes = {};
+        this.countryCodes = {};
 
-        tb.md = window.markdownit({
+        this.md = window.markdownit({
             html: false,
             breaks: true,
             linkify: true,
             typographer: true
         });
-        tb.tbm = new TaskBrowserMap(tb);
-        tb.taskDetailsContainerWidth = 0;
-        tb.initCountryCodes();
-        tb.searchPanelAlreadySetup = false;
+        this.tbm = new TaskBrowserMap(this);
+        this.taskDetailsContainerWidth = 0;
+        this.initCountryCodes();
+        this.searchPanelAlreadySetup = false;
 
         // Mapping of country names in your app to the corresponding names used by the flag service
-        tb.countryNameMapping = {
+        this.countryNameMapping = {
             'Czech Republic': 'Czechia',
             'Virgin Islands - U.S.': 'United States Virgin Islands',
             'Virgin Islands - British': 'British Virgin Islands'
         };
-        tb.initCountryCodes();
-        tb.userSettings = tb.loadUserSettings();
-        tb.userMapSettings = tb.loadMapUserSettings();
-        tb.TaskDetailsPanelVisible = false;
-        tb.SearchFiltersPanelVisible = false;
-        tb.hideTaskDetailsPanel();
-        tb.hideSearchFiltersPanel();
+        this.initCountryCodes();
+        this.userSettings = this.loadUserSettings();
+        this.userMapSettings = this.loadMapUserSettings();
+        this.TaskDetailsPanelVisible = false;
+        this.SearchFiltersPanelVisible = false;
+        this.hideTaskDetailsPanel();
+        this.hideSearchFiltersPanel();
 
+    }
+
+    displayEventsStaticPortion() {
+        const eventsTabGeneralInfo = document.getElementById('eventsGeneralInfoSection');
+
+        // Add static general information collapsible section
+        this.generateCollapsibleSection("Global Schedule & Information", `
+        <div class="general-info">
+            <p>Welcome to the heart of our soaring communities! In this channel, you'll discover a comprehensive weekly schedule of group flights held by the various Discord communities, meticulously organized for enthusiasts across different time zones.</p>
+            <h2>What's Inside:</h2>
+            <ul>
+                <li>A global calendar of all known group events from various soaring club channels, updated weekly.</li>
+                <li>Quick reference to help you align with events, regardless of where you are in the world.</li>
+            </ul>
+            <h3>Remember:</h3>
+            <p>While the events are listed in UTC times, these might not always correspond to your local day. Please check the local date and time (for you) usually displayed with the original event for best accuracy. Also, note that during daylight saving time changes, there might be a period with incorrect time indications.</p>
+            <p>Dive into our global schedule and choose your next group flight adventure!</p>
+            <div id="tutorials"></div>
+            <div id="invites"></div>
+            <h2>General Weekly Schedule</h2>
+            <h3>Sunday</h3>
+            🕖 18:15 UTC: UKVGA Sunday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/325227457445625856/1332655847029080097">Event Channel</a></br>
+            <h3>Monday</h3>
+            <p>-</p>
+            <h3>Tuesday</h3>
+            🕤 09:30 UTC: Ausglide Tuesday <em>(Normal time)</em> - <a href="discord://discord.com/channels/876123356385149009/1066655140733517844">Event Channel</a></br>
+            🕖 18:15 UTC: UKVGA Tuesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042887084048515">Event Channel</a></br>
+            🕧 23:30 UTC: Diamonds Tuesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/793376245915189268/1097353400015921252">Event Channel</a></br>
+            <h3>Wednesday</h3>
+            🕡 17:45 UTC: SSC Wednesday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/876123356385149009/1128345453063327835">Event Channel</a></br>
+            <h3>Thursday</h3>
+            🕖 18:15 UTC: UKVGA Thursday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/325227457445625856/1166042920869175357">Event Channel</a></br>
+            <h3>Friday</h3>
+            🕘 21:00 UTC: Friday Soaring Club - <a href="discord://discord.com/channels/793376245915189268/1097354088892596234">Event Channel</a></br>
+            <h3>Saturday</h3>
+            🕡 17:45 UTC: SSC Saturday <em>(Daylight saving time)</em> - <a href="discord://discord.com/channels/876123356385149009/987611111509590087">Event Channel</a></br>
+        </div>
+    `, eventsTabGeneralInfo);
+
+        // Add the tutorials section within the general information section
+        const tutorialsContainer = document.getElementById('tutorials');
+        this.generateCollapsibleSection("Tutorials / Knowledge base on MSFS soaring and group flights", `
+        <p>Great resources that will get you up to speed on soaring in MSFS and joining group flights!</p>
+        <ul>
+            <li><a href="https://discord.com/channels/793376245915189268/1097520643580362753/1097520937701736529" target="_blank">GotGravel - The Beginner's Guide to Soaring Events</a></li>
+            <li><a href="https://discord.com/channels/876123356385149009/1038819881396744285" target="_blank">SSC - How to join our Group Flights</a></li>
+        </ul>
+    `, tutorialsContainer);
+
+        // Add the invites section within the general information section
+        const invitesContainer = document.getElementById('invites');
+        this.generateCollapsibleSection("Discord Club Invites", `
+        <p>To gain access to the several club events listed on the Hub, you will first need to register on their Discord server. Here are invite links to do so.</p>
+        <ul>
+            <li><strong>AusGlide</strong> and <strong>Sim Soaring Club</strong> (on same SSC Discord): <a href="discord://discord.gg/h9H2MZyrg2" target="_blank">https://discord.gg/h9H2MZyrg2</a></li>
+            <li><strong>💎 Diamonds</strong> and <strong>Friday Soaring Club</strong> (on same GG Discord): <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">https://discord.gg/got-gravel-793376245915189268</a></li>
+            <li><strong>UK Virtual Gliding Association</strong> (UKVGA Discord): <a href="discord://discord.gg/emwraayPkR" target="_blank">https://discord.gg/9PtUtaH9tz</a></li>
+            <li><strong>Planeur France FS2020</strong>: <a href="discord://discord.gg/h2GuWXJaGK" target="_blank">https://discord.gg/h2GuWXJaGK</a></li>
+        </ul>
+    `, invitesContainer);
     }
 
     // Function to initialize the search and filters panel with default content and events
     setupSearchFiltersPanel() {
-        let tb = this;
-        if (!tb.searchPanelAlreadySetup) {
+        if (!this.searchPanelAlreadySetup) {
             const searchFiltersContainer = document.getElementById('searchAndFilters');
-            tb.addPanelTitle(searchFiltersContainer);
-            tb.addTaskCountControls(searchFiltersContainer);
-            tb.addDateRangePicker(searchFiltersContainer);
-            tb.addSoaringTypeFilter(searchFiltersContainer);
-            tb.addDurationFilter(searchFiltersContainer);
-            tb.addApplyButton(searchFiltersContainer);
-            tb.searchPanelAlreadySetup = true;
+            this.addPanelTitle(searchFiltersContainer);
+            this.addTaskCountControls(searchFiltersContainer);
+            this.addDateRangePicker(searchFiltersContainer);
+            this.addSoaringTypeFilter(searchFiltersContainer);
+            this.addDurationFilter(searchFiltersContainer);
+            this.addApplyButton(searchFiltersContainer);
+            this.searchPanelAlreadySetup = true;
         }
     }
 
@@ -117,8 +176,6 @@ class TaskBrowser {
 
     // Function to add task count slider and input controls as a collapsible section
     addTaskCountControls(container) {
-        let tb = this;
-
         // HTML content for Task Count Controls
         const content = `
             <div style="display: flex; align-items: center; justify-content: space-between;">
@@ -126,19 +183,19 @@ class TaskBrowser {
                 <button id="maxButton" class="button-style" style="font-size: 12px; padding: 2px 6px;">Max</button>
             </div>
             <div style="display: flex; align-items: center; margin-bottom: 10px;">
-                <input type="range" id="taskCountSlider" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="flex: 1; margin-right: 10px;">
-                <input type="number" id="taskCountInput" min="1" max="${tb.tbm.totalTasksInDB}" value="${tb.tbm.taskCount}" style="width: 60px; text-align: right;">
+                <input type="range" id="taskCountSlider" min="1" max="${this.tbm.totalTasksInDB}" value="${this.tbm.taskCount}" style="flex: 1; margin-right: 10px;">
+                <input type="number" id="taskCountInput" min="1" max="${this.tbm.totalTasksInDB}" value="${this.tbm.taskCount}" style="width: 60px; text-align: right;">
             </div>
         `;
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            tb.resetTaskCount();
+            this.resetTaskCount();
         };
 
         // Generate the collapsible section with the Task Count Controls content
-        tb.generateCollapsibleSection("Max Tasks", content, container, "maxTasksSection", null, resetCallback);
-        tb.expandCollapsibleSection('maxTasksSection');
+        this.generateCollapsibleSection("Max Tasks", content, container, "maxTasksSection", null, resetCallback);
+        this.expandCollapsibleSection('maxTasksSection');
 
         // After generating the collapsible section, add event listeners for slider, input, and Max button
         const maxButton = container.querySelector('#maxButton');
@@ -147,8 +204,8 @@ class TaskBrowser {
 
         // Set max value on Max button click
         maxButton.addEventListener('click', () => {
-            taskCountSlider.value = tb.tbm.totalTasksInDB;
-            taskCountInput.value = tb.tbm.totalTasksInDB;
+            taskCountSlider.value = this.tbm.totalTasksInDB;
+            taskCountInput.value = this.tbm.totalTasksInDB;
         });
 
         // Sync slider and input
@@ -159,14 +216,13 @@ class TaskBrowser {
         taskCountInput.addEventListener('input', (event) => {
             let value = parseInt(event.target.value);
             if (isNaN(value) || value < 1) value = 1;
-            if (value > tb.tbm.totalTasksInDB) value = tb.tbm.totalTasksInDB;
+            if (value > this.tbm.totalTasksInDB) value = this.tbm.totalTasksInDB;
             taskCountSlider.value = value;
             taskCountInput.value = value;
         });
     }
 
     expandAllCollapsibleSections(waitingForIGCException = false) {
-        const tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         if (!taskDetailContainer) {
             console.error("taskDetailContainer not found.");
@@ -174,8 +230,8 @@ class TaskBrowser {
         }
 
         // If there’s a non‑empty array, only expand those names; else expand all
-        const toExpand = Array.isArray(tb.sectionsToExpandFromURL) && tb.sectionsToExpandFromURL.length
-            ? tb.sectionsToExpandFromURL
+        const toExpand = Array.isArray(this.sectionsToExpandFromURL) && this.sectionsToExpandFromURL.length
+            ? this.sectionsToExpandFromURL
             : null;
 
         const collapsibleSections = taskDetailContainer.querySelectorAll(".tool-entry.collapsible");
@@ -219,11 +275,10 @@ class TaskBrowser {
         }
 
         // Clear it so future calls expand all by default
-        tb.sectionsToExpandFromURL = [];
+        this.sectionsToExpandFromURL = [];
     }
 
     collapseAllCollapsibleSections() {
-        const tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
         if (!taskDetailContainer) {
             console.error("taskDetailContainer not found.");
@@ -240,15 +295,14 @@ class TaskBrowser {
 
     // Function to add date range picker with quick select dropdown as a collapsible section
     addDateRangePicker(container) {
-        let tb = this;
 
         // HTML content for the Date Range Picker
         const content = `
             <label>Between:</label></br>
             <div style="display: flex; align-items: center;">
-                <input type="date" id="startDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.oldestDate}" style="width: 120px; margin-right: 10px;" disabled>
+                <input type="date" id="startDate" min="${this.tbm.oldestDate}" max="${this.tbm.newestDate}" value="${this.tbm.oldestDate}" style="width: 120px; margin-right: 10px;" disabled>
                 <span>and</span>
-                <input type="date" id="endDate" min="${tb.tbm.oldestDate}" max="${tb.tbm.newestDate}" value="${tb.tbm.newestDate}" style="width: 120px; margin-left: 10px;" disabled>
+                <input type="date" id="endDate" min="${this.tbm.oldestDate}" max="${this.tbm.newestDate}" value="${this.tbm.newestDate}" style="width: 120px; margin-left: 10px;" disabled>
             </div>
             <div style="margin-top: 10px;">
                 <select id="dateRangeSelect" style="width: 100%; margin-top: 5px;">
@@ -265,11 +319,11 @@ class TaskBrowser {
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            tb.resetDateRange();
+            this.resetDateRange();
         };
 
         // Generate the collapsible section with the Date Range Picker content and reset callback
-        tb.generateCollapsibleSection("Last Update", content, container, "lastUpdateSection", null, resetCallback);
+        this.generateCollapsibleSection("Last Update", content, container, "lastUpdateSection", null, resetCallback);
 
         // After generating the collapsible section, add event listeners to handle dropdown selection logic
         const startDateInput = container.querySelector('#startDate');
@@ -318,14 +372,14 @@ class TaskBrowser {
                         break;
                     case 'any':
                     default:
-                        startDate = new Date(tb.tbm.oldestDate);
-                        endDate = new Date(tb.tbm.newestDate);
+                        startDate = new Date(this.tbm.oldestDate);
+                        endDate = new Date(this.tbm.newestDate);
                         break;
                 }
 
                 // Enforce min and max date constraints
-                startDate = startDate < new Date(tb.tbm.oldestDate) ? new Date(tb.tbm.oldestDate) : startDate;
-                endDate = endDate > new Date(tb.tbm.newestDate) ? new Date(tb.tbm.newestDate) : endDate;
+                startDate = startDate < new Date(this.tbm.oldestDate) ? new Date(this.tbm.oldestDate) : startDate;
+                endDate = endDate > new Date(this.tbm.newestDate) ? new Date(this.tbm.newestDate) : endDate;
 
                 // Update date inputs with constrained values
                 startDateInput.value = startDate.toISOString().split('T')[0];
@@ -336,7 +390,6 @@ class TaskBrowser {
 
     // Function to add soaring type filters using generateCollapsibleSection
     addSoaringTypeFilter(container) {
-        let tb = this;
         const content = `
             <div style="display: flex; flex-direction: column; margin-top: 5px;">
                 <div>
@@ -369,17 +422,15 @@ class TaskBrowser {
 
         // Define the reset callback for this section
         const resetCallback = () => {
-            tb.resetSoaringType();
+            this.resetSoaringType();
         };
 
         // Call generateCollapsibleSection to create the collapsible section with the reset callback
-        tb.generateCollapsibleSection("Soaring Type", content, container, "soaringTypeSection", null, resetCallback);
+        this.generateCollapsibleSection("Soaring Type", content, container, "soaringTypeSection", null, resetCallback);
     }
 
     // Function to add duration filter inputs as a collapsible section
     addDurationFilter(container) {
-        let tb = this;
-
         const content = `
         <div style="display: flex; flex-direction: column; margin-top: 5px;">
             <label for="durationMin">Duration (minutes):</label>
@@ -397,16 +448,15 @@ class TaskBrowser {
 
         // Define the reset callback for the Duration section
         const resetCallback = () => {
-            tb.resetDuration();
+            this.resetDuration();
         };
 
         // Generate the collapsible section with the Duration content and reset callback
-        tb.generateCollapsibleSection("Task Duration", content, container, "taskDurationSection", null, resetCallback);
+        this.generateCollapsibleSection("Task Duration", content, container, "taskDurationSection", null, resetCallback);
     }
 
     // Function to add apply and reset all buttons
     addApplyButton(container) {
-        let tb = this;
 
         // Create the Apply button
         const applyButton = document.createElement('button');
@@ -434,22 +484,21 @@ class TaskBrowser {
 
         // Apply button event
         applyButton.addEventListener('click', () => {
-            tb.applyFilters();
+            this.applyFilters();
         });
 
         // Reset All button event
         resetAllButton.addEventListener('click', () => {
             // Call all individual reset functions
-            tb.resetTaskCount();
-            tb.resetDateRange();
-            tb.resetSoaringType();
-            tb.resetDuration();
-            tb.applyFilters();
+            this.resetTaskCount();
+            this.resetDateRange();
+            this.resetSoaringType();
+            this.resetDuration();
+            this.applyFilters();
         });
     }
 
     applyFilters() {
-        let tb = this;
         const taskCount = document.getElementById('taskCountInput').value;
         const startDate = document.getElementById('startDate').value;
         const endDate = document.getElementById('endDate').value;
@@ -473,17 +522,17 @@ class TaskBrowser {
         console.log(`Applying filters: Task Count = ${taskCount}, Start Date = ${startDate}, End Date = ${endDate}, Soaring Types = ${JSON.stringify(soaringTypes)}, Filter Type = ${soaringTypeFilter}, Duration Min = ${durationMin}, Duration Max = ${durationMax}, Include No Duration = ${includeNoDuration}`);
 
         // Update the TBM instance variables
-        tb.tbm.taskCount = taskCount;
-        tb.tbm.startDate = startDate;
-        tb.tbm.endDate = endDate;
-        tb.tbm.soaringTypes = soaringTypes;
-        tb.tbm.soaringTypeFilter = soaringTypeFilter;
-        tb.tbm.durationMin = parseInt(durationMin, 10);
-        tb.tbm.durationMax = parseInt(durationMax, 10);
-        tb.tbm.includeNoDuration = includeNoDuration;
+        this.tbm.taskCount = taskCount;
+        this.tbm.startDate = startDate;
+        this.tbm.endDate = endDate;
+        this.tbm.soaringTypes = soaringTypes;
+        this.tbm.soaringTypeFilter = soaringTypeFilter;
+        this.tbm.durationMin = parseInt(durationMin, 10);
+        this.tbm.durationMax = parseInt(durationMax, 10);
+        this.tbm.includeNoDuration = includeNoDuration;
 
         // Call fetchTasks with updated filters
-        tb.tbm.fetchTasks();
+        this.tbm.fetchTasks();
     }
 
     // Reset Task Count section
@@ -494,14 +543,12 @@ class TaskBrowser {
 
     // Reset Date Range section
     resetDateRange() {
-        let tb = this;
-
         const startDateInput = document.getElementById('startDate');
         const endDateInput = document.getElementById('endDate');
         const dateRangeSelect = document.getElementById('dateRangeSelect');
 
-        startDateInput.value = tb.tbm.oldestDate;
-        endDateInput.value = tb.tbm.newestDate;
+        startDateInput.value = this.tbm.oldestDate;
+        endDateInput.value = this.tbm.newestDate;
         dateRangeSelect.value = 'any'; // Reset dropdown to default
         startDateInput.disabled = true; // Lock date inputs
         endDateInput.disabled = true;
@@ -528,11 +575,10 @@ class TaskBrowser {
     }
 
     initCountryCodes() {
-        let tb = this;
         fetch('https://flagcdn.com/en/codes.json')
             .then(response => response.json())
             .then(data => {
-                tb.countryCodes = data;
+                this.countryCodes = data;
             })
             .catch(error => {
                 console.error('Error fetching country codes:', error);
@@ -556,8 +602,7 @@ class TaskBrowser {
     }
 
     copyTextToClipboard(text) {
-        let tb = this;
-        tb.shouldHandlePopState = false; // Disable popstate handling
+        this.shouldHandlePopState = false; // Disable popstate handling
         if (navigator.clipboard) {
             navigator.clipboard.writeText(text).then(() => {
                 alert("Link copied to your clipboard!");
@@ -579,40 +624,60 @@ class TaskBrowser {
             }
             document.body.removeChild(textArea);
         }
-        //tb.shouldHandlePopState = true; // Re-enable popstate handling
+        //this.shouldHandlePopState = true; // Re-enable popstate handling
     }
 
     resizeMap() {
-        let tb = this;
         try {
-            if (tb.tbm && tb.tbm.map && document.getElementById('mapTab').classList.contains('active')) {
-                tb.tbm.map.invalidateSize();
+            if (this.tbm && this.tbm.map && document.getElementById('mapTab').classList.contains('active')) {
+                this.tbm.map.invalidateSize();
             }
         } catch (err) {
             console.error('Failed to copy text: ', err);
         }
     }
 
+    addScrollEventListeners() {
+        const leftButton = document.querySelector('.scroll-button.left');
+        const rightButton = document.querySelector('.scroll-button.right');
+        const container = document.querySelector('.community-logos-container');
+
+        if (leftButton && rightButton && container) {
+            leftButton.addEventListener('click', () => {
+                container.scrollBy({
+                    left: -256,
+                    behavior: 'smooth'
+                });
+            });
+
+            rightButton.addEventListener('click', () => {
+                container.scrollBy({
+                    left: 256,
+                    behavior: 'smooth'
+                });
+            });
+        }
+    }
+
     switchTab(tabId) {
-        const tb = this;
 
         // 🟢 Home tab: start polling if first time or coming back
         if (tabId === 'homeTab') {
             // First time: load and start polling
-            if (!homeTabWasLoaded) {
-                loadTabContent(tabId); // Inject HTML
-                loadHomeTab(true);     // Force first load
-                homeTabWasLoaded = true;
+            if (!this.homeTabWasLoaded) {
+                this.loadTabContent(tabId); // Inject HTML
+                this.loadHomeTab(true);     // Force first load
+                this.homeTabWasLoaded = true;
 
                 // Begin polling every 60 seconds (check for updates)
                 homeTabPollingInterval = setInterval(() => {
                     if (document.getElementById('homeTab').classList.contains('active')) {
-                        loadHomeTab(false); // Only update if new data
+                        this.loadHomeTab(false); // Only update if new data
                     }
                 }, 60000);
             } else {
                 // Coming back to tab → refresh immediately
-                loadHomeTab(true);
+                this.loadHomeTab(true);
             }
         } else {
             // 🔴 Leaving home tab: stop polling if active
@@ -622,14 +687,21 @@ class TaskBrowser {
             }
         }
 
+
+
+
+
+
+
+
         // Load content if it hasn't been loaded yet
         const tabContent = document.getElementById(tabId);
         if (!tabContent.innerHTML) {
-            loadTabContent(tabId); // Assuming loadTabContent is defined in task_browser.js
+            this.loadTabContent(tabId); // Assuming loadTabContent is defined in task_browser.js
 
             if (tabId === 'eventsTab') {
-                displayEventsStaticPortion(); // Add static events info
-                fetchAndDisplayEvents(); // Load dynamic events content
+                this.displayEventsStaticPortion(); // Add static events info
+                this.fetchAndDisplayEvents(); // Load dynamic events content
 
                 // Add refresh button functionality
                 const refreshButton = document.getElementById('refreshButton');
@@ -661,8 +733,8 @@ class TaskBrowser {
         document.querySelector(`button[data-tab="${tabId}"]`).classList.add('active');
 
         // Resize the map if we're on the map tab
-        if (tabId === 'mapTab' && typeof tb.resizeMap === 'function') {
-            tb.resizeMap();
+        if (tabId === 'mapTab' && typeof this.resizeMap === 'function') {
+            this.resizeMap();
         }
 
         // Update the URL to reflect the current tab
@@ -722,13 +794,385 @@ class TaskBrowser {
         window.history.pushState({}, '', url);
     }
 
+    loadToolsFromXML() {
+        return fetch('otherdata/tools.xml')
+            .then(response => response.text())
+            .then(data => {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(data, "application/xml");
+                const tools = xmlDoc.getElementsByTagName('tool');
+                const toolEntries = [];
+
+                for (let i = 0; i < tools.length; i++) {
+                    const title = tools[i].getElementsByTagName('title')[0].textContent;
+                    const text = tools[i].getElementsByTagName('text')[0].textContent;
+                    toolEntries.push({ Title: title, Description: text });
+                }
+
+                return toolEntries;
+            })
+            .catch(error => {
+                console.error('Error fetching tools:', error);
+                return [];
+            });
+    }
+
+    fetchAndDisplayEvents() {
+        fetch('php/RetrieveNewsWSG.php?newsType=1')
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    const events = data.data;
+                    displayEvents(events);
+                } else {
+                    console.error('Error fetching events:', data.message);
+                }
+            })
+            .catch(error => console.error('Error fetching events:', error));
+    }
+
+    // Function to load tab content dynamically
+    loadTabContent(tabId) {
+        let content = '';
+        switch (tabId) {
+            case 'homeTab':
+                content = `
+                <div class="hero-container">
+                    <div class="hero-left">
+                        <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="hero-logo-img-large">
+                        <div class="hero-branding">
+                            <h1>WeSimGlide.org</h1>
+                            <p class="hero-subtagline">Your Virtual MSFS Soaring Home</p>
+                            <ul class="hero-values">
+                                <li>→ Explore</li>
+                                <li>→ Connect</li>
+                                <li>→ Share</li>
+                                <li>→ Compete</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="hero-right">
+                        <p class="hero-prompt">🌤️ Where do you want to go today?</p>
+                        <div class="hero-actions">
+                            <div class="nav-tile" onclick="this.switchTab('eventsTab')">📅 Events</div>
+                            <div class="nav-tile" onclick="this.switchTab('mapTab')">🌍 Map</div>
+                            <div class="nav-tile" onclick="this.switchTab('toolsTab')">🛠️ Tools</div>
+                            <div class="nav-tile" onclick="this.switchTab('settingsTab')">⚙️ Settings</div>
+                            <div class="nav-tile" onclick="this.switchTab('accountTab')">👤 Account</div>
+                            <div class="nav-tile" onclick="this.switchTab('aboutTab')">ℹ️ About</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="hero-discord-cta">
+                    <span>💬 Want to help shape WeSimGlide?</span>
+                    <a href="https://discord.gg/aW8YYe3HJF" target="_blank">Join us on Discord</a>
+                </div>
+                <hr>
+                <div class="latest-igc-leaders">
+                    <div class="latest-igc-header">
+                        <h2>🏆 Last 10 Top Performances 🏆</h2>
+                        <p>The most recently uploaded top-speed IGCs across all tasks</p>
+                    </div>
+                    <table id="latestTopIGCTable" class="igcRecordsTable dataTable" style="width: 100%; margin-top: 10px;">
+                        <thead>
+                            <tr>
+                                <th>Pilot</th>
+                                <th>Glider</th>
+                                <th>Speed</th>
+                                <th>Task</th>
+                                <th>Date</th>
+                                <th>Sim</th>
+                            </tr>
+                        </thead>
+                        <tbody id="latest-igc-leaders-body">
+                            <tr><td colspan="5">Loading...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <hr>
+                <div class="latest-igc-header">
+                    <h2>In the last 7 days</h3>
+                </div>
+                <div class="home-stats-row" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <!-- Top 5 Contributors (Last 7 Days) -->
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>Top 5 Contributors</h3>
+                        </div>
+                        <table id="topContrib7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Pilot</th>
+                                    <th>Uploads</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-contrib-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>Top 5 Gliders</h3>
+                        </div>
+                        <table id="topGliders7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Glider Type</th>
+                                    <th>Flights</th>
+                                </tr>
+                            </thead>
+                            <tbody id="top-gliders-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="home-stat" style="flex: 1 1 30%; min-width: 200px;">
+                        <div class="latest-igc-header">
+                            <h3>MSFS Versions</h3>
+                        </div>
+                        <table id="msfsVer7Table" class="igcRecordsTable dataTable" style="width: 100%;">
+                            <thead>
+                                <tr>
+                                    <th>Version</th>
+                                    <th>Count</th>
+                                </tr>
+                            </thead>
+                            <tbody id="msfs‐ver-7-body">
+                                <tr><td colspan="2">Loading...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <hr>
+                <div class="community-section">
+                    <h2>Featured Soaring Communities and Clubs</h2>
+                    <div class="community-navigation left">
+                        <button class="scroll-button left">&larr;</button>
+                    </div>
+                    <div class="community-logos-container">
+                        <div class="community-logos">
+                            <div class="community-item">
+                                <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">
+                                    <img src="images/SoaringDiamondsClub.jpg" alt="Soaring Diamonds Club" class="community-logo">
+                                </a>
+                                <p class="community-name"><strong>Soaring Diamonds Club</strong></p>
+                                <p class="community-clubs">Hosted on<br>GotGravel's Discord</p>
+                            </div>
+                            <div class="community-item">
+                                <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">
+                                    <img src="images/GotGravel.jpg" alt="GotGravel" class="community-logo">
+                                </a>
+                                <p class="community-name"><strong>Friday Soaring Club</strong></p>
+                                <p class="community-clubs">Hosted on<br>GotGravel's Discord</p>
+                            </div>
+                            <div class="community-item">
+                                <a href="discord://discord.gg/h9H2MZyrg2" target="_blank">
+                                    <img src="images/SSCLogo.jpg" alt="Sim Soaring Club" class="community-logo">
+                                </a>
+                                <p class="community-name"><strong>Sim Soaring Club</strong></p>
+                                <p class="community-clubs">Also home of<br>AusGlide Club</p>
+                            </div>
+                            <div class="community-item">
+                                <a href="discord://discord.gg/9PtUtaH9tz" target="_blank">
+                                    <img src="images/UKVGALogo.jpg" alt="UKVGA" class="community-logo">
+                                </a>
+                                <p class="community-name"><strong>UK Virtual Gliding Association</strong></p>
+                                <p class="community-clubs"></p>
+                            </div>
+                            <div class="community-item">
+                                <a href="discord://discord.gg/h2GuWXJaGK" target="_blank">
+                                    <img src="images/FranceMSFS.png" alt="UKVGA" class="community-logo">
+                                </a>
+                                <p class="community-name"><strong>MSFS ✈️20✈️24 FR</strong></p>
+                                <p class="community-clubs">Home of<br>Planeur France</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="community-navigation right">
+                        <button class="scroll-button right">&rarr;</button>
+                    </div>
+                </div>
+                `;
+                break;
+            case 'eventsTab':
+                content = `
+                <div class="header-container">
+                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <h2>Group Soaring Events</h2>
+                </div>
+                <div id="eventsGeneralInfoSection"></div>
+                <button id="refreshButton" class="button-style">↻ Refresh Events</button>
+                <div id="eventsList"></div>
+                `;
+                break;
+            case 'toolsTab':
+                content = `
+                <div class="header-container">
+                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <h2>Most useful soaring tools and other references!</h2>
+                </div>
+                `;
+                document.getElementById(tabId).innerHTML = content;
+                setTimeout(() => {
+                    this.loadToolsFromXML().then(toolEntries => {
+                        toolEntries.forEach(toolEntry => {
+                            this.generateToolEntry(toolEntry.Title, toolEntry.Description);
+                        });
+
+                        // Add the message and button below all the tool entries
+                        const messageAndButton = `
+                        <p>If you would like to suggest a new tool or reference, contact us through our support channel on Discord!</p>
+                        <a href="discord://discord.com/channels/1022705603489042472/1258192556202922107" target="_blank">
+                            <button class="button-style">Go to our Discord</button>
+                        </a>
+                        <p></p>
+                    `;
+                        const toolsTab = document.getElementById('toolsTab');
+                        toolsTab.insertAdjacentHTML('beforeend', messageAndButton);
+                    });
+                }, 0);
+                break;
+            case 'settingsTab':
+                break;
+            case 'accountTab':
+                content = `
+                <div class="header-container">
+                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <h2>Your User Account</h2>
+                </div>
+                <div id="account-content">
+                    <p>Loading user info...</p>
+                </div>
+            `;
+                break;
+            case 'aboutTab':
+                content = `
+                <div class="header-container">
+                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <h2>About WeSimGlide</h2>
+                </div>
+                <p>Welcome to WeSimGlide.org, your go-to destination for virtual soaring in Flight Simulator. Inspired by the official WeGlide.org site for real-life soaring, WeSimGlide is dedicated to bringing the same level of community to the virtual skies.</p>
+                <h3>Our Vision</h3>
+                <p>WeSimGlide is part of a comprehensive solution designed to enhance your soaring experience. This project includes:</p>
+                <ul class="all-links">
+                    <li>A dedicated <strong>Discord server</strong> for community engagement and support. <a href="https://discord.gg/aW8YYe3HJF" target="_blank">(Discord Invite)</a></li>
+                    <li>Several <strong>Windows applications</strong> tailored for soaring enthusiasts. <a href="https://flightsim.to/profile/siglr" target="_blank">(Visit FlightSim.to)</a></li>
+                    <li>A detailed <strong>world map browser</strong> showcasing hundreds of soaring tasks created by talented designers from around the globe (this is where you are now).</li>
+                </ul>
+                <h3>Who's behind this?</h3>
+                <p>While the library and tools are primarily a solo endeavor by myself, Guy (MajorDad), this project wouldn't be possible without the invaluable contributions of Ian (B21) and the input from many dedicated members of the community.</p>
+                <h3>Support WeSimGlide.org</h3>
+                <p>WeSimGlide is a passion project aimed at enriching the virtual soaring community. If you enjoy using these tools and would like to support further development, I welcome voluntary contributions. Your donations help us cover server costs, develop new features, and maintain the quality of our offerings.</p>
+                <a href="https://www.paypal.com/paypalme/wesimglide" target="_blank">
+                    <button class="button-style">Donate Now</button>
+                </a>
+                <p>Contributions can also take other forms:</p>
+                <ul>
+                    <li><strong>Community Contributions:</strong> Use our tools to create, share and download soaring tasks, provide feedback, or help others on the Discord server.</li>
+                    <li><strong>Spread the Word:</strong> Share WeSimGlide.org with your friends and fellow pilots to help grow our community.</li>
+                </ul>
+                <p>Thank you for being a part of the WeSimGlide community. Together, we can make virtual soaring an even more incredible experience.</p>
+                <h3>Affiliation</h3>
+                <p>WeSimGlide.org has no affiliation whatsoever with <strong><a href="https://WeGlide.org" target="_blank">WeGlide.org</a></strong>.</p>
+                <h3>Be Advised</h3>
+                <p><strong>Note:</strong> WeSimGlide.org is still a work in progress. I appreciate your patience and feedback as I continue to improve and expand the feature set.</p>
+                <h3>Privacy Policy</h3>
+                <p>WeSimGlide.org stores basic user information (username, Discord ID, and avatar) obtained through the 'Login with Discord' feature solely to manage account functionality. We do not use this data for any other purpose.</p>`;
+                break;
+        }
+        document.getElementById(tabId).innerHTML = content;
+        if (tabId == 'homeTab') {
+            this.addScrollEventListeners();
+        }
+        // If the user account tab is loaded, fetch and display user connection info
+        if (tabId === 'accountTab') {
+            loadAccountInfo();
+        }
+        // If the user account tab is loaded, fetch and display user connection info
+        if (tabId === 'homeTab') {
+            this.loadHomeTab();
+        }
+    }
+
+    loadHomeTab(forceUpdate = false) {
+        fetch(`/otherdata/latestTopIGCs.json?nocache=${Date.now()}`)   // ← use backticks so ${Date.now()} works
+            .then(res => res.json())
+            .then(data => {
+                if (!data || data.length === 0) return;
+
+                const newestKey = data[0]?.IGCKey || null;
+                if (!forceUpdate && newestKey === this.lastTopIGCKey) return;
+                this.lastTopIGCKey = newestKey;
+
+                const isImperial = this.userSettings.distance === 'imperial';
+                const rows = data.slice(0, 10).map(entry => {
+                    const formattedDate = this.formatSimDateTime(
+                        entry.IGCUploadDateTimeUTC, true, false, true, true, true
+                    );
+                    let speed = parseFloat(entry.Speed) || 0;
+                    if (isImperial) speed *= 0.621371;
+                    const speedStr = `${speed.toFixed(1)} ${isImperial ? 'mph' : 'km/h'}`;
+
+                    return [
+                        `${entry.Pilot} (${entry.GliderID})`, // 0
+                        entry.GliderType,                     // 1
+                        speedStr,                             // 2
+                        `<a href="javascript:void(0)" class="download-igc-link"
+                      onclick="switchToMapAndSelectTask('${entry.EntrySeqID}', false, ['Leader Board'])">
+                      (${entry.EntrySeqID}) ${entry.Title}
+                   </a>`,                              // 3
+                        formattedDate,                        // 4
+                        entry.Sim                            // 5 ← make sure you include this!
+                    ];
+                });
+
+                if ($.fn.DataTable.isDataTable('#latestTopIGCTable')) {
+                    const table = $('#latestTopIGCTable').DataTable();
+                    table.clear();
+                    table.rows.add(rows);
+                    table.draw();
+                } else {
+                    $('#latestTopIGCTable').DataTable({
+                        data: rows,
+                        columns: [
+                            { title: "Pilot" },
+                            { title: "Glider" },
+                            { title: "Speed" },
+                            { title: "Task" },
+                            { title: "Date" },
+                            { title: "Sim" }    // sixth column
+                        ],
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        ordering: false,
+                        order: [[4, 'desc']]
+                    });
+                }
+
+                this.loadTopContrib7();
+                this.loadTopGliders7();
+                this.loadMsfsVer7();
+            })
+            .catch(error => {
+                console.error('Error fetching latest IGCs:', error);
+                const tbody = document.getElementById('latest-igc-leaders-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="6">Failed to load data.</td></tr>';
+                }
+                this.loadTopContrib7();
+                this.loadTopGliders7();
+                this.loadMsfsVer7();
+            });
+    }
+
     addCountryFlags(countries) {
-        let tb = this;
         const baseUrl = 'https://flagcdn.com/h24/';
         return countries.split(',').map(country => {
             const countryName = country.trim();
-            const mappedCountryName = tb.countryNameMapping[countryName] || countryName;
-            const code = Object.keys(tb.countryCodes).find(key => tb.countryCodes[key].toLowerCase() === mappedCountryName.toLowerCase());
+            const mappedCountryName = this.countryNameMapping[countryName] || countryName;
+            const code = Object.keys(this.countryCodes).find(key => this.countryCodes[key].toLowerCase() === mappedCountryName.toLowerCase());
             return code ? `<img src="${baseUrl}${code}.webp" alt="${countryName}" title="${countryName}" style="margin-right: 5px;">` : countryName;
         }).join(' ');
     }
@@ -759,8 +1203,6 @@ class TaskBrowser {
     }
 
     convertToMarkdown(text, removeParagraphTag = false) {
-        let tb = this;
-
         // Function to add target="_blank" to all href links
         function addTargetBlank(html) {
             return html.replace(/<a /g, '<a target="_blank" ');
@@ -771,11 +1213,11 @@ class TaskBrowser {
             return html.replace(/href="https?:\/\/discord\.com/g, 'href="discord://discord.com');
         }
 
-        text = tb.replaceLineBreaks(text);
-        text = tb.removeSpacesBeforeClosingAsterisks(text);
-        text = tb.restoreLineBreaks(text);
+        text = this.replaceLineBreaks(text);
+        text = this.removeSpacesBeforeClosingAsterisks(text);
+        text = this.restoreLineBreaks(text);
 
-        let renderedMarkdown = tb.md.render(text);
+        let renderedMarkdown = this.md.render(text);
 
         // Optionally remove <p> tags
         if (removeParagraphTag) {
@@ -855,16 +1297,14 @@ class TaskBrowser {
     }
 
     generateTaskDetailsMainSection(task) {
-        let tb = this;
-
         // Format the last update date/time and description if present
         let lastUpdateInfo = "";
-        const lastUpdateFormatted = tb.formatSimDateTime(task.LastUpdate, true, false, true);
+        const lastUpdateFormatted = this.formatSimDateTime(task.LastUpdate, true, false, true);
         const lastUpdateDescription = task.LastUpdateDescription ? ` (${task.LastUpdateDescription})` : "";
         lastUpdateInfo = `Last update: ${lastUpdateFormatted}${lastUpdateDescription}`;
 
         // Get user settings for distance
-        const distanceUnit = tb.userSettings.distance || 'imperial';
+        const distanceUnit = this.userSettings.distance || 'imperial';
         let taskDistance = task.TaskDistance;
         let totalDistance = task.TotalDistance;
         let distanceUnitLabel = 'km';
@@ -877,8 +1317,8 @@ class TaskBrowser {
 
         // If igcMatchData is present (non-empty), prepend it.
         let igcContent = "";
-        if (tb.igcMatchData && tb.igcMatchData.trim() !== "") {
-            igcContent = tb.igcMatchData;
+        if (this.igcMatchData && this.igcMatchData.trim() !== "") {
+            igcContent = this.igcMatchData;
         }
 
         // Create the task details HTML
@@ -890,20 +1330,20 @@ class TaskBrowser {
                 <span class="task-flags">${this.addCountryFlags(task.Countries)}</span>
             </div>
             <h1>${task.Title}</h1>
-            ${tb.addDetailLineWithoutBreak('', tb.convertToMarkdown(task.ShortDescription))}
-            ${tb.addDetailLineWithBreak('🗺', task.MainAreaPOI)}
+            ${this.addDetailLineWithoutBreak('', this.convertToMarkdown(task.ShortDescription))}
+            ${this.addDetailLineWithBreak('🗺', task.MainAreaPOI)}
             🛫 ${task.DepartureICAO} ${task.DepartureName} ${task.DepartureExtra}<br>
             🛬 ${task.ArrivalICAO} ${task.ArrivalName} ${this.addDetailWithinBrackets(task.ArrivalExtra)}<br>
-            ⌚ ${tb.formatSimDateTime(task.SimDateTime, task.IncludeYear)} ${tb.addDetailWithinBrackets(task.SimDateTimeExtraInfo)}<br>
-            ↗️ ${task.SoaringRidge ? 'Ridge' : ''}${task.SoaringThermals ? ' Thermals' : ''}${task.SoaringWaves ? ' Waves' : ''}${task.SoaringDynamic ? ' Dynamic' : ''} ${tb.addDetailWithinBrackets(task.SoaringExtraInfo)}<br>
+            ⌚ ${this.formatSimDateTime(task.SimDateTime, task.IncludeYear)} ${this.addDetailWithinBrackets(task.SimDateTimeExtraInfo)}<br>
+            ↗️ ${task.SoaringRidge ? 'Ridge' : ''}${task.SoaringThermals ? ' Thermals' : ''}${task.SoaringWaves ? ' Waves' : ''}${task.SoaringDynamic ? ' Dynamic' : ''} ${this.addDetailWithinBrackets(task.SoaringExtraInfo)}<br>
             ${task.WeatherSummary ? `⛅ ${task.WeatherSummary}<br>` : ''}
             📏 ${taskDistance} ${distanceUnitLabel} task (${totalDistance} ${distanceUnitLabel} total)<br>
-            ⏳ ${tb.formatDuration(task.DurationMin, task.DurationMax)} ${tb.addDetailWithinBrackets(task.DurationExtraInfo)}<br>
+            ⏳ ${this.formatDuration(task.DurationMin, task.DurationMax)} ${this.addDetailWithinBrackets(task.DurationExtraInfo)}<br>
             `;
 
         // Check and add AAT minimum time if available
-        if (tb.tbm.b21_task && tb.tbm.b21_task.aat_min_time_s) {
-            const aatMinTime = tb.tbm.b21_task.aat_min_time_s;
+        if (this.tbm.b21_task && this.tbm.b21_task.aat_min_time_s) {
+            const aatMinTime = this.tbm.b21_task.aat_min_time_s;
             const hours = Math.floor(aatMinTime / 3600);
             const minutes = Math.floor((aatMinTime % 3600) / 60);
             const formattedAatMinTime = `⚠️ AAT with a minimum duration of ${hours} hour${hours !== 1 ? 's' : ''} ${minutes} minute${minutes !== 1 ? 's' : ''}`;
@@ -912,7 +1352,7 @@ class TaskBrowser {
 
         taskDetailsHtml += `
             ✈️ ${task.RecommendedGliders}<br>
-            🎚 ${tb.formatDifficultyRating(task.DifficultyRating, task.DifficultyExtraInfo)}
+            🎚 ${this.formatDifficultyRating(task.DifficultyRating, task.DifficultyExtraInfo)}
             <p>${task.Credits}</p>
             <p><em>Don't forget to upload your IGC log after flying this task!</em></p>
             <p>
@@ -920,7 +1360,7 @@ class TaskBrowser {
                 <span>${lastUpdateInfo}</span>
                 <button
                   style="background:#7289da;color:#fff;border:none;padding:4px 8px;border-radius:3px;cursor:pointer;"
-                  onclick="TB.collapseAllCollapsibleSections()"
+                  onclick="this.collapseAllCollapsibleSections()"
                 >Collapse All</button>
               </div>
             </p>
@@ -930,58 +1370,56 @@ class TaskBrowser {
     }
 
     generateTaskDetailsFullDescription(task) {
-        let tb = this;
+
         // Collapsible Full Description
         if (task.LongDescription) {
-            tb.generateCollapsibleSection("📖 Full Description", tb.convertToMarkdown(task.LongDescription), taskDetailContainer);
+            this.generateCollapsibleSection("📖 Full Description", this.convertToMarkdown(task.LongDescription), taskDetailContainer);
         }
     }
 
     generateTaskDetailsFiles(task) {
-        let tb = this;
+
 
         // Collapsible Files
         let filesContent = `
             <p><strong>Option 1:</strong> Download the single package DPHX file for use with the <a href="https://flightsim.to/file/62573/msfs-soaring-task-tools-dphx-unpack-load" target="_blank">DPHX Unpack & Load tool</a></p>
             <p>
-                <a href="#" onclick="TB.downloadDPHXFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
+                <a href="#" onclick="this.downloadDPHXFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
                     <img src="images/DPHXFile.png" alt="DPHX File" class="file-icon" style="width: 40px; height: 40px;">
                     ${task.Title}.dphx
                 </a>
             </p>
             <p><strong>Option 2:</strong> Download individual files and install them yourself</p>
             <p>
-                <a href="#" onclick="TB.downloadPLNFile()">
+                <a href="#" onclick="this.downloadPLNFile()">
                     <img src="images/PLNFile.png" alt="PLN File" class="file-icon">
-                    Flight plan file (PLN): ${tb.getFileNameFromPath(tb.currentTask.PLNFilename)}
+                    Flight plan file (PLN): ${this.getFileNameFromPath(this.currentTask.PLNFilename)}
                 </a>
             </p>
             <p>
-                <a href="#" onclick="TB.downloadWPRFile()">
+                <a href="#" onclick="this.downloadWPRFile()">
                     <img src="images/WPRFile.png" alt="WPR File" class="file-icon">
-                    Weather file (WPR): ${tb.getFileNameFromPath(tb.currentTask.WPRFilename)}
+                    Weather file (WPR): ${this.getFileNameFromPath(this.currentTask.WPRFilename)}
                 </a>
             </p>
             <p>
-                <a href="#" onclick="TB.openTaskInPlanner();">
+                <a href="#" onclick="this.openTaskInPlanner();">
                     Open these files on B21 Task Planner Online
                 </a>
             </p>
             <p><strong>Option 3:</strong> Download all files (including extras) as ZIP file</strong></p>
             <p>
-                <a href="#" onclick="TB.downloadZIPFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
+                <a href="#" onclick="this.downloadZIPFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
                     <img src="images/ZIPFile.png" alt="ZIP File" class="file-icon">
                     ${task.Title}.zip
                 </a>
             </p>
             <p>Current downloads (PLN or DPHX): ${task.TotDownloads}</p>`;
 
-        tb.generateCollapsibleSection("📁 Files", filesContent, taskDetailContainer);
+        this.generateCollapsibleSection("📁 Files", filesContent, taskDetailContainer);
     }
 
     generateTaskDetailsExtraFiles(task) {
-        let tb = this;
-
         // Parse ExtraFilesList JSON
         let extraFiles = [];
         try {
@@ -1001,7 +1439,7 @@ class TaskBrowser {
         extraFiles.forEach((file) => {
             extraFilesContent += `
         <li>
-            <a href="#" onclick="TB.downloadExtraFile('${file}')">
+            <a href="#" onclick="this.downloadExtraFile('${file}')">
                 ${file}
             </a>
         </li>`;
@@ -1009,15 +1447,14 @@ class TaskBrowser {
         extraFilesContent += "</ul>";
 
         // Create the collapsible section
-        tb.generateCollapsibleSection("🗄️ Extra Files", extraFilesContent, taskDetailContainer);
+        this.generateCollapsibleSection("🗄️ Extra Files", extraFilesContent, taskDetailContainer);
     }
 
     generateTaskDetailsRestriction(task) {
-        let tb = this;
         // Get user settings for altitude
-        const altitudeUnit = tb.userSettings.altitude || 'imperial';
+        const altitudeUnit = this.userSettings.altitude || 'imperial';
         let restrictionsContent = '<ul>';
-        tb.tbm.b21_task.waypoints.forEach((wp, index) => {
+        this.tbm.b21_task.waypoints.forEach((wp, index) => {
             const name = wp.name || `Waypoint ${index + 1}`;
             let restriction = '';
 
@@ -1054,19 +1491,18 @@ class TaskBrowser {
 
         // Only generate the section if there are restrictions
         if (restrictionsContent !== '<ul></ul>') {
-            tb.generateCollapsibleSection("⚠️ Altitude Restrictions", restrictionsContent, taskDetailContainer);
+            this.generateCollapsibleSection("⚠️ Altitude Restrictions", restrictionsContent, taskDetailContainer);
         }
     }
 
     generateTaskDetailsWeather(task) {
-        let tb = this;
-        const userSettings = tb.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
 
         // Collapsible Weather Section
-        let elevMeasurement = tb.wsg_weather.isAltitudeAMGL ? "AMGL - Ground" : "AMSL - Sea";
+        let elevMeasurement = this.wsg_weather.isAltitudeAMGL ? "AMGL - Ground" : "AMSL - Sea";
 
         // MSL Pressure conversion
-        let mslPressure = tb.wsg_weather.mslPressure;
+        let mslPressure = this.wsg_weather.mslPressure;
         if (userSettings.pressure === 'inHg') {
             mslPressure = (mslPressure / 3386.39).toFixed(2) + ' inHg'; // Convert Pa to inHg
         } else {
@@ -1085,17 +1521,17 @@ class TaskBrowser {
             }
         }
         // MSL Temperature conversion
-        let mslTemperature = tb.wsg_weather.mslTemperature;
+        let mslTemperature = this.wsg_weather.mslTemperature;
         if (userSettings.temperature === 'fahrenheit') {
             mslTemperature = ((mslTemperature - 273.15) * 9 / 5 + 32).toFixed(1) + ' °F'; // Convert Kelvin to Fahrenheit
         } else {
             mslTemperature = (mslTemperature - 273.15).toFixed(1) + ' °C'; // Convert Kelvin to Celsius
         }
 
-        let aerosolIndex = tb.wsg_weather.aerosolDensity;
+        let aerosolIndex = this.wsg_weather.aerosolDensity;
 
         // Precipitations
-        let precipitations = tb.wsg_weather.precipitations;
+        let precipitations = this.wsg_weather.precipitations;
         if (precipitations > 0) {
             if (userSettings.temperature === 'fahrenheit') {
                 precipitations = (precipitations / 25.4).toFixed(2) + ' inch/h'; // Convert mm/h to inch/h
@@ -1107,7 +1543,7 @@ class TaskBrowser {
         }
 
         // Snow Cover
-        let snowCover = tb.wsg_weather.snowCover;
+        let snowCover = this.wsg_weather.snowCover;
         if (snowCover > 0) {
             if (userSettings.temperature === 'fahrenheit') {
                 snowCover = (snowCover * 39.3701).toFixed(2) + ' inches'; // Convert meters to inches
@@ -1119,7 +1555,7 @@ class TaskBrowser {
         }
 
         // Thunderstorm Intensity
-        let thunderstormIntensity = tb.wsg_weather.thunderstormIntensity;
+        let thunderstormIntensity = this.wsg_weather.thunderstormIntensity;
         if (thunderstormIntensity > 0) {
             thunderstormIntensity = (thunderstormIntensity * 100).toFixed(1) + ' %'; // Convert to percentage
         } else {
@@ -1129,7 +1565,7 @@ class TaskBrowser {
         // Generate weather content HTML
         let weatherContent = `
             <ul>
-                <li>Name: ${tb.wsg_weather.name}</li>
+                <li>Name: ${this.wsg_weather.name}</li>
                 ${task.WeatherSummary ? `<li>Summary: ${task.WeatherSummary}</li>` : ''}
                 <li>Altitudes: ${elevMeasurement}</li>
                 <li>MSL Pressure: ${mslPressure}</li>
@@ -1139,18 +1575,17 @@ class TaskBrowser {
                 ${snowCover ? `<li>Snow Cover: ${snowCover}</li>` : ''}
                 ${thunderstormIntensity ? `<li>Lightning: ${thunderstormIntensity}</li>` : ''}
             </ul>
-            <img src="${tb.discordPostHelperTaskBrowserPath}WeatherCharts/${task.EntrySeqID}.jpg" class="weather-image" onclick="TB.showImageModal(this.src)" />
+            <img src="${this.discordPostHelperTaskBrowserPath}WeatherCharts/${task.EntrySeqID}.jpg" class="weather-image" onclick="this.showImageModal(this.src)" />
         `;
 
-        tb.generateCollapsibleSection("🌥 Weather & Chart", weatherContent, taskDetailContainer);
+        this.generateCollapsibleSection("🌥 Weather & Chart", weatherContent, taskDetailContainer);
     }
 
     generateTaskDetailsWinds(task) {
-        let tb = this;
-        const userSettings = tb.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
 
         // Sort wind layers by altitude in descending order
-        let sortedWindLayers = tb.wsg_weather.windLayers.slice().sort((a, b) => parseFloat(b.altitude) - parseFloat(a.altitude));
+        let sortedWindLayers = this.wsg_weather.windLayers.slice().sort((a, b) => parseFloat(b.altitude) - parseFloat(a.altitude));
 
         // Create the winds content
         let windsContent = '';
@@ -1189,23 +1624,22 @@ class TaskBrowser {
             `;
         });
 
-        let elevMeasurement = tb.wsg_weather.isAltitudeAMGL ? "AMGL" : "AMSL";
+        let elevMeasurement = this.wsg_weather.isAltitudeAMGL ? "AMGL" : "AMSL";
 
-        tb.generateCollapsibleSection("🌬️ Winds " + elevMeasurement, windsContent, taskDetailContainer);
+        this.generateCollapsibleSection("🌬️ Winds " + elevMeasurement, windsContent, taskDetailContainer);
 
-        tb.selectWindLayerInList(sortedWindLayers.length - 1, sortedWindLayers);
+        this.selectWindLayerInList(sortedWindLayers.length - 1, sortedWindLayers);
 
         // Add click event listeners to each wind layer item
         document.querySelectorAll('.wind-layer-item').forEach(item => {
             item.addEventListener('click', function () {
                 const index = this.getAttribute('data-index');
-                tb.selectWindLayerInList(index, sortedWindLayers);
+                this.selectWindLayerInList(index, sortedWindLayers);
             });
         });
     }
 
     selectWindLayerInList(index, sortedWindLayers) {
-        let tb = this;
         // Remove 'selected' class from all wind layer items
         document.querySelectorAll('.wind-layer-item').forEach(item => item.classList.remove('selected'));
 
@@ -1217,30 +1651,29 @@ class TaskBrowser {
 
             const windLayer = sortedWindLayers[index];
             let altitude = parseFloat(windLayer.altitude);
-            let elevMeasurement = tb.wsg_weather.isAltitudeAMGL ? "AG" : "AS";
+            let elevMeasurement = this.wsg_weather.isAltitudeAMGL ? "AG" : "AS";
             // Convert altitude based on user settings
-            if (tb.userSettings.altitude === 'imperial') {
+            if (this.userSettings.altitude === 'imperial') {
                 altitude = (altitude * 3.28084).toFixed(0) + "' " + elevMeasurement; // Convert meters to feet
             } else {
                 altitude = altitude.toFixed(0) + " m " + elevMeasurement; // Keep meters
             }
             let windSpeed = parseFloat(windLayer.speed);
             // Convert wind speed based on user settings
-            if (tb.userSettings.windSpeed === 'knots') {
+            if (this.userSettings.windSpeed === 'knots') {
                 windSpeed = windSpeed.toFixed(0) + ' kts'; // Keep knots
             } else {
                 windSpeed = (windSpeed * 0.514444).toFixed(1) + ' m/s'; // Convert knots to meters per second
             }
-            tb.tbm.setWindDirection(parseFloat(windLayer.angle), windSpeed, altitude);
+            this.tbm.setWindDirection(parseFloat(windLayer.angle), windSpeed, altitude);
         }
     }
 
     generateTaskDetailsClouds(task) {
-        let tb = this;
-        const userSettings = tb.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
 
         // Sort cloud layers by bottom altitude in descending order
-        let sortedCloudLayers = tb.wsg_weather.cloudLayers.slice().sort((a, b) => parseFloat(b.altitudeBot) - parseFloat(a.altitudeBot));
+        let sortedCloudLayers = this.wsg_weather.cloudLayers.slice().sort((a, b) => parseFloat(b.altitudeBot) - parseFloat(a.altitudeBot));
 
         // Collapsible Clouds Section
         let cloudsContent = ``;
@@ -1271,26 +1704,25 @@ class TaskBrowser {
                 <div class="cloud-layer-item" data-index="${index}" style="margin: 0; padding: 5px; cursor: pointer;">
                     <div>${cloudDetails}</div>
                 </div>
-                ${index < tb.wsg_weather.cloudLayers.length - 1 ? '<hr style="margin: 5px 0;">' : ''}
+                ${index < this.wsg_weather.cloudLayers.length - 1 ? '<hr style="margin: 5px 0;">' : ''}
             `;
         });
 
-        let elevMeasurement = tb.wsg_weather.isAltitudeAMGL ? "AMGL" : "AMSL";
+        let elevMeasurement = this.wsg_weather.isAltitudeAMGL ? "AMGL" : "AMSL";
 
-        tb.generateCollapsibleSection("☁️ Clouds " + elevMeasurement, cloudsContent, taskDetailContainer);
+        this.generateCollapsibleSection("☁️ Clouds " + elevMeasurement, cloudsContent, taskDetailContainer);
 
         // Add click event listeners to each cloud layer item
         document.querySelectorAll('.cloud-layer-item').forEach(item => {
             item.addEventListener('click', function () {
                 const index = this.getAttribute('data-index');
-                tb.selectCloudLayerInList(index);
+                this.selectCloudLayerInList(index);
             });
         });
 
     }
 
     selectCloudLayerInList(index) {
-        let tb = this;
         // Remove 'selected' class from all wind layer items
         document.querySelectorAll('.cloud-layer-item').forEach(item => item.classList.remove('selected'));
 
@@ -1303,12 +1735,10 @@ class TaskBrowser {
     }
 
     generateTaskDetailsWaypoints(task) {
-        let tb = this;
-
         // Create the waypoints content
         let waypointsContent = '';
 
-        tb.tbm.b21_task.waypoints.forEach((wp) => {
+        this.tbm.b21_task.waypoints.forEach((wp) => {
             let firstLine = wp.getFirstLine();
             let secondLine = wp.getSecondLine();
             let thirdLine = wp.getThirdLine();
@@ -1320,17 +1750,17 @@ class TaskBrowser {
                     <div>${secondLine}</div>
                     <div>${thirdLine}</div>
                 </div>
-                ${wp.index < tb.tbm.b21_task.waypoints.length - 1 ? '<hr style="margin: 5px 0;">' : ''}
+                ${wp.index < this.tbm.b21_task.waypoints.length - 1 ? '<hr style="margin: 5px 0;">' : ''}
             `;
         });
 
-        tb.generateCollapsibleSection("🗺️ Waypoints", waypointsContent, taskDetailContainer);
-        tb.selectWaypointInList(0);
+        this.generateCollapsibleSection("🗺️ Waypoints", waypointsContent, taskDetailContainer);
+        this.selectWaypointInList(0);
 
         document.querySelectorAll('.waypoint-item').forEach(item => {
             item.addEventListener('click', function () {
                 const index = this.getAttribute('data-index');
-                const waypoint = tb.tbm.b21_task.waypoints[index];
+                const waypoint = this.tbm.b21_task.waypoints[index];
                 if (waypoint && waypoint.position) {
                     waypoint.wp_click(waypoint);
                 } else {
@@ -1341,7 +1771,6 @@ class TaskBrowser {
     }
 
     selectWaypointInList(index) {
-        let tb = this;
         // Remove 'selected' class from all waypoint items
         document.querySelectorAll('.waypoint-item').forEach(item => item.classList.remove('selected'));
 
@@ -1354,16 +1783,13 @@ class TaskBrowser {
     }
 
     selectWaypointOnMap(index) {
-        let tb = this;
-        let waypoint = tb.tbm.b21_task.waypoints[index];
+        let waypoint = this.tbm.b21_task.waypoints[index];
         if (waypoint) {
-            tb.tbm.b21_task.set_current_wp(index);
+            this.tbm.b21_task.set_current_wp(index);
         }
     }
 
     generateTaskDetailsRecommendedAddOns(task) {
-        let tb = this;
-
         // Check if RecommendedAddOnsList is not empty
         if (task.RecommendedAddOnsList) {
             let addOns;
@@ -1398,7 +1824,7 @@ class TaskBrowser {
             if (content === "") return;
 
             // Create the collapsible section
-            tb.generateCollapsibleSection(
+            this.generateCollapsibleSection(
                 "📀 Recommended Add-ons",
                 `<ul>${content}</ul>`,
                 taskDetailContainer
@@ -1407,7 +1833,6 @@ class TaskBrowser {
     }
 
     generateTaskDetailsIGCRecords(task) {
-        let tb = this;
         if (!task.IGCRecords || task.IGCRecords.length === 0) return;
 
         // Build the HTML for the collapsible section
@@ -1449,20 +1874,19 @@ class TaskBrowser {
 
         // Define the button callback for this section
         const callbackButton = () => {
-            tb.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}&results=1`);
+            this.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}&results=1`);
         };
 
         // Insert as a collapsible section
         const container = document.getElementById("taskDetailContainer");
-        tb.generateCollapsibleSection("🏆 Leader Board", igcContent, container, null, null, callbackButton, null, null, null, "Copy link");
+        this.generateCollapsibleSection("🏆 Leader Board", igcContent, container, null, null, callbackButton, null, null, null, "Copy link");
 
         // Now that the HTML is in the DOM, call the population function
-        tb.populateIGCRecordsTable(task.IGCRecords);
+        this.populateIGCRecordsTable(task.IGCRecords);
     }
 
     populateIGCRecordsTable(igcRecords) {
         const tableId = '#igcRecordsTable';
-        let tb = this;
 
         // If the DataTable is already initialized, just reload the data
         if ($.fn.DataTable.isDataTable(tableId)) {
@@ -1496,7 +1920,7 @@ class TaskBrowser {
                         render: function (data, type, row, meta) {
                             if (type === 'display') {
                                 // grab the current task’s EntrySeqID
-                                var entrySeqID = tb.currentTask.EntrySeqID;
+                                var entrySeqID = this.currentTask.EntrySeqID;
                                 // wrap the pilot name in the same download link
                                 return `<a href="#"
                                          class="download-igc-link"
@@ -1541,7 +1965,7 @@ class TaskBrowser {
                         render: function (data, type, row) {
                             if (type !== 'display') return data;
                             var speed = parseFloat(data) || 0;
-                            var isImperial = tb.userSettings.distance === 'imperial';
+                            var isImperial = this.userSettings.distance === 'imperial';
                             if (isImperial) {
                                 speed *= 0.621371; // Convert km/h to mph
                             }
@@ -1566,7 +1990,7 @@ class TaskBrowser {
                             if (type !== 'display') return data;
                             var distance = parseFloat(data);
                             if (!distance || distance <= 0) return '';
-                            var isImperial = tb.userSettings.distance === 'imperial';
+                            var isImperial = this.userSettings.distance === 'imperial';
                             if (isImperial) {
                                 distance *= 0.621371;
                             }
@@ -1587,7 +2011,7 @@ class TaskBrowser {
                                     ss = lt.slice(4, 6);
                                 const dt = `${ymd} ${hh}:${mm}:${ss}`;
                                 // now format it exactly like “Created on”
-                                return TB.formatSimDateTime(dt, false, false, false, true, true);
+                                return this.formatSimDateTime(dt, false, false, false, true, true);
                             }
                             return data;
                         }
@@ -1599,9 +2023,9 @@ class TaskBrowser {
                         render: function (data, type, row, meta) {
                             if (type === 'display') {
                                 // Format the date as before.
-                                var formattedDate = TB.formatSimDateTime(data, true, false, true, true, true);
-                                // Get the task EntrySeqID from the closure (assuming tb.currentTask is available).
-                                var entrySeqID = tb.currentTask.EntrySeqID;
+                                var formattedDate = this.formatSimDateTime(data, true, false, true, true, true);
+                                // Get the task EntrySeqID from the closure (assuming this.currentTask is available).
+                                var entrySeqID = this.currentTask.EntrySeqID;
                                 // Return a link that carries both EntrySeqID and IGCKey.
                                 return `${formattedDate}`;
                             }
@@ -1708,7 +2132,7 @@ class TaskBrowser {
                 },
                 drawCallback: function (settings) {
                     const api = this.api();
-                    const entrySeqID = tb.currentTask.EntrySeqID;
+                    const entrySeqID = this.currentTask.EntrySeqID;
 
                     // “Select All” checkbox
                     $('#select-all')
@@ -1720,7 +2144,7 @@ class TaskBrowser {
                                 const igcKey = $(this).data('key');
                                 const $row = $(this).closest('tr');
                                 $row.toggleClass('chkbx-selected', checked);
-                                tb.tbm.processIGCRecordDisplay(entrySeqID, igcKey, checked);
+                                this.tbm.processIGCRecordDisplay(entrySeqID, igcKey, checked);
                             });
                         });
 
@@ -1733,7 +2157,7 @@ class TaskBrowser {
                             const $row = $(this).closest('tr');
 
                             $row.toggleClass('chkbx-selected', isChecked);
-                            tb.tbm.processIGCRecordDisplay(entrySeqID, igcKey, isChecked);
+                            this.tbm.processIGCRecordDisplay(entrySeqID, igcKey, isChecked);
                         });
                 },
                 initComplete: function () {
@@ -1781,11 +2205,11 @@ class TaskBrowser {
                             const $old = tableBody.find('tr.selected');
                             if ($old.length) {
                                 const oldData = api.row($old).data();
-                                const oldPoly = tb.tbm.igcTrackCache[oldData.IGCKey];
-                                if (oldPoly && tb.tbm.map.hasLayer(oldPoly)) {
+                                const oldPoly = this.tbm.igcTrackCache[oldData.IGCKey];
+                                if (oldPoly && this.tbm.map.hasLayer(oldPoly)) {
                                     oldPoly.setStyle({
-                                        color: tb.tbm.igcTrackNormalColor,
-                                        weight: tb.tbm.igcTrackNormalWeight
+                                        color: this.tbm.igcTrackNormalColor,
+                                        weight: this.tbm.igcTrackNormalWeight
                                     });
                                 }
                                 $old.removeClass('selected');
@@ -1794,11 +2218,11 @@ class TaskBrowser {
                             // SELECT the clicked row & restyle its track to “selected”
                             const $row = $(this).addClass('selected');
                             const rowData = api.row(this).data();
-                            const poly = tb.tbm.igcTrackCache[rowData.IGCKey];
-                            if (poly && tb.tbm.map.hasLayer(poly)) {
+                            const poly = this.tbm.igcTrackCache[rowData.IGCKey];
+                            if (poly && this.tbm.map.hasLayer(poly)) {
                                 poly.setStyle({
-                                    color: tb.tbm.igcTrackSelectedColor,
-                                    weight: tb.tbm.igcTrackSelectedWeight
+                                    color: this.tbm.igcTrackSelectedColor,
+                                    weight: this.tbm.igcTrackSelectedWeight
                                 });
                             }
                         });
@@ -1843,7 +2267,7 @@ class TaskBrowser {
                             $('.igc-select-checkbox:checked').each(function () {
                                 selectedKeys.push($(this).data('key'));
                             });
-                            tb.sendSelectedIGCRecordsToTaskPlanner(selectedKeys);
+                            this.sendSelectedIGCRecordsToTaskPlanner(selectedKeys);
                         });
                     filterDiv.prepend(analyzeBtn);
 
@@ -1854,7 +2278,7 @@ class TaskBrowser {
                         var entrySeqID = $(this).data('entryseqid');
                         var igcKey = $(this).data('igckey');
                         // Call the TaskBrowser's downloadIGCFile method.
-                        tb.downloadIGCFile(entrySeqID, igcKey);
+                        this.downloadIGCFile(entrySeqID, igcKey);
                     });
 
                     // 7) Highlight tracklog on hover on a row
@@ -1862,12 +2286,12 @@ class TaskBrowser {
                         let rowData = dt.row(this).data();
                         if (rowData) {
                             let igcKey = rowData.IGCKey;
-                            if (tb.tbm.igcTrackCache[igcKey] && tb.tbm.map.hasLayer(tb.tbm.igcTrackCache[igcKey])) {
-                                tb.tbm.igcTrackCache[igcKey].setStyle({
-                                    weight: tb.tbm.igcTrackHighlightedWeight,
-                                    color: tb.tbm.igcTrackHighlightedColor
+                            if (this.tbm.igcTrackCache[igcKey] && this.tbm.map.hasLayer(this.tbm.igcTrackCache[igcKey])) {
+                                this.tbm.igcTrackCache[igcKey].setStyle({
+                                    weight: this.tbm.igcTrackHighlightedWeight,
+                                    color: this.tbm.igcTrackHighlightedColor
                                 });
-                                tb.tbm.igcTrackCache[igcKey].bringToFront();
+                                this.tbm.igcTrackCache[igcKey].bringToFront();
                             }
                         }
                     });
@@ -1876,20 +2300,20 @@ class TaskBrowser {
                     $('#igcRecordsTable tbody').on('mouseleave', 'tr', function () {
                         const rowData = dt.row(this).data();
                         if (!rowData) return;
-                        const poly = tb.tbm.igcTrackCache[rowData.IGCKey];
-                        if (poly && tb.tbm.map.hasLayer(poly)) {
+                        const poly = this.tbm.igcTrackCache[rowData.IGCKey];
+                        if (poly && this.tbm.map.hasLayer(poly)) {
                             const $row = $(this);
                             // if the row is selected, re-apply the selected style
                             if ($row.hasClass('selected')) {
                                 poly.setStyle({
-                                    weight: tb.tbm.igcTrackSelectedWeight,
-                                    color: tb.tbm.igcTrackSelectedColor
+                                    weight: this.tbm.igcTrackSelectedWeight,
+                                    color: this.tbm.igcTrackSelectedColor
                                 });
                             } else {
                                 // otherwise restore the normal style
                                 poly.setStyle({
-                                    weight: tb.tbm.igcTrackNormalWeight,
-                                    color: tb.tbm.igcTrackNormalColor
+                                    weight: this.tbm.igcTrackNormalWeight,
+                                    color: this.tbm.igcTrackNormalColor
                                 });
                             }
                         }
@@ -1904,13 +2328,13 @@ class TaskBrowser {
             alert("No IGC keys selected for submission.");
             return;
         }
-        let tb = this;
+
         // Create a FormData object and append required fields.
         const formData = new FormData();
-        formData.append('EntrySeqID', tb.currentTask.EntrySeqID);
-        formData.append('TaskID', tb.currentTask.TaskID);
-        formData.append('PLNFilename', tb.currentTask.PLNFilename);
-        formData.append('WPRFilename', tb.currentTask.WPRFilename);
+        formData.append('EntrySeqID', this.currentTask.EntrySeqID);
+        formData.append('TaskID', this.currentTask.TaskID);
+        formData.append('PLNFilename', this.currentTask.PLNFilename);
+        formData.append('WPRFilename', this.currentTask.WPRFilename);
         // Append the IGC keys as a comma-separated string.
         formData.append('igcKeys', selectedKeys.join(','));
 
@@ -1939,8 +2363,7 @@ class TaskBrowser {
     }
 
     async generateTaskDetailsUserStuff(task) {
-        let tb = this;
-        if (!tb.isUserConnected) return;
+        if (!this.isUserConnected) return;
 
         // Prepare query parameters with the task's EntrySeqID.
         let params = new URLSearchParams({ entrySeqID: task.EntrySeqID });
@@ -1953,23 +2376,23 @@ class TaskBrowser {
             let data = await response.json();
             // Use an empty object if no userTask record exists.
             let ut = data.userTask || {};
-            tb.currentUserTaskEntry = ut;
+            this.currentUserTaskEntry = ut;
 
             let content = "";
 
             // --- Markings Section (Checkboxes) ---
             content += `<div class="user-markings">`;
             content += `<label>
-          <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flown', this.checked)">
-          ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
+          <input type="checkbox" id="flownCheckbox" ${ut.MarkedFlownDateUTC ? "checked" : ""} onchange="this.handleMarkingAndDisplay('flown', this.checked)">
+          ✅ Flown <span id="flownDate">${ut.MarkedFlownDateUTC ? "(" + this.formatSimDateTime(ut.MarkedFlownDateUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
-          <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('flyNext', this.checked)">
-          🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + tb.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
+          <input type="checkbox" id="flyNextCheckbox" ${ut.MarkedFlyNextUTC ? "checked" : ""} onchange="this.handleMarkingAndDisplay('flyNext', this.checked)">
+          🔜 Fly Next <span id="flyNextDate">${ut.MarkedFlyNextUTC ? "(" + this.formatSimDateTime(ut.MarkedFlyNextUTC, true, false, true, true, true) + ")" : ""}</span>
       </label><br>`;
             content += `<label>
-          <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="TB.handleMarkingAndDisplay('favorites', this.checked)">
-          🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + tb.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
+          <input type="checkbox" id="favoritesCheckbox" ${ut.MarkedFavoritesUTC ? "checked" : ""} onchange="this.handleMarkingAndDisplay('favorites', this.checked)">
+          🌟 Favorites <span id="favoritesDate">${ut.MarkedFavoritesUTC ? "(" + this.formatSimDateTime(ut.MarkedFavoritesUTC, true, false, true, true, true) + ")" : ""}</span>
       </label>`;
             content += `</div>`;
 
@@ -1984,7 +2407,7 @@ class TaskBrowser {
             ];
             content += `<div class="user-difficulty" style="margin-top:10px;">`;
             content += `<label for="difficultyRatingSelect">Difficulty:</label><br>
-                  <select id="difficultyRatingSelect" onchange="TB.updateUserTaskRecord()">`;
+                  <select id="difficultyRatingSelect" onchange="this.updateUserTaskRecord()">`;
             difficultyOptions.forEach(opt => {
                 let selected = (ut.DifficultyRating !== undefined && parseInt(ut.DifficultyRating, 10) === opt.value) ? "selected" : "";
                 content += `<option value="${opt.value}" ${selected}>${opt.label}</option>`;
@@ -1999,9 +2422,9 @@ class TaskBrowser {
             for (let i = 1; i <= 5; i++) {
                 let starColor = (i <= currentQuality) ? "gold" : "gray";
                 content += `<span class="star" data-value="${i}" style="cursor:pointer; color:${starColor}; font-size: 1.2em;"
-                             onclick="TB.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
+                             onclick="this.setQualityRating(${task.EntrySeqID}, ${i})">★</span>`;
             }
-            content += `<button type="button" class="igc-button-style" style="margin-left:4px;" onclick="TB.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-left:4px;" onclick="this.setQualityRating(${task.EntrySeqID}, 0)">Reset</button>`;
             content += `</div><hr>`;
 
             // --- Text Data Section (Editable; saved with dedicated "Save Changes" button) ---
@@ -2012,7 +2435,7 @@ class TaskBrowser {
   <textarea id="privateNotesTextarea" rows="2" maxlength="500" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.PrivateNotes || ""}</textarea><br>`;
             //content += `<label for="tagsInput">Private Tags:</label><br>
             //<textarea id="tagsInput" rows="1" maxlength="200" style="width:98%; resize: none; overflow-y: auto; max-height: 3.5em; font-family: inherit;">${ut.Tags || ""}</textarea><br>`;
-            content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="TB.updateUserTaskRecord()">Save Changes</button>`;
+            content += `<button type="button" class="igc-button-style" style="margin-top:2px;" onclick="this.updateUserTaskRecord()">Save Changes</button>`;
             content += `</div>`;
 
             // --- IGCRecords Listing Section ---
@@ -2027,7 +2450,7 @@ class TaskBrowser {
             //}
 
             // --- Generate the collapsible section ---
-            tb.generateCollapsibleSection(
+            this.generateCollapsibleSection(
                 "My Stuff",
                 content,
                 taskDetailContainer, // Ensure taskDetailContainer is available in your scope.
@@ -2040,7 +2463,7 @@ class TaskBrowser {
             );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
-            tb.generateCollapsibleSection(
+            this.generateCollapsibleSection(
                 "My Stuff",
                 "<p>Error retrieving your user data.</p>",
                 taskDetailContainer,
@@ -2056,12 +2479,11 @@ class TaskBrowser {
 
     // Function to update the "Lists" column in the DataTable for the currently selected task.
     updateDataTableMarkings() {
-        let tb = this;
         // Check if the DataTable is initialized
         if (!$.fn.DataTable.isDataTable('#taskGridTable')) return;
 
         const table = $('#taskGridTable').DataTable();
-        const currentTaskId = tb.currentTask.EntrySeqID;
+        const currentTaskId = this.currentTask.EntrySeqID;
 
         // Find the row index where the task's EntrySeqID matches currentTaskId.
         // 'row().data()' returns an object; we assume tasks are stored with EntrySeqID property.
@@ -2074,13 +2496,13 @@ class TaskBrowser {
             // Build the markings string based on the stored values in currentUserTaskEntry.
             // If there is a valid timestamp, it's considered checked.
             let markings = "";
-            if (tb.currentUserTaskEntry.MarkedFlownDateUTC) {
+            if (this.currentUserTaskEntry.MarkedFlownDateUTC) {
                 markings += "✅";
             }
-            if (tb.currentUserTaskEntry.MarkedFlyNextUTC) {
+            if (this.currentUserTaskEntry.MarkedFlyNextUTC) {
                 markings += "🔜";
             }
-            if (tb.currentUserTaskEntry.MarkedFavoritesUTC) {
+            if (this.currentUserTaskEntry.MarkedFavoritesUTC) {
                 markings += "🌟";
             }
 
@@ -2095,28 +2517,27 @@ class TaskBrowser {
 
 
     async handleMarkingAndDisplay(type, checked) {
-        let tb = this;
         // Get the current timestamp in ISO format (customize if needed)
         let nowTimestamp = new Date().toISOString().replace('T', ' ').split('.')[0];
 
         // Update only the relevant field on the stored currentUserTaskEntry.
         if (type === 'flown') {
-            tb.currentUserTaskEntry.MarkedFlownDateUTC = checked ? nowTimestamp : "";
-            document.getElementById("flownDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
+            this.currentUserTaskEntry.MarkedFlownDateUTC = checked ? nowTimestamp : "";
+            document.getElementById("flownDate").textContent = checked ? "(" + this.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
         } else if (type === 'flyNext') {
-            tb.currentUserTaskEntry.MarkedFlyNextUTC = checked ? nowTimestamp : "";
-            document.getElementById("flyNextDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
+            this.currentUserTaskEntry.MarkedFlyNextUTC = checked ? nowTimestamp : "";
+            document.getElementById("flyNextDate").textContent = checked ? "(" + this.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
         } else if (type === 'favorites') {
-            tb.currentUserTaskEntry.MarkedFavoritesUTC = checked ? nowTimestamp : "";
-            document.getElementById("favoritesDate").textContent = checked ? "(" + tb.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
+            this.currentUserTaskEntry.MarkedFavoritesUTC = checked ? nowTimestamp : "";
+            document.getElementById("favoritesDate").textContent = checked ? "(" + this.formatSimDateTime(nowTimestamp, true, false, true, true, true) + ")" : "";
         }
 
         // Finally, call the unified update function to push the changes to the server.
-        tb.updateUserTaskRecord();
+        this.updateUserTaskRecord();
 
-        // Update the corresponding task in the tb.tbm.allTasks array.
-        const currentTaskId = tb.currentTask.EntrySeqID;
-        let taskObj = tb.tbm.allTasks.find(task => task.EntrySeqID === currentTaskId);
+        // Update the corresponding task in the this.tbm.allTasks array.
+        const currentTaskId = this.currentTask.EntrySeqID;
+        let taskObj = this.tbm.allTasks.find(task => task.EntrySeqID === currentTaskId);
         if (taskObj) {
             if (type === 'flown') {
                 taskObj.MarkedFlown = checked ? 1 : 0;
@@ -2126,26 +2547,23 @@ class TaskBrowser {
                 taskObj.MarkedFavorites = checked ? 1 : 0;
             }
         }
-        tb.updateDataTableMarkings();
+        this.updateDataTableMarkings();
     }
 
     async setQualityRating(entrySeqID, rating) {
         // Update the UI for the star rating.
-        let tb = this;
         const stars = document.querySelectorAll("#qualityRatingWrapper .star");
         stars.forEach(star => {
             const starValue = parseInt(star.getAttribute("data-value"), 10);
             star.style.color = (starValue <= rating) ? "gold" : "gray";
         });
-        tb.currentUserTaskEntry.QualityRating = rating;
+        this.currentUserTaskEntry.QualityRating = rating;
 
-        tb.updateUserTaskRecord();
+        this.updateUserTaskRecord();
     }
 
     async updateTaskHeaderMarkings() {
         // Retrieve the checkboxes.
-        let tb = this;
-
         const flownCheckbox = document.getElementById("flownCheckbox");
         const flyNextCheckbox = document.getElementById("flyNextCheckbox");
         const favoritesCheckbox = document.getElementById("favoritesCheckbox");
@@ -2156,12 +2574,12 @@ class TaskBrowser {
         // for example by using a container element with a data attribute.
         const numberSpan = document.querySelector('.task-number');
         if (!numberSpan) {
-            console.warn(`Could not find an element with the class "task-number" for EntrySeqID ${tb.currentTask.EntrySeqID}`);
+            console.warn(`Could not find an element with the class "task-number" for EntrySeqID ${this.currentTask.EntrySeqID}`);
             return;
         }
 
         // Build the new text string.
-        let newText = `#${tb.currentTask.EntrySeqID} `;
+        let newText = `#${this.currentTask.EntrySeqID} `;
         if (flownCheckbox && flownCheckbox.checked) {
             newText += "✅";
         }
@@ -2177,21 +2595,19 @@ class TaskBrowser {
     }
 
     async updateUserTaskRecord() {
-        let tb = this;
-
         // Retrieve the rest of the values from the DOM.
         const difficultyRating = document.getElementById("difficultyRatingSelect")?.value || "";
-        const qualityRating = tb.currentUserTaskEntry.QualityRating || 0;
+        const qualityRating = this.currentUserTaskEntry.QualityRating || 0;
         const publicFeedback = document.getElementById("publicFeedbackTextarea")?.value || "";
         const privateNotes = document.getElementById("privateNotesTextarea")?.value || "";
         const tags = document.getElementById("tagsInput")?.value || "";
 
         let postData = new URLSearchParams();
-        postData.append("entrySeqID", tb.currentTask.EntrySeqID);
+        postData.append("entrySeqID", this.currentTask.EntrySeqID);
         // Use the stored date/time stamps instead of converting the checkbox values.
-        postData.append("MarkedFlown", tb.currentUserTaskEntry.MarkedFlownDateUTC ?? "");
-        postData.append("MarkedFlyNext", tb.currentUserTaskEntry.MarkedFlyNextUTC ?? "");
-        postData.append("MarkedFavorites", tb.currentUserTaskEntry.MarkedFavoritesUTC ?? "");
+        postData.append("MarkedFlown", this.currentUserTaskEntry.MarkedFlownDateUTC ?? "");
+        postData.append("MarkedFlyNext", this.currentUserTaskEntry.MarkedFlyNextUTC ?? "");
+        postData.append("MarkedFavorites", this.currentUserTaskEntry.MarkedFavoritesUTC ?? "");
         postData.append("DifficultyRating", difficultyRating);
         postData.append("QualityRating", qualityRating);
         postData.append("PublicFeedback", publicFeedback);
@@ -2217,18 +2633,17 @@ class TaskBrowser {
     }
 
     async showTaskDetailsStandalone(task) {
-        let tb = this;
         const taskDetailContainer = document.getElementById("taskDetailContainer");
-        tb.currentTask = task; // Save the current task for download use
+        this.currentTask = task; // Save the current task for download use
 
         // Build the main section and prepend the matching details if they exist.
-        taskDetailContainer.innerHTML = tb.generateTaskDetailsMainSection(task);
+        taskDetailContainer.innerHTML = this.generateTaskDetailsMainSection(task);
 
         // If opacity is 0, remove the background image entirely
-        if (tb.userSettings.coverImageOpacity > 0) {
+        if (this.userSettings.coverImageOpacity > 0) {
             document.documentElement.style.setProperty(
                 "--task-cover-url",
-                `url('${tb.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
+                `url('${this.discordPostHelperTaskBrowserPath}Covers/${task.EntrySeqID}.jpg')`
             );
         } else {
             document.documentElement.style.setProperty("--task-cover-url", "none");
@@ -2237,20 +2652,20 @@ class TaskBrowser {
         // Set the opacity dynamically (0 to 1)
         document.documentElement.style.setProperty(
             "--task-cover-opacity",
-            tb.userSettings.coverImageOpacity / 100 // Convert to decimal (e.g., 25 -> 0.25)
+            this.userSettings.coverImageOpacity / 100 // Convert to decimal (e.g., 25 -> 0.25)
         );
 
-        await tb.generateTaskDetailsUserStuff(task);
-        tb.generateTaskDetailsFullDescription(task);
-        tb.generateTaskDetailsFiles(task);
-        tb.generateTaskDetailsExtraFiles(task);
-        tb.generateTaskDetailsRestriction(task);
-        tb.generateTaskDetailsWeather(task);
-        tb.generateTaskDetailsWinds(task);
-        tb.generateTaskDetailsClouds(task);
-        tb.generateTaskDetailsWaypoints(task);
-        tb.generateTaskDetailsRecommendedAddOns(task);
-        tb.generateTaskDetailsIGCRecords(task);
+        await this.generateTaskDetailsUserStuff(task);
+        this.generateTaskDetailsFullDescription(task);
+        this.generateTaskDetailsFiles(task);
+        this.generateTaskDetailsExtraFiles(task);
+        this.generateTaskDetailsRestriction(task);
+        this.generateTaskDetailsWeather(task);
+        this.generateTaskDetailsWinds(task);
+        this.generateTaskDetailsClouds(task);
+        this.generateTaskDetailsWaypoints(task);
+        this.generateTaskDetailsRecommendedAddOns(task);
+        this.generateTaskDetailsIGCRecords(task);
 
         // Show the task control panel
         const taskControlPanel = document.getElementById('taskControlPanel');
@@ -2259,67 +2674,67 @@ class TaskBrowser {
         // Add event listener to the deselect button
         const deselectButton = document.getElementById('deselectTaskButton');
         deselectButton.onclick = function () {
-            tb.tbm.deselectTask();
+            this.tbm.deselectTask();
         };
         // Add event listener to the copy to clipboard button
         const copyButton = document.getElementById('copyTaskLinkToClipboard');
         copyButton.onclick = function () {
-            tb.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}`);
+            this.copyTextToClipboard(`${window.location.origin}/index.html?task=${task.EntrySeqID}`);
         };
 
         // Add event listener to the Discord task thread button
         const gotoDiscordThreadButton = document.getElementById('gotoDiscordThread');
         gotoDiscordThreadButton.onclick = function () {
-            tb.incrementThreadAccess(task.EntrySeqID);
-            window.open(`${tb.discordTasksChannel}${task.DiscordPostID}`, '_blank');
+            this.incrementThreadAccess(task.EntrySeqID);
+            window.open(`${this.discordTasksChannel}${task.DiscordPostID}`, '_blank');
         };
 
         // Add event listener to the download DPHX file button
         const directDPHXDownloadButton = document.getElementById('directDPHXDownload');
         directDPHXDownloadButton.onclick = function () {
-            tb.downloadDPHXFile(task.TaskID, task.EntrySeqID, task.Title);
+            this.downloadDPHXFile(task.TaskID, task.EntrySeqID, task.Title);
         };
 
         // Add event listener to the send task to tracker button
         const sendTaskToTrackerButton = document.getElementById('sendTaskToTracker');
         sendTaskToTrackerButton.onclick = function () {
-            tb.setSSCTracker("", task.EntrySeqID, `${tb.discordTasksChannel}${task.DiscordPostID}`);
+            this.setSSCTracker("", task.EntrySeqID, `${this.discordTasksChannel}${task.DiscordPostID}`);
         };
 
         // Add event listener to the toggle task details button
         const toggleTaskDetailsPanelButton = document.getElementById('toggleTaskDetailsPanel');
         toggleTaskDetailsPanelButton.onclick = function () {
             const taskDetailContainer = document.getElementById('taskDetailContainer');
-            if (tb.TaskDetailsPanelVisible == false) {
-                tb.TaskDetailsPanelVisible = true;
-                tb.showTaskDetailsPanel();
+            if (this.TaskDetailsPanelVisible == false) {
+                this.TaskDetailsPanelVisible = true;
+                this.showTaskDetailsPanel();
             } else {
-                tb.TaskDetailsPanelVisible = false;
-                tb.hideTaskDetailsPanel();
+                this.TaskDetailsPanelVisible = false;
+                this.hideTaskDetailsPanel();
             }
         };
 
-        const isWaitingForIGC = (tb.igcMatchData && tb.igcMatchData !== "")
+        const isWaitingForIGC = (this.igcMatchData && this.igcMatchData !== "")
         // Set up the button event listeners
-        if (tb.igcMatchData && tb.igcMatchData !== "") {
-            tb.disableMapInteractions();
+        if (this.igcMatchData && this.igcMatchData !== "") {
+            this.disableMapInteractions();
             document.getElementById('submitIGCBtn').addEventListener('click', () => {
-                tb.IGCUpload.submitIGCRecord();
+                this.IGCUpload.submitIGCRecord();
             });
             document.getElementById('cancelIGCBtn').addEventListener('click', () => {
                 // Clear the match data.
-                tb.tbm.processIGCRecordDisplay(tb.igcMatchData.EntrySeqID, tb.igcMatchData.IGCKey, false);
-                tb.igcMatchData = "";
-                tb.fromURL = false;
-                tb.showTaskDetailsStandalone(task);
-                tb.enableMapInteractions();
+                this.tbm.processIGCRecordDisplay(this.igcMatchData.EntrySeqID, this.igcMatchData.IGCKey, false);
+                this.igcMatchData = "";
+                this.fromURL = false;
+                this.showTaskDetailsStandalone(task);
+                this.enableMapInteractions();
             });
         }
 
-        tb.updateTaskHeaderMarkings();
+        this.updateTaskHeaderMarkings();
 
-        if (tb.fromURL) {
-            tb.expandAllCollapsibleSections(isWaitingForIGC);
+        if (this.fromURL) {
+            this.expandAllCollapsibleSections(isWaitingForIGC);
         }
 
     }
@@ -2339,9 +2754,9 @@ class TaskBrowser {
 
     disableMapInteractions() {
         // Disable pointer events on the map to block interactions.
-        let tb = this;
-        tb.hideSearchFiltersPanel();
-        tb.toggleTableVisibility(true);
+
+        this.hideSearchFiltersPanel();
+        this.toggleTableVisibility(true);
 
         const mapDiv = document.getElementById('map');
         if (mapDiv) {
@@ -2360,20 +2775,20 @@ class TaskBrowser {
         const modalImg = document.getElementById('modalImage');
         modal.style.display = "block";
         modalImg.src = src;
-        document.addEventListener('keydown', TB.handleKeyDown); // Add event listener for keydown
+        document.addEventListener('keydown', this.handleKeyDown); // Add event listener for keydown
     }
 
     // Function to close the image modal
     closeImageModal() {
         const modal = document.getElementById('imageModal');
         modal.style.display = "none";
-        document.removeEventListener('keydown', TB.handleKeyDown); // Remove event listener for keydown
+        document.removeEventListener('keydown', this.handleKeyDown); // Remove event listener for keydown
     }
 
     // Function to handle keydown events
     handleKeyDown(event) {
         if (event.key === 'Escape') {
-            TB.closeImageModal();
+            this.closeImageModal();
         }
     }
 
@@ -2396,7 +2811,7 @@ class TaskBrowser {
         iconImageUrl = null,
         resetButtonText = null
     ) {
-        let tb = this;
+
         const section = document.createElement('div');
         section.className = 'tool-entry collapsible collapsed';
         if (id) {
@@ -2468,7 +2883,7 @@ class TaskBrowser {
         if (backgroundImageUrl) {
             contentElement.style.setProperty('--cover-url', `url('${backgroundImageUrl}')`);
         }
-        contentElement.style.setProperty('--cover-opacity', tb.userSettings.coverImageOpacity / 100);
+        contentElement.style.setProperty('--cover-opacity', this.userSettings.coverImageOpacity / 100);
 
         // Append content to wrapper, then to section
         contentWrapper.appendChild(contentElement);
@@ -2521,10 +2936,8 @@ class TaskBrowser {
     }
 
     downloadIGCFile(EntrySeqID, IGCKey) {
-        let tb = this;
-
         // Construct the file download URL
-        const url = `${tb.discordPostHelperTaskBrowserPath}IGCFiles/${EntrySeqID}/${IGCKey}.igc`;
+        const url = `${this.discordPostHelperTaskBrowserPath}IGCFiles/${EntrySeqID}/${IGCKey}.igc`;
 
         // Fetch the file and handle the download
         fetch(url)
@@ -2556,8 +2969,7 @@ class TaskBrowser {
     }
 
     downloadExtraFile(filename, source = "map", task = null) {
-        let tb = this;
-        const taskToUse = task || tb.currentTask;
+        const taskToUse = task || this.currentTask;
         const taskID = taskToUse.TaskID;
         const url = `php/DownloadExtraFile.php`;
 
@@ -2607,13 +3019,11 @@ class TaskBrowser {
     }
 
     downloadZIPFile(theTaskID, EntrySeqID, Title, source = "map") {
-        let tb = this;
-
         // Increment download count
-        tb.incrementDownloadCount(EntrySeqID);
+        this.incrementDownloadCount(EntrySeqID);
 
         // Construct the file download URL
-        const url = `${tb.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
+        const url = `${this.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
 
         // Fetch the file and handle the download
         fetch(url)
@@ -2652,17 +3062,15 @@ class TaskBrowser {
     }
 
     downloadDPHXFile(theTaskID, EntrySeqID, Title, source = "map") {
-        let tb = this;
-
         if (source === "map") {
-            tb.tbm.showLoadingSpinner("Preparing DPHX download...");
+            this.tbm.showLoadingSpinner("Preparing DPHX download...");
         }
 
         // Increment download count
-        tb.incrementDownloadCount(EntrySeqID);
+        this.incrementDownloadCount(EntrySeqID);
 
         // Attempt to call the local web server first
-        const port = tb.userSettings?.DPHXlocalPort || 54513;
+        const port = this.userSettings?.DPHXlocalPort || 54513;
         const localUrl = `http://localhost:${port}/?taskID=${theTaskID}&title=${encodeURIComponent(Title)}&source=${source}`;
         fetch(localUrl)
             .then(() => {
@@ -2673,7 +3081,7 @@ class TaskBrowser {
                     window.close();
                 }
                 else {
-                    tb.tbm.hideLoadingSpinner();
+                    this.tbm.hideLoadingSpinner();
                 }
             })
             .catch(err => {
@@ -2681,7 +3089,7 @@ class TaskBrowser {
                 console.warn("Could not contact local app (check same port on both sides?): ", err);
 
                 // Now do the normal file download
-                const url = `${tb.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
+                const url = `${this.discordPostHelperTaskBrowserPath}Tasks/${theTaskID}.dphx`;
                 fetch(url)
                     .then(response => response.blob())
                     .then(blob => {
@@ -2701,7 +3109,7 @@ class TaskBrowser {
                             }, 3000); // Delay to allow the browser's download prompt to appear
                         }
                         else {
-                            tb.tbm.hideLoadingSpinner();
+                            this.tbm.hideLoadingSpinner();
                         }
                     })
                     .catch(err2 => console.error("Error downloading file as fallback:", err2));
@@ -2739,38 +3147,34 @@ class TaskBrowser {
     }
 
     downloadPLNFile(task = null, source = "map") {
-        let tb = this;
-        const taskToUse = task || tb.currentTask;
-        const fileName = tb.getFileNameFromPath(taskToUse.PLNFilename);
+        const taskToUse = task || this.currentTask;
+        const fileName = this.getFileNameFromPath(taskToUse.PLNFilename);
 
         // Increment download count
-        tb.incrementDownloadCount(taskToUse.EntrySeqID);
+        this.incrementDownloadCount(taskToUse.EntrySeqID);
 
-        if (tb.isIOSDevice()) {
-            tb.downloadExtraFile(fileName, source, taskToUse);
+        if (this.isIOSDevice()) {
+            this.downloadExtraFile(fileName, source, taskToUse);
         } else {
-            tb.downloadTextFile(taskToUse.PLNXML, fileName, source);
+            this.downloadTextFile(taskToUse.PLNXML, fileName, source);
         }
     }
 
     downloadWPRFile(task = null, source = "map") {
-        let tb = this;
-        const taskToUse = task || tb.currentTask;
-        const fileName = tb.getFileNameFromPath(taskToUse.WPRFilename);
+        const taskToUse = task || this.currentTask;
+        const fileName = this.getFileNameFromPath(taskToUse.WPRFilename);
 
-        if (tb.isIOSDevice()) {
-            tb.downloadExtraFile(fileName, source, taskToUse);
+        if (this.isIOSDevice()) {
+            this.downloadExtraFile(fileName, source, taskToUse);
         } else {
-            tb.downloadTextFile(taskToUse.WPRXML, fileName, source);
+            this.downloadTextFile(taskToUse.WPRXML, fileName, source);
         }
     }
 
     async setSSCTracker(group, entrySeqID, URLInfo) {
-        let tb = this;
-
         try {
             // Retrieve necessary data
-            const port = tb.userSettings?.TrackerlocalPort || 55055;
+            const port = this.userSettings?.TrackerlocalPort || 55055;
             const baseUrl = `http://localhost:${port}/settask`;
 
             // Extract just the filename without the extension from a full path
@@ -2788,7 +3192,7 @@ class TaskBrowser {
 
             // If EntrySeqID is not 0, fetch task details
             if (entrySeqID !== 0) {
-                const taskDetails = await tb.getTaskDetails(entrySeqID);
+                const taskDetails = await this.getTaskDetails(entrySeqID);
                 if (!taskDetails) {
                     console.error(`No task details found for EntrySeqID: ${entrySeqID}`);
                     return;
@@ -2838,8 +3242,6 @@ class TaskBrowser {
     }
 
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
-        let tb = this;
-
         return new Promise((resolve, reject) => {
             let fetch_promise;
             if (DEBUG_LOCAL) {
@@ -2871,7 +3273,7 @@ class TaskBrowser {
                             day: 'numeric',
                             hour: 'numeric',
                             minute: 'numeric',
-                            hour12: TB.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
+                            hour12: this.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
                         });
                         alert(`Task availability currently set to ${localAvailabilityDate}`);
                         resolve(false); // Resolve with null to indicate unavailability
@@ -2885,7 +3287,7 @@ class TaskBrowser {
                     }
 
                     // Process the task details
-                    tb.handleTaskDetails(task_details, forceZoomToTask);
+                    this.handleTaskDetails(task_details, forceZoomToTask);
                     resolve(task_details);
                 })
                 .catch(error => {
@@ -2897,52 +3299,47 @@ class TaskBrowser {
     }
 
     handleTaskDetails(task_details, forceZoomToTask = false) {
-        let tb = this;
-
-        if (!tb.tbm.b21_task) {
-            tb.tbm.setB21Task(task_details);
+        if (!this.tbm.b21_task) {
+            this.tbm.setB21Task(task_details);
         }
 
-        if (!task_details.EntrySeqID == tb.tbm.b21_task.planner.currentEntrySeqID) {
-            tb.tbm.setB21Task(task_details);
+        if (!task_details.EntrySeqID == this.tbm.b21_task.planner.currentEntrySeqID) {
+            this.tbm.setB21Task(task_details);
         }
 
-        tb.setWeatherInfo(task_details.WPRXML);
+        this.setWeatherInfo(task_details.WPRXML);
 
         // Zoom in on the task if specified or if task bounds outside current map bounds
-        let taskBounds = tb.tbm.b21_task.get_bounds();
-        let mapBounds = tb.tbm.map.getBounds();
+        let taskBounds = this.tbm.b21_task.get_bounds();
+        let mapBounds = this.tbm.map.getBounds();
         let containsBounds = mapBounds.contains(taskBounds);
 
         if (forceZoomToTask || !containsBounds) {
-            tb.tbm.zoomToTask();
+            this.tbm.zoomToTask();
         }
-        //tb.tbm.map.fitBounds(tb.tbm.b21_task.get_bounds());
-        tb.showTaskDetailsStandalone(task_details);
+        //this.tbm.map.fitBounds(this.tbm.b21_task.get_bounds());
+        this.showTaskDetailsStandalone(task_details);
     }
 
     setWeatherInfo(wpr_str) {
-        let tb = this;
-        tb.wsg_weather = new WSG_Weather();
-        tb.wsg_weather.load_wpr_str(wpr_str);
-        console.log("Weather information loaded:", tb.wsg_weather);
+        this.wsg_weather = new WSG_Weather();
+        this.wsg_weather.load_wpr_str(wpr_str);
+        console.log("Weather information loaded:", this.wsg_weather);
     }
 
     clearTaskDetails() {
         // Assuming taskDetailContainer is the element that holds the task details
-        let tb = this;
         let taskDetailContainer = document.getElementById('taskDetailContainer');
         if (taskDetailContainer) {
             taskDetailContainer.innerHTML = ''; // Clear the task details
         }
-        tb.tbm.setWindDirection(-1, 0, 0);
-        tb.TaskDetailsPanelVisible = false;
-        tb.hideTaskDetailsPanel();
+        this.tbm.setWindDirection(-1, 0, 0);
+        this.TaskDetailsPanelVisible = false;
+        this.hideTaskDetailsPanel();
     }
 
     generateToolEntry(title, description) {
-        let tb = this;
-        const descriptionHtml = tb.convertToMarkdown(description);
+        const descriptionHtml = this.convertToMarkdown(description);
 
         const toolEntry = document.createElement('div');
         toolEntry.className = 'tool-entry collapsible collapsed';
@@ -2969,7 +3366,7 @@ class TaskBrowser {
         links.forEach(link => {
             const url = link.href;
             if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                tb.fetchYouTubeMetadata(url).then(metadata => {
+                this.fetchYouTubeMetadata(url).then(metadata => {
                     if (metadata.embedHtml) {
                         const preview = document.createElement('div');
                         preview.className = 'link-preview';
@@ -2986,7 +3383,7 @@ class TaskBrowser {
                     }
                 });
             } else {
-                tb.fetchLinkMetadata(url).then(metadata => {
+                this.fetchLinkMetadata(url).then(metadata => {
                     if ((metadata.ogTitle && metadata.ogTitle !== title) || metadata.ogDescription || metadata.ogImage) {
                         const preview = document.createElement('div');
                         preview.className = 'link-preview';
@@ -3002,6 +3399,165 @@ class TaskBrowser {
                 });
             }
         });
+    }
+
+    /**
+     * Fetch /otherdata/topIGCContributors7Days.json and populate #topContrib7Table.
+     * Expected JSON schema: [ { "Pilot": "...", "UploadCount": 12 }, … ]
+     */
+    loadTopContrib7() {
+        fetch('/otherdata/topIGCContributors7Days.json?nocache=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    const tbody = document.getElementById('top-contrib-7-body');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
+                    }
+                    return;
+                }
+
+                // Only keep top 5; JSON is assumed already sorted, but just in case:
+                const slice5 = data.slice(0, 5);
+                const rows = slice5.map(entry => {
+                    return [
+                        entry.Pilot,
+                        entry.UploadCount
+                    ];
+                });
+
+                if ($.fn.DataTable.isDataTable('#topContrib7Table')) {
+                    const tbl = $('#topContrib7Table').DataTable();
+                    tbl.clear();
+                    tbl.rows.add(rows);
+                    tbl.draw();
+                } else {
+                    $('#topContrib7Table').DataTable({
+                        data: rows,
+                        columns: [
+                            { title: 'Pilot' },
+                            { title: 'Uploads' }
+                        ],
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        ordering: false
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching top‐5 contributors (7d):', err);
+                const tbody = document.getElementById('top-contrib-7-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
+                }
+            });
+    }
+
+    /**
+     * Fetch /otherdata/topGliders7Days.json and populate #topGliders7Table.
+     * Expected JSON schema: [ { "GliderType": "...", "FlightCount": 37 }, … ]
+     */
+    loadTopGliders7() {
+        fetch('/otherdata/topGliders7Days.json?nocache=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    const tbody = document.getElementById('top-gliders-7-body');
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
+                    }
+                    return;
+                }
+
+                // Only keep top 5
+                const slice5 = data.slice(0, 5);
+                const rows = slice5.map(entry => {
+                    return [
+                        entry.GliderType,
+                        entry.FlightCount   // ← use “FlightCount” (not “Count”)
+                    ];
+                });
+
+                if ($.fn.DataTable.isDataTable('#topGliders7Table')) {
+                    const tbl = $('#topGliders7Table').DataTable();
+                    tbl.clear();
+                    tbl.rows.add(rows);
+                    tbl.draw();
+                } else {
+                    $('#topGliders7Table').DataTable({
+                        data: rows,
+                        columns: [
+                            { title: 'Glider Type' },
+                            { title: 'Flights' }
+                        ],
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        ordering: false
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching top‐5 gliders (7d):', err);
+                const tbody = document.getElementById('top-gliders-7-body');
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
+                }
+            });
+    }
+
+    /**
+     * Fetch /otherdata/msfsVersions7Days.json and populate #msfsVer7Table.
+     * Expected JSON schema: [ { "Version": "1.24.5.0", "VersionCount": 42 }, … ]
+     */
+    loadMsfsVer7() {
+        fetch('/otherdata/msfsVersions7Days.json?nocache=' + Date.now())
+            .then(res => res.json())
+            .then(data => {
+                if (!Array.isArray(data) || data.length === 0) {
+                    const tbody = document.getElementById('msfs-ver-7-body'); // make sure this matches your <tbody> id
+                    if (tbody) {
+                        tbody.innerHTML = '<tr><td colspan="2">No data.</td></tr>';
+                    }
+                    return;
+                }
+
+                // Only keep top 5
+                const slice5 = data.slice(0, 5);
+                const rows = slice5.map(entry => {
+                    return [
+                        entry.Version,
+                        entry.VersionCount   // ← use “VersionCount” (not “Count”)
+                    ];
+                });
+
+                if ($.fn.DataTable.isDataTable('#msfsVer7Table')) {
+                    const tbl = $('#msfsVer7Table').DataTable();
+                    tbl.clear();
+                    tbl.rows.add(rows);
+                    tbl.draw();
+                } else {
+                    $('#msfsVer7Table').DataTable({
+                        data: rows,
+                        columns: [
+                            { title: 'Version' },
+                            { title: 'Count' }
+                        ],
+                        paging: false,
+                        searching: false,
+                        info: false,
+                        ordering: false
+                    });
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching MSFS versions (7d):', err);
+                const tbody = document.getElementById('msfs-ver-7-body'); // match your actual ID
+                if (tbody) {
+                    tbody.innerHTML = '<tr><td colspan="2">Failed to load.</td></tr>';
+                }
+            });
     }
 
     // Function to fetch metadata for YouTube links
@@ -3092,22 +3648,22 @@ class TaskBrowser {
 
     saveMapUserSettings() {
         const tb = this;
-        if (!tb.ApplyingSettings) {
+        if (!this.ApplyingSettings) {
             const settings = {
-                mapLayer: tb.tbm.getCurrentMapLayer(),
-                showAirports: tb.tbm.isLayerVisible('Airports'),
-                showRailways: tb.tbm.isLayerVisible('Railways'),
-                windCompass: tb.tbm.isLayerVisible('Wind Compass'),
-                showSelectedOnly: tb.tbm.isLayerVisible('Show selected only'),
-                taskDetailWidth: tb.taskDetailsContainerWidth
+                mapLayer: this.tbm.getCurrentMapLayer(),
+                showAirports: this.tbm.isLayerVisible('Airports'),
+                showRailways: this.tbm.isLayerVisible('Railways'),
+                windCompass: this.tbm.isLayerVisible('Wind Compass'),
+                showSelectedOnly: this.tbm.isLayerVisible('Show selected only'),
+                taskDetailWidth: this.taskDetailsContainerWidth
             };
-            tb.setJsonCookie('mapUserSettings', settings, 300);
+            this.setJsonCookie('mapUserSettings', settings, 300);
         }
     }
 
     loadMapUserSettings() {
         const tb = this;
-        const settings = tb.getJsonCookie('mapUserSettings', 300);
+        const settings = this.getJsonCookie('mapUserSettings', 300);
 
         // Set default settings if not found
         const defaultSettings = {
@@ -3123,21 +3679,21 @@ class TaskBrowser {
         const mergedSettings = { ...defaultSettings, ...settings };
 
         // Apply settings to the map
-        tb.ApplyingSettings = true;
-        tb.tbm.setMapLayer(mergedSettings.mapLayer);
-        tb.tbm.setLayerVisibility('Airports', mergedSettings.showAirports);
-        tb.tbm.setLayerVisibility('Railways', mergedSettings.showRailways);
-        tb.tbm.setLayerVisibility('Wind Compass', mergedSettings.windCompass);
-        tb.tbm.setLayerVisibility('Show selected only', mergedSettings.showSelectedOnly);
-        tb.setTaskDetailWidth(mergedSettings.taskDetailWidth);
-        tb.ApplyingSettings = false;
+        this.ApplyingSettings = true;
+        this.tbm.setMapLayer(mergedSettings.mapLayer);
+        this.tbm.setLayerVisibility('Airports', mergedSettings.showAirports);
+        this.tbm.setLayerVisibility('Railways', mergedSettings.showRailways);
+        this.tbm.setLayerVisibility('Wind Compass', mergedSettings.windCompass);
+        this.tbm.setLayerVisibility('Show selected only', mergedSettings.showSelectedOnly);
+        this.setTaskDetailWidth(mergedSettings.taskDetailWidth);
+        this.ApplyingSettings = false;
     }
 
     setTaskDetailWidth(width) {
         const tb = this;
         const taskDetailContainer = document.getElementById('taskDetailContainer');
         const mapContainer = document.getElementById('map');
-        tb.taskDetailsContainerWidth = width;
+        this.taskDetailsContainerWidth = width;
         taskDetailContainer.style.width = width;
         mapContainer.style.width = `${100 - parseFloat(width)}%`;
         this.resizeMap(); // Ensure the map resizes correctly
@@ -3145,7 +3701,7 @@ class TaskBrowser {
 
     loadUserSettings() {
         const tb = this;
-        const settings = tb.getJsonCookie('userSettings', 300);
+        const settings = this.getJsonCookie('userSettings', 300);
 
         // Default settings
         const defaultSettings = {
@@ -3165,9 +3721,9 @@ class TaskBrowser {
         // Merge default settings with saved settings
         const mergedSettings = { ...defaultSettings, ...settings };
 
-        if (!tb.isDownloadPage) {
+        if (!this.isDownloadPage) {
             // Set the radio buttons based on the settings
-            tb.ApplyingSettings = true;
+            this.ApplyingSettings = true;
             document.querySelector(`input[name="uiTheme"][value="${mergedSettings.uiTheme}"]`).checked = true;
             document.querySelector(`input[name="timeFormat"][value="${mergedSettings.timeFormat}"]`).checked = true;
             document.querySelector(`input[name="altitude"][value="${mergedSettings.altitude}"]`).checked = true;
@@ -3191,29 +3747,29 @@ class TaskBrowser {
             if (TrackerlocalPortInput) {
                 TrackerlocalPortInput.value = mergedSettings.TrackerlocalPort;
             }
-            tb.ApplyingSettings = false;
+            this.ApplyingSettings = false;
 
             // Add event listener so that changes trigger a save
             if (DPHXlocalPortInput) {
                 DPHXlocalPortInput.addEventListener('change', () => {
-                    tb.saveUserSettings();  // We’ll validate & then save
+                    this.saveUserSettings();  // We’ll validate & then save
                 });
             }
             if (TrackerlocalPortInput) {
                 TrackerlocalPortInput.addEventListener('change', () => {
-                    tb.saveUserSettings();  // We’ll validate & then save
+                    this.saveUserSettings();  // We’ll validate & then save
                 });
             }
 
             opacitySlider.addEventListener("input", function () {
                 opacityValue.innerText = `${this.value}%`; // Update the displayed percentage
-                tb.saveUserSettings(); // Save the new setting
+                this.saveUserSettings(); // Save the new setting
             });
 
             // Attach change event listeners to save settings when any radio button is changed
             document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
                 input.addEventListener('change', () => {
-                    tb.saveUserSettings();
+                    this.saveUserSettings();
                 });
             });
 
@@ -3223,9 +3779,7 @@ class TaskBrowser {
     }
 
     saveUserSettings() {
-        const tb = this;
-
-        if (!tb.ApplyingSettings) {
+        if (!this.ApplyingSettings) {
             const settings = {
                 uiTheme: document.querySelector('input[name="uiTheme"]:checked').value,
                 timeFormat: document.querySelector('input[name="timeFormat"]:checked').value,
@@ -3241,16 +3795,16 @@ class TaskBrowser {
             // Validate and assign ports
             settings.DPHXlocalPort = this.validatePort(
                 'DPHXlocalPort',
-                tb.userSettings.DPHXlocalPort || 54513
+                this.userSettings.DPHXlocalPort || 54513
             );
             settings.TrackerlocalPort = this.validatePort(
                 'TrackerlocalPort',
-                tb.userSettings.TrackerlocalPort || 55055
+                this.userSettings.TrackerlocalPort || 55055
             );
 
             // Save settings to cookies and update the local state
-            tb.setJsonCookie('userSettings', settings, 300);
-            tb.userSettings = settings;
+            this.setJsonCookie('userSettings', settings, 300);
+            this.userSettings = settings;
         }
     }
 
@@ -3275,16 +3829,15 @@ class TaskBrowser {
     }
 
     openTaskInPlanner() {
-        let tb = this;
         const newWindow = window.open('', '_blank');  // Open immediately on user click
 
-        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${tb.currentTask.TaskID}`)
+        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${this.currentTask.TaskID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
                     const taskFolder = data.taskFolder;
-                    const plnFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.PLNFilename));
-                    const wprFilename = encodeURIComponent(tb.getFileNameFromPath(tb.currentTask.WPRFilename));
+                    const plnFilename = encodeURIComponent(this.getFileNameFromPath(this.currentTask.PLNFilename));
+                    const wprFilename = encodeURIComponent(this.getFileNameFromPath(this.currentTask.WPRFilename));
 
                     const plannerUrl = `https://xp-soaring.github.io/tasks/b21_task_planner/index.html?pln=${taskFolder}/${plnFilename}&wpr=${taskFolder}/${wprFilename}`;
                     newWindow.location.href = plannerUrl;  // Navigate the pre-opened window
@@ -3301,8 +3854,7 @@ class TaskBrowser {
     }
 
     hideTaskDetailsPanel() {
-        let tb = this;
-        if (tb.TaskDetailsPanelVisible == true) {
+        if (this.TaskDetailsPanelVisible == true) {
             return;
         }
         const taskDetailContainer = document.getElementById('taskDetailContainer');
@@ -3311,12 +3863,11 @@ class TaskBrowser {
         taskDetailContainer.style.display = 'none';
         resizer.style.display = 'none';
         map.style.width = '100%';
-        tb.resizeMap(); // Ensure map is resized
+        this.resizeMap(); // Ensure map is resized
     }
 
     showTaskDetailsPanel() {
-        let tb = this;
-        if (tb.TaskDetailsPanelVisible == false) {
+        if (this.TaskDetailsPanelVisible == false) {
             return;
         }
         const taskDetailContainer = document.getElementById('taskDetailContainer');
@@ -3324,24 +3875,22 @@ class TaskBrowser {
         const map = document.getElementById('map');
         taskDetailContainer.style.display = 'block';
         resizer.style.display = 'block';
-        tb.setTaskDetailWidth(tb.taskDetailsContainerWidth);
-        //tb.resizeMap(); // Ensure map is resized
+        this.setTaskDetailWidth(this.taskDetailsContainerWidth);
+        //this.resizeMap(); // Ensure map is resized
     }
 
     hideSearchFiltersPanel() {
-        let tb = this;
         const searchFiltersPanel = document.getElementById('searchAndFilters');
         const mapContainer = document.getElementById('mapContainer');
 
         searchFiltersPanel.style.display = 'none';
         mapContainer.style.flex = '1'; // Ensures the map takes the full width when the panel is hidden
 
-        tb.SearchFiltersPanelVisible = false;
-        tb.resizeMap(); // Ensure the map resizes correctly
+        this.SearchFiltersPanelVisible = false;
+        this.resizeMap(); // Ensure the map resizes correctly
     }
 
     showSearchFiltersPanel() {
-        let tb = this;
         const searchFiltersPanel = document.getElementById('searchAndFilters');
         const mapContainer = document.getElementById('mapContainer');
 
@@ -3351,22 +3900,20 @@ class TaskBrowser {
         // Adjust mapContainer to occupy the remaining space
         mapContainer.style.flex = '1';
 
-        tb.SearchFiltersPanelVisible = true;
-        tb.resizeMap(); // Ensure the map resizes correctly
+        this.SearchFiltersPanelVisible = true;
+        this.resizeMap(); // Ensure the map resizes correctly
     }
 
     toggleSearchAndFiltersPanel() {
-        let tb = this;
         const searchFiltersPanel = document.getElementById('searchAndFilters');
-        if (tb.SearchFiltersPanelVisible == false) {
-            tb.showSearchFiltersPanel();
+        if (this.SearchFiltersPanelVisible == false) {
+            this.showSearchFiltersPanel();
         } else {
-            tb.hideSearchFiltersPanel();
+            this.hideSearchFiltersPanel();
         }
     }
 
     toggleTableVisibility(forceHide = false) {
-        let tb = this;
         const taskGridOverlay = document.getElementById("taskGridOverlay");
 
         // If forceHide is true, hide the overlay and remove listeners.
@@ -3375,9 +3922,9 @@ class TaskBrowser {
             taskGridOverlay.style.display = "none";
 
             // Remove event listeners using our named functions.
-            taskGridOverlay.removeEventListener("mouseenter", tb._overlayMouseEnter);
-            taskGridOverlay.removeEventListener("mouseleave", tb._overlayMouseLeave);
-            taskGridOverlay.removeEventListener("wheel", tb._overlayWheel);
+            taskGridOverlay.removeEventListener("mouseenter", this._overlayMouseEnter);
+            taskGridOverlay.removeEventListener("mouseleave", this._overlayMouseLeave);
+            taskGridOverlay.removeEventListener("wheel", this._overlayWheel);
             return;
         }
 
@@ -3387,47 +3934,47 @@ class TaskBrowser {
             taskGridOverlay.style.display = "flex";
 
             // Populate the DataTable with current tasks
-            tb.populateDataTable(tb.tbm.visibleTasks);
+            this.populateDataTable(this.tbm.visibleTasks);
 
             // Ensure the refresh button updates the grid
             refreshGridButton.addEventListener("click", () => {
-                tb.populateDataTable(tb.tbm.visibleTasks);
+                this.populateDataTable(this.tbm.visibleTasks);
             });
 
             // Reselect the current task if one is selected
-            if (tb.tbm.currentEntrySeqID) {
-                tb.selectGridTask(tb.tbm.currentEntrySeqID);
+            if (this.tbm.currentEntrySeqID) {
+                this.selectGridTask(this.tbm.currentEntrySeqID);
             }
 
             // Define the event listener functions and store them for removal.
-            tb._overlayMouseEnter = () => {
-                tb.tbm.map.dragging.disable();
-                tb.tbm.map.scrollWheelZoom.disable();
-                tb.tbm.map.doubleClickZoom.disable();
+            this._overlayMouseEnter = () => {
+                this.tbm.map.dragging.disable();
+                this.tbm.map.scrollWheelZoom.disable();
+                this.tbm.map.doubleClickZoom.disable();
             };
 
-            tb._overlayMouseLeave = () => {
-                tb.tbm.map.dragging.enable();
-                tb.tbm.map.scrollWheelZoom.enable();
-                tb.tbm.map.doubleClickZoom.enable();
+            this._overlayMouseLeave = () => {
+                this.tbm.map.dragging.enable();
+                this.tbm.map.scrollWheelZoom.enable();
+                this.tbm.map.doubleClickZoom.enable();
             };
 
-            tb._overlayWheel = (event) => {
+            this._overlayWheel = (event) => {
                 event.stopPropagation();
             };
 
             // Attach the event listeners.
-            taskGridOverlay.addEventListener("mouseenter", tb._overlayMouseEnter);
-            taskGridOverlay.addEventListener("mouseleave", tb._overlayMouseLeave);
-            taskGridOverlay.addEventListener("wheel", tb._overlayWheel, { passive: false });
+            taskGridOverlay.addEventListener("mouseenter", this._overlayMouseEnter);
+            taskGridOverlay.addEventListener("mouseleave", this._overlayMouseLeave);
+            taskGridOverlay.addEventListener("wheel", this._overlayWheel, { passive: false });
         } else {
             // If not forcing and overlay is visible, hide it.
             taskGridOverlay.style.display = "none";
 
             // Remove event listeners.
-            taskGridOverlay.removeEventListener("mouseenter", tb._overlayMouseEnter);
-            taskGridOverlay.removeEventListener("mouseleave", tb._overlayMouseLeave);
-            taskGridOverlay.removeEventListener("wheel", tb._overlayWheel);
+            taskGridOverlay.removeEventListener("mouseenter", this._overlayMouseEnter);
+            taskGridOverlay.removeEventListener("mouseleave", this._overlayMouseLeave);
+            taskGridOverlay.removeEventListener("wheel", this._overlayWheel);
         }
     }
 
@@ -3542,8 +4089,7 @@ class TaskBrowser {
     }
 
     populateDataTable(tasks) {
-        let tb = this;
-        const processedTasks = tb.processTasks(tasks); // Process tasks as needed
+        const processedTasks = this.processTasks(tasks); // Process tasks as needed
 
         // Check if the DataTable is already initialized
         if ($.fn.DataTable.isDataTable('#taskGridTable')) {
@@ -3648,10 +4194,10 @@ class TaskBrowser {
                 const rowData = table.row(this).data();
                 if (rowData && rowData.EntrySeqID) {
                     // Remove "selected" class from any other row
-                    tb.deselectGridTask(); // Clear any selection before refreshing data
+                    this.deselectGridTask(); // Clear any selection before refreshing data
 
                     // Call the map function to select the task from the DataTable click
-                    tb.tbm.selectTaskFromClick(rowData.EntrySeqID, false);
+                    this.tbm.selectTaskFromClick(rowData.EntrySeqID, false);
 
                     // Add "selected" class to the clicked row
                     $(this).addClass('selected');
@@ -3659,18 +4205,18 @@ class TaskBrowser {
             }).on('mouseover', 'tr', function () {
                 const rowData = table.row(this).data();
                 if (rowData && rowData.EntrySeqID) {
-                    tb.tbm.highlightTask(tb.tbm, rowData.EntrySeqID);
+                    this.tbm.highlightTask(this.tbm, rowData.EntrySeqID);
                 }
             }).on('mouseout', 'tr', function () {
                 const rowData = table.row(this).data();
                 if (rowData && rowData.EntrySeqID) {
-                    tb.tbm.unhighlightTask(tb.tbm, rowData.EntrySeqID);
+                    this.tbm.unhighlightTask(this.tbm, rowData.EntrySeqID);
                 }
             });
             // 🔹 Adjust grid height dynamically when searching or updating the table
             table.on('search.dt draw.dt', function () {
                 let filteredRowCount = table.rows({ filter: 'applied' }).count(); // Get only visible rows
-                tb.adjustGridHeight(filteredRowCount);
+                this.adjustGridHeight(filteredRowCount);
 
                 // Update info dynamically
                 $("#taskGridInfo").html($("#taskGridTable_info").html());
@@ -3678,11 +4224,10 @@ class TaskBrowser {
         }
         // Get row count and adjust height
         const rowCount = $('#taskGridTable tbody tr').length;
-        tb.adjustGridHeight(rowCount);
+        this.adjustGridHeight(rowCount);
     }
 
     getUserConnectionInfo() {
-        let tb = this;
         return fetch('php/session_status.php')
             .then(response => {
                 if (!response.ok) {
@@ -3692,26 +4237,25 @@ class TaskBrowser {
             })
             .then(data => {
                 // Save the connection info in your TB object.
-                tb.isUserConnected = data.loggedIn;
-                tb.user = data.loggedIn ? data.user : null;
-                tb.setUserAccountImage();  // Update the account image based on new session data.
+                this.isUserConnected = data.loggedIn;
+                this.user = data.loggedIn ? data.user : null;
+                this.setUserAccountImage();  // Update the account image based on new session data.
                 return data;
             })
             .catch(error => {
-                tb.isUserConnected = false;
-                tb.user = null;
-                tb.setUserAccountImage();
+                this.isUserConnected = false;
+                this.user = null;
+                this.setUserAccountImage();
                 return { loggedIn: false };
             });
     }
 
     setUserAccountImage() {
-        let tb = this;
         const userImg = document.getElementById('userAccountImage');
         if (userImg) {
-            if (tb.isUserConnected) {
+            if (this.isUserConnected) {
                 userImg.src = "images/user_account_connected.svg";
-                userImg.title = "You are currently logged in as " + tb.user.displayName;
+                userImg.title = "You are currently logged in as " + this.user.displayName;
             }
             else {
                 userImg.src = "images/user_account_disconnected.svg";

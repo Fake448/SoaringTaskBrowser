@@ -26,18 +26,19 @@
     <link rel="stylesheet" href="task_draw.css">
 
 </head>
+
 <body>
     <div id="container">
         <div id="tabButtons">
-            <button class="tabButton" onclick="TB.switchTab('homeTab')" title="WeSimGlide.org's Home" data-tab="homeTab">🏠</button>
-            <button class="tabButton" onclick="TB.switchTab('eventsTab')" title="Sim Soaring events calendar" data-tab="eventsTab">📆</button>
-            <button class="tabButton active" onclick="TB.switchTab('mapTab')" title="Explore tasks on the map" data-tab="mapTab">🌐</button>
-            <button class="tabButton" onclick="TB.switchTab('toolsTab')" title="Useful tools and other references" data-tab="toolsTab">🛠️</button>
-            <button class="tabButton" onclick="TB.switchTab('settingsTab')" title="Your settings" data-tab="settingsTab">⚙️</button>
-            <button class="tabButton" onclick="TB.switchTab('accountTab')" title="User Account" data-tab="accountTab">
+            <button class="tabButton" title="WeSimGlide.org's Home" data-tab="homeTab">🏠</button>
+            <button class="tabButton" title="Sim Soaring events calendar" data-tab="eventsTab">📆</button>
+            <button class="tabButton active" title="Explore tasks on the map" data-tab="mapTab">🌐</button>
+            <button class="tabButton" title="Useful tools and other references" data-tab="toolsTab">🛠️</button>
+            <button class="tabButton" title="Your settings" data-tab="settingsTab">⚙️</button>
+            <button class="tabButton" title="User Account" data-tab="accountTab">
                 <img id="userAccountImage" src="images/user_account_disconnected.svg" alt="User Account" style="width: 23px; height: 23px;">
             </button>
-            <button class="tabButton" onclick="TB.switchTab('aboutTab')" title="About WeSimGlide.org" data-tab="aboutTab">ℹ️</button>
+            <button class="tabButton" title="About WeSimGlide.org" data-tab="aboutTab">ℹ️</button>
         </div>
         <div id="tabsContainer">
             <div id="homeTab" class="tabContent"></div>
@@ -51,13 +52,13 @@
                             <div id="loadingMessage" class="loading-message"></div>
                             <img src="images/loading_circle.gif" alt="Loading...">
                         </div>
-                        <button id="fullWorldButton" onclick="TB.tbm.resetToFullWorld()" title="View full world">
+                        <button id="fullWorldButton" title="View full world">
                             <img src="images/FullWorld.svg" alt="View full world" style="width: 25px; height: 25px;">
                         </button>
-                        <button id="searchFiltersButton" onclick="TB.toggleSearchAndFiltersPanel()" title="Search/Filters">
+                        <button id="searchFiltersButton" title="Search/Filters">
                             <img src="images/SearchFilters.png" alt="Search/Filters" style="width: 25px; height: 25px;">
                         </button>
-                        <button id="tableToggleButton" onclick="TB.toggleTableVisibility()" title="Toggle Table Visibility">
+                        <button id="tableToggleButton" title="Toggle Table Visibility">
                             <img src="images/Grid.png" alt="Toggle Table Visibility" style="width: 25px; height: 25px;">
                         </button>
                         <div class="upload-container" id="dropZone">
@@ -70,7 +71,7 @@
                             <input type="file" id="igcFileInput" accept=".igc">
                         </div>
                         <div id="taskControlPanel">
-                            <button id="zoomButton" onclick="TB.tbm.zoomToTask()" title="Zoom to task">
+                            <button id="zoomButton" title="Zoom to task">
                                 <img src="images/ZoomToTask.png" alt="Zoom to task">
                             </button>
                             <button id="directDPHXDownload" title="Download DPHX file">
@@ -217,7 +218,7 @@
         </div>
     </div>
     <div id="imageModal" class="modal">
-        <span class="close" onclick="TB.closeImageModal()">&times;</span>
+        <span class="close">&times;</span>
         <img class="modal-content" id="modalImage">
         <div id="caption"></div>
     </div>
@@ -243,8 +244,7 @@
         var VERSION = "0.0.5_MD";</script>
 
     <!-- Standalone-specific JavaScript -->
-    <script src="task_browser.js?v=2506.16.1"></script>
     <script src="igcupload.js?v=2505.11.1"></script>
-    <script src="index.js?v=2506.17.1"></script>
+    <script src="index.js" type="module"></script>
 </body>
 </html>
