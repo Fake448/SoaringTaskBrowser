@@ -1,3 +1,4 @@
+import User from "./user.js";
 import Events from "./events.js";
 
 "use strict"
@@ -5,6 +6,8 @@ let homeTabPollingInterval = null;
 
 export default class TaskBrowser {
     constructor() {
+        this.user = new User(this);
+        this.events = new Events(this);
         this.shouldHandlePopState = true;
         this.fromURL = false;
         this.sectionsToExpandFromURL = [];
@@ -16,13 +19,12 @@ export default class TaskBrowser {
         this.currentUserTaskEntry = {};
         this.homeTabWasLoaded = false;
         this.lastTopIGCKey = null
-        this.events = new Events();
     }
 
     init(igcUpload) {
         // Store the reference to the TaskBrowser instance.
         this.IGCUpload = igcUpload;
-        this.getUserConnectionInfo();
+        this.user.getUserConnectionInfo();
 
         // Automatically detect the mode based on the current path
         const currentPath = window.location.pathname;
@@ -41,7 +43,7 @@ export default class TaskBrowser {
         if (this.isDownloadPage) {
             // Light initialization for download purposes
             console.log("Initializing TaskBrowser in light mode for download page.");
-            this.userSettings = this.loadUserSettings();
+            this.userSettings = this.user.loadUserSettings();
             return;
         }
 
@@ -54,6 +56,7 @@ export default class TaskBrowser {
             typographer: true
         });
         this.tbm = new TaskBrowserMap(this);
+        this.user.tbm = this.tbm;
         this.taskDetailsContainerWidth = 0;
         this.initCountryCodes();
         this.searchPanelAlreadySetup = false;
@@ -65,8 +68,8 @@ export default class TaskBrowser {
             'Virgin Islands - British': 'British Virgin Islands'
         };
         this.initCountryCodes();
-        this.userSettings = this.loadUserSettings();
-        this.userMapSettings = this.loadMapUserSettings();
+        this.userSettings = this.user.loadUserSettings();
+        this.userMapSettings = this.user.loadMapUserSettings();
         this.TaskDetailsPanelVisible = false;
         this.SearchFiltersPanelVisible = false;
         this.hideTaskDetailsPanel();
@@ -1480,7 +1483,7 @@ export default class TaskBrowser {
     }
 
     generateTaskDetailsWeather(task) {
-        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.user.loadUserSettings(); // Load user settings for unit preferences
 
         // Collapsible Weather Section
         let elevMeasurement = this.wsg_weather.isAltitudeAMGL ? "AMGL - Ground" : "AMSL - Sea";
@@ -1566,7 +1569,7 @@ export default class TaskBrowser {
     }
 
     generateTaskDetailsWinds(task) {
-        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.user.loadUserSettings(); // Load user settings for unit preferences
 
         // Sort wind layers by altitude in descending order
         let sortedWindLayers = this.wsg_weather.windLayers.slice().sort((a, b) => parseFloat(b.altitude) - parseFloat(a.altitude));
@@ -1654,7 +1657,7 @@ export default class TaskBrowser {
     }
 
     generateTaskDetailsClouds(task) {
-        const userSettings = this.loadUserSettings(); // Load user settings for unit preferences
+        const userSettings = this.user.loadUserSettings(); // Load user settings for unit preferences
 
         // Sort cloud layers by bottom altitude in descending order
         let sortedCloudLayers = this.wsg_weather.cloudLayers.slice().sort((a, b) => parseFloat(b.altitudeBot) - parseFloat(a.altitudeBot));
@@ -3054,7 +3057,7 @@ export default class TaskBrowser {
         this.incrementDownloadCount(EntrySeqID);
 
         // Attempt to call the local web server first
-        const port = this.userSettings?.DPHXlocalPort || 54513;
+        const port = (this.userSettings && this.userSettings.DPHXlocalPort) ? this.userSettings.DPHXlocalPort : 54513;
         const localUrl = `http://localhost:${port}/?taskID=${theTaskID}&title=${encodeURIComponent(Title)}&source=${source}`;
         fetch(localUrl)
             .then(() => {
@@ -3586,210 +3589,13 @@ export default class TaskBrowser {
             });
     }
 
-    setJsonCookie(name, jsonObject, days) {
-        var expires = "";
-        if (days) {
-            var date = new Date();
-            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
-            expires = "; expires=" + date.toUTCString();
-        }
-        var jsonString = JSON.stringify(jsonObject);
-        var encodedJsonString = encodeURIComponent(jsonString);
-        document.cookie = name + "=" + encodedJsonString + expires + "; path=/";
-    }
-
-    getJsonCookie(name, renewDays) {
-        var nameEQ = name + "=";
-        var ca = document.cookie.split(';');
-        for (var i = 0; i < ca.length; i++) {
-            var c = ca[i];
-            while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-            if (c.indexOf(nameEQ) === 0) {
-                var encodedJsonString = c.substring(nameEQ.length, c.length);
-                var jsonString = decodeURIComponent(encodedJsonString);
-                var jsonObject = JSON.parse(jsonString);
-
-                // Renew the cookie's expiration date
-                if (renewDays) {
-                    this.setJsonCookie(name, jsonObject, renewDays);
-                }
-
-                return jsonObject;
-            }
-        }
-        return null;
-    }
-
-    getCookieSize(name) {
-        const jsonCookie = this.getJsonCookie(name);
-        if (jsonCookie) {
-            const jsonString = JSON.stringify(jsonCookie);
-            const encodedJsonString = encodeURIComponent(jsonString);
-            return encodedJsonString.length;
-        }
-        return 0;
-    }
-
-    saveMapUserSettings() {
-        const tb = this;
-        if (!this.ApplyingSettings) {
-            const settings = {
-                mapLayer: this.tbm.getCurrentMapLayer(),
-                showAirports: this.tbm.isLayerVisible('Airports'),
-                showRailways: this.tbm.isLayerVisible('Railways'),
-                windCompass: this.tbm.isLayerVisible('Wind Compass'),
-                showSelectedOnly: this.tbm.isLayerVisible('Show selected only'),
-                taskDetailWidth: this.taskDetailsContainerWidth
-            };
-            this.setJsonCookie('mapUserSettings', settings, 300);
-        }
-    }
-
-    loadMapUserSettings() {
-        const tb = this;
-        const settings = this.getJsonCookie('mapUserSettings', 300);
-
-        // Set default settings if not found
-        const defaultSettings = {
-            mapLayer: "Google Terrain",
-            showAirports: true,
-            showRailways: false,
-            windCompass: false,
-            showSelectedOnly: true,
-            taskDetailWidth: '30%'
-        };
-
-        // Merge default settings with loaded settings
-        const mergedSettings = { ...defaultSettings, ...settings };
-
-        // Apply settings to the map
-        this.ApplyingSettings = true;
-        this.tbm.setMapLayer(mergedSettings.mapLayer);
-        this.tbm.setLayerVisibility('Airports', mergedSettings.showAirports);
-        this.tbm.setLayerVisibility('Railways', mergedSettings.showRailways);
-        this.tbm.setLayerVisibility('Wind Compass', mergedSettings.windCompass);
-        this.tbm.setLayerVisibility('Show selected only', mergedSettings.showSelectedOnly);
-        this.setTaskDetailWidth(mergedSettings.taskDetailWidth);
-        this.ApplyingSettings = false;
-    }
-
     setTaskDetailWidth(width) {
-        const tb = this;
         const taskDetailContainer = document.getElementById('taskDetailContainer');
         const mapContainer = document.getElementById('map');
         this.taskDetailsContainerWidth = width;
         taskDetailContainer.style.width = width;
         mapContainer.style.width = `${100 - parseFloat(width)}%`;
         this.resizeMap(); // Ensure the map resizes correctly
-    }
-
-    loadUserSettings() {
-        const tb = this;
-        const settings = this.getJsonCookie('userSettings', 300);
-
-        // Default settings
-        const defaultSettings = {
-            uiTheme: 'dark',
-            timeFormat: 'usa',
-            altitude: 'imperial',
-            distance: 'imperial',
-            gateMeasurement: 'imperial',
-            windSpeed: 'knots',
-            pressure: 'inHg',
-            temperature: 'fahrenheit',
-            DPHXlocalPort: 54513,
-            TrackerlocalPort: 55055,
-            coverImageOpacity: 25,
-        };
-
-        // Merge default settings with saved settings
-        const mergedSettings = { ...defaultSettings, ...settings };
-
-        if (!this.isDownloadPage) {
-            // Set the radio buttons based on the settings
-            this.ApplyingSettings = true;
-            document.querySelector(`input[name="uiTheme"][value="${mergedSettings.uiTheme}"]`).checked = true;
-            document.querySelector(`input[name="timeFormat"][value="${mergedSettings.timeFormat}"]`).checked = true;
-            document.querySelector(`input[name="altitude"][value="${mergedSettings.altitude}"]`).checked = true;
-            document.querySelector(`input[name="distance"][value="${mergedSettings.distance}"]`).checked = true;
-            document.querySelector(`input[name="gateMeasurement"][value="${mergedSettings.gateMeasurement}"]`).checked = true;
-            document.querySelector(`input[name="windSpeed"][value="${mergedSettings.windSpeed}"]`).checked = true;
-            document.querySelector(`input[name="pressure"][value="${mergedSettings.pressure}"]`).checked = true;
-            document.querySelector(`input[name="temperature"][value="${mergedSettings.temperature}"]`).checked = true;
-
-            const opacitySlider = document.getElementById("coverImageOpacity");
-            const opacityValue = document.getElementById("coverImageOpacityValue");
-
-            opacitySlider.value = mergedSettings.coverImageOpacity;
-            opacityValue.innerText = `${mergedSettings.coverImageOpacity}%`;
-
-            const DPHXlocalPortInput = document.getElementById('DPHXlocalPort');
-            if (DPHXlocalPortInput) {
-                DPHXlocalPortInput.value = mergedSettings.DPHXlocalPort;
-            }
-            const TrackerlocalPortInput = document.getElementById('TrackerlocalPort');
-            if (TrackerlocalPortInput) {
-                TrackerlocalPortInput.value = mergedSettings.TrackerlocalPort;
-            }
-            this.ApplyingSettings = false;
-
-            // Add event listener so that changes trigger a save
-            if (DPHXlocalPortInput) {
-                DPHXlocalPortInput.addEventListener('change', () => {
-                    this.saveUserSettings();  // We’ll validate & then save
-                });
-            }
-            if (TrackerlocalPortInput) {
-                TrackerlocalPortInput.addEventListener('change', () => {
-                    this.saveUserSettings();  // We’ll validate & then save
-                });
-            }
-
-            opacitySlider.addEventListener("input", function () {
-                opacityValue.innerText = `${this.value}%`; // Update the displayed percentage
-                this.saveUserSettings(); // Save the new setting
-            });
-
-            // Attach change event listeners to save settings when any radio button is changed
-            document.querySelectorAll('#settingsForm input[type="radio"]').forEach(input => {
-                input.addEventListener('change', () => {
-                    this.saveUserSettings();
-                });
-            });
-
-        }
-
-        return mergedSettings;
-    }
-
-    saveUserSettings() {
-        if (!this.ApplyingSettings) {
-            const settings = {
-                uiTheme: document.querySelector('input[name="uiTheme"]:checked').value,
-                timeFormat: document.querySelector('input[name="timeFormat"]:checked').value,
-                altitude: document.querySelector('input[name="altitude"]:checked').value,
-                distance: document.querySelector('input[name="distance"]:checked').value,
-                gateMeasurement: document.querySelector('input[name="gateMeasurement"]:checked').value,
-                windSpeed: document.querySelector('input[name="windSpeed"]:checked').value,
-                pressure: document.querySelector('input[name="pressure"]:checked').value,
-                temperature: document.querySelector('input[name="temperature"]:checked').value,
-                coverImageOpacity: document.getElementById("coverImageOpacity").value,
-            };
-
-            // Validate and assign ports
-            settings.DPHXlocalPort = this.validatePort(
-                'DPHXlocalPort',
-                this.userSettings.DPHXlocalPort || 54513
-            );
-            settings.TrackerlocalPort = this.validatePort(
-                'TrackerlocalPort',
-                this.userSettings.TrackerlocalPort || 55055
-            );
-
-            // Save settings to cookies and update the local state
-            this.setJsonCookie('userSettings', settings, 300);
-            this.userSettings = settings;
-        }
     }
 
     validatePort(inputId, defaultValue) {
@@ -4211,40 +4017,5 @@ export default class TaskBrowser {
         this.adjustGridHeight(rowCount);
     }
 
-    getUserConnectionInfo() {
-        return fetch('php/session_status.php')
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok: ' + response.statusText);
-                }
-                return response.json();
-            })
-            .then(data => {
-                // Save the connection info in your TB object.
-                this.isUserConnected = data.loggedIn;
-                this.user = data.loggedIn ? data.user : null;
-                this.setUserAccountImage();  // Update the account image based on new session data.
-                return data;
-            })
-            .catch(error => {
-                this.isUserConnected = false;
-                this.user = null;
-                this.setUserAccountImage();
-                return { loggedIn: false };
-            });
-    }
 
-    setUserAccountImage() {
-        const userImg = document.getElementById('userAccountImage');
-        if (userImg) {
-            if (this.isUserConnected) {
-                userImg.src = "images/user_account_connected.svg";
-                userImg.title = "You are currently logged in as " + this.user.displayName;
-            }
-            else {
-                userImg.src = "images/user_account_disconnected.svg";
-                userImg.title = "You are NOT currently logged in.";
-            }
-        }
-    }
 }

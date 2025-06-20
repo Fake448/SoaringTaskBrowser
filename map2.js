@@ -147,7 +147,7 @@ class TaskBrowserMap {
                 tbm.showSelectedOnlyChecked = true;
                 tbm.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            tbm.tb.user.saveMapUserSettings();
         });
 
         tbm.map.on('overlayremove', function (eventLayer) {
@@ -158,11 +158,11 @@ class TaskBrowserMap {
                 tbm.showSelectedOnlyChecked = false;
                 tbm.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            tbm.tb.user.saveMapUserSettings();
         });
 
         tbm.map.on('baselayerchange', function (eventLayer) {
-            tbm.tb.saveMapUserSettings();
+            tbm.tb.user.saveMapUserSettings();
         });
 
         tbm.setWindCompassVisibility();

@@ -10,7 +10,7 @@ if (!TB.isDownloadPage) {
 }
 
 setupEventListeners();
-window.loadAccountInfo = loadAccountInfo;
+window.loadAccountInfo = () => TB.user.loadAccountInfo();
 
 let lastTopIGCKey = null;
 let homeTabWasLoaded = false;
@@ -86,86 +86,7 @@ function switchToMapAndSelectTask(entrySeqID, doNotExpand = false, sectionsToExp
     TB.tbm.selectTaskFromURL(entrySeqID, doNotExpand, sectionsToExpand);
 }
 
-function loadAccountInfo() {
-    TB.getUserConnectionInfo().then(info => {
-        const accountContent = document.getElementById('account-content');
-        accountContent.innerHTML = ''; // clear first
 
-        if (!info.loggedIn) {
-            accountContent.innerHTML = `
-        <p>You are not logged in.</p>
-        <button class="button-style" onclick="window.location.href='php/login.php'">
-          Login with Discord
-        </button>
-      `;
-            return;
-        }
-
-        const { displayName, avatar, pilotName = '', compId = '' } = info.user;
-
-        // Header
-        const header = document.createElement('div');
-        header.innerHTML = `<h3>Welcome, ${displayName}!</h3>`;
-        accountContent.appendChild(header);
-
-        // Profile section
-        createSectionSkeleton("Profile", "user-profile-section", "user-profile-content", accountContent);
-        const profilePane = document.getElementById('user-profile-content');
-        profilePane.innerHTML = `
-      <p><img src="${avatar}" alt="Avatar" style="border-radius:50%;width:80px;height:80px;"></p>
-      <p><em>To update your Discord avatar, please logout and then log back in.</em></p>
-      <div class="user-info-form">
-        <label for="pilotName">Pilot Name</label><br>
-        <input type="text" id="pilotName" value="${pilotName}" placeholder="Your pilot name"><br><br>
-        <label for="compId">Competition ID</label><br>
-        <input type="text" id="compId" value="${compId}" placeholder="Your competition ID"><br><br>
-        <button class="button-style" id="updateUserInfo">Save & Check matching unassigned IGC</button>
-        <span id="update-status" style="margin-left:8px;font-style:italic;color:green;"></span>
-      </div>
-      <div id="match-results" style="margin-top:1em;"></div>
-    `;
-
-        // Handle Save click
-        document.getElementById('updateUserInfo').onclick = () => {
-            const p = document.getElementById('pilotName').value.trim();
-            const c = document.getElementById('compId').value.trim();
-            if (!p || !c) return alert('Both fields are required.');
-
-            fetch('php/updateUserInfo.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ pilotName: p, compId: c })
-            })
-                .then(r => r.json())
-                .then(({ success, matches = [], message }) => {
-                    const statusEl = document.getElementById('update-status');
-                    if (!success) {
-                        return alert('Error: ' + message);
-                    }
-                    statusEl.textContent = 'Profile updated!';
-                    setTimeout(() => { statusEl.textContent = ''; }, 3000);
-
-                    // render matches table (or clear if none)
-                    renderMatchTable(matches);
-                })
-                .catch(err => {
-                    console.error(err);
-                    alert('Update failed');
-                });
-        };
-
-        // IGC submissions...
-        createSectionSkeleton("IGC Submissions", "igc-submissions", "igc-submissions-content", accountContent);
-        refreshIGCSubmissionsContent();
-
-        // Logout
-        const logout = document.createElement('button');
-        logout.className = 'button-style';
-        logout.textContent = 'Logout';
-        logout.onclick = () => window.location.href = 'php/logout.php';
-        accountContent.appendChild(logout);
-    });
-}
 
 // Renders (or clears) the match-results div
 function renderMatchTable(matches) {
@@ -251,7 +172,7 @@ function renderMatchTable(matches) {
                     .then(resp => {
                         if (resp.success) {
                             alert(`Claimed ${selected.length} record(s).`);
-                            loadAccountInfo(); // refresh everything
+                            this.user.loadAccountInfo(); // refresh everything
                         } else {
                             alert('Error: ' + resp.message);
                         }
@@ -709,7 +630,7 @@ async function handleGetFileFromDiscord(fileType, entrySeqID) {
                 day: 'numeric',
                 hour: 'numeric',
                 minute: 'numeric',
-                hour12: TB.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
+                hour12: TB.user.userSettings.timeFormat === 'usa' // Use 12-hour format if 'usa'
             });
             alert(`Task availability currently set to ${localAvailabilityDate}`);
             window.close();

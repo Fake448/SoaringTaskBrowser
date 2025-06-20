@@ -1,13 +1,16 @@
 export default class Events {
 
+   constructor(tb) {
+      this.TB = tb;
+   }
+
    displayEvents(events) {
       const eventsTabEventsList = document.getElementById('eventsList');
-      const settings = TB.userSettings;
+      const settings = this.TB.userSettings;
       const timeFormat = settings?.timeFormat || 'usa'; // Default to 12 hours if not set
 
       // Retrieve the saved array of open event IDs
-      const savedEventIds = TB.getJsonCookie('CurrentGroupEventsOpened') || [];
-
+      const savedEventIds = this.TB.user.getJsonCookie('CurrentGroupEventsOpened') || [];
       // Mapping of club IDs to their respective logos
       const clubLogos = {
          'DIAMTU': 'images/SoaringDiamondsClub.jpg',
@@ -286,7 +289,7 @@ export default class Events {
                   savedEventIds.splice(index, 1); // Remove the ID if it's collapsed
                }
             }
-            TB.setJsonCookie('CurrentGroupEventsOpened', savedEventIds, 300); // Save the updated array
+            TB.user.setJsonCookie('CurrentGroupEventsOpened', savedEventIds, 300); // Save the updated array
          });
 
          // Restore the state of previously opened sections
