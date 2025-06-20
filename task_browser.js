@@ -1,3 +1,5 @@
+import Events from "./events.js";
+
 "use strict"
 let homeTabPollingInterval = null;
 
@@ -14,6 +16,7 @@ export default class TaskBrowser {
         this.currentUserTaskEntry = {};
         this.homeTabWasLoaded = false;
         this.lastTopIGCKey = null
+        this.events = new Events();
     }
 
     init(igcUpload) {
@@ -694,13 +697,13 @@ export default class TaskBrowser {
 
             if (tabId === 'eventsTab') {
                 this.displayEventsStaticPortion(); // Add static events info
-                this.fetchAndDisplayEvents(); // Load dynamic events content
+                this.events.fetchAndDisplayEvents(); // Load dynamic events content
 
                 // Add refresh button functionality
                 const refreshButton = document.getElementById('refreshButton');
                 refreshButton.addEventListener('click', () => {
                     document.getElementById('eventsList').innerHTML = ''; // Clear events list
-                    fetchAndDisplayEvents(); // Reload events
+                    this.events.fetchAndDisplayEvents(); // Reload events
                 });
             }
         }
@@ -810,19 +813,7 @@ export default class TaskBrowser {
             });
     }
 
-    fetchAndDisplayEvents() {
-        fetch('php/RetrieveNewsWSG.php?newsType=1')
-            .then(response => response.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    const events = data.data;
-                    displayEvents(events);
-                } else {
-                    console.error('Error fetching events:', data.message);
-                }
-            })
-            .catch(error => console.error('Error fetching events:', error));
-    }
+
 
     // Function to load tab content dynamically
     loadTabContent(tabId) {
