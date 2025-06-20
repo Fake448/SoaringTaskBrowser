@@ -3885,6 +3885,14 @@ export default class TaskBrowser {
     }
 
     populateDataTable(tasks) {
+        // FIX: when no task is available, the height is calculated incorrect
+        // Ensure tasks is always an array and at least 1
+        // --> temporarily fix
+        if (!Array.isArray(tasks)) {
+            tasks = [1];
+        }
+
+
         const processedTasks = this.processTasks(tasks); // Process tasks as needed
 
         // Check if the DataTable is already initialized
