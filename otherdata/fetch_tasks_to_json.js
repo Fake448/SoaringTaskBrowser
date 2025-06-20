@@ -1,7 +1,13 @@
+// Fetches task summaries and details from the soaring.siglr.com API
+// and saves them to a JSON file.
+// --------------------------------------------------
+// Usage: node fetch_tasks_to_json.js
+// --------------------------------------------------
+
 const fs = require('fs');
 const http = require('http');
 
-const outputFile = 'otherdata/test_all_tasks.json';
+const outputFile = 'test_all_tasks.json';
 const listUrl = 'http://soaring.siglr.com/php/GetTasksForMap.php?taskCount=10';
 const detailUrl = id => `http://soaring.siglr.com/php/GetTaskDetails.php?entrySeqID=${id}`;
 
