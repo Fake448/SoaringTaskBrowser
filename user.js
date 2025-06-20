@@ -217,7 +217,7 @@ export default class User {
                   setTimeout(() => { statusEl.textContent = ''; }, 3000);
 
                   // render matches table (or clear if none)
-                  renderMatchTable(matches);
+                  this.TB.renderMatchTable(matches);
                })
                .catch(err => {
                   console.error(err);
