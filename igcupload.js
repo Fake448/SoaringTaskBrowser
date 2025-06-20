@@ -1,4 +1,4 @@
-﻿class IGCUpload {
+﻿export default class IGCUpload {
     constructor(taskBrowser) {
         // Store the reference to the TaskBrowser instance.
         this.taskBrowser = taskBrowser;
@@ -747,4 +747,5 @@
             });
     }
 
+    
 }

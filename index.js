@@ -1,4 +1,5 @@
 ﻿import TaskBrowser from './task_browser.js';
+import IGCUpload from './igcupload.js';
 
 var TB = new TaskBrowser();
 var igcUpload = new IGCUpload(TB);
@@ -9,6 +10,7 @@ if (!TB.isDownloadPage) {
 }
 
 setupEventListeners();
+window.loadAccountInfo = loadAccountInfo;
 
 let lastTopIGCKey = null;
 let homeTabWasLoaded = false;
