@@ -27,6 +27,57 @@ if (!TB.isDownloadPage) {
     });
 }
 
+; (function () {
+    const jsonUrl = 'otherdata/banner.json';
+
+    fetch(jsonUrl)
+        .then(res => {
+            if (!res.ok) throw new Error('banner.json not found');
+            return res.json();
+        })
+        .then(cfg => {
+            if (!cfg.text || !cfg.text.trim()) return;
+
+            // 1) Create the banner container
+            const tabs = document.getElementById('tabButtons');
+            const banner = document.createElement('div');
+            banner.id = 'scrollingBanner';
+            banner.style.backgroundColor = cfg.backgroundColor || '#222';
+            banner.style.color = cfg.textColor || '#ddd';
+            banner.style.position = 'relative';  // for absolute close button
+
+            // 2) Create the moving-text element
+            const content = document.createElement('div');
+            content.className = 'scrolling-banner-content';
+            content.textContent = cfg.text;
+
+            // 3) Create the close button
+            const closeBtn = document.createElement('span');
+            closeBtn.className = 'close-banner';
+            closeBtn.innerHTML = '&times;';       // ×
+            closeBtn.title = 'Dismiss';
+            closeBtn.style.position = 'absolute';
+            closeBtn.style.top = '4px';
+            closeBtn.style.right = '8px';
+            closeBtn.style.cursor = 'pointer';
+            closeBtn.style.fontSize = '1.2rem';
+            closeBtn.style.lineHeight = '1';
+            closeBtn.style.userSelect = 'none';
+
+            // 4) Wire up the dismiss
+            closeBtn.addEventListener('click', () => {
+                banner.remove();
+            });
+
+            // 5) Assemble
+            banner.appendChild(content);
+            banner.appendChild(closeBtn);
+            tabs.parentNode.insertBefore(banner, tabs.nextSibling);
+        })
+        .catch(err => {
+            console.debug('Banner not loaded:', err);
+        });
+})();
 function resize(e) {
     if (isResizing) {
         const containerWidth = mapContainer.offsetWidth + taskDetailContainer.offsetWidth;
