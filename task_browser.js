@@ -687,13 +687,6 @@ export default class TaskBrowser {
             }
         }
 
-
-
-
-
-
-
-
         // Load content if it hasn't been loaded yet
         const tabContent = document.getElementById(tabId);
         if (!tabContent.innerHTML) {
@@ -4263,5 +4256,4 @@ export default class TaskBrowser {
             }
         }
     }
-
 }
