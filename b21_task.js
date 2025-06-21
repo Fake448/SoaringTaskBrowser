@@ -29,12 +29,22 @@ class B21_Task {
         task.aat_min_time_s = null; // minimum time for an AAT task in seconds
 
         task.map_elements = L.layerGroup();
+        task.cloudLayer = L.layerGroup();
 
         // task bounds
         task.min_lat = 90;
         task.min_lng = 180;
         task.max_lat = -90;
         task.max_lng = -180;
+
+        // needed for scaling the clouds when zooming
+        if (!task.planner._cloudZoomHandlerAttached) {
+            task.planner.map.on('zoomend', () => {
+                task.drawClouds();
+            });
+            task.planner._cloudZoomHandlerAttached = true;
+
+        }
     }
 
     // Return true if a task is actually available
@@ -410,6 +420,35 @@ class B21_Task {
         task.map_elements.addTo(task.planner.map);
     }
 
+    // CLOUDS
+    drawClouds() {
+        console.log("------------- Task.drawClouds() -----------");
+
+        // Remove previous cloud if it exists
+        this.cloudLayer.clearLayers();
+
+        let cloudLat = this.waypoints[0].position.lat + 0.11;
+        let cloudLng = this.waypoints[0].position.lng + 0.11;
+        const scale = this.planner.map.getZoom() / 10
+
+        let cloudIcon = L.icon({
+            iconUrl: 'images/cloud.png',
+            iconSize: [48 * scale, 32 * scale],
+            iconAnchor: [24 * scale, 16 * scale]
+        });
+
+        let cloudMarker = L.marker([cloudLat, cloudLng], { icon: cloudIcon });
+
+        // Add cloudlayer 
+        this.cloudLayer.addLayer(cloudMarker);
+        this.drawTaskCircle()
+
+        // Add the cloudLayer to the map
+        this.cloudLayer.addTo(this.planner.map);
+    }
+
+
+
     set_current_wp(index) {
         let task = this;
 
@@ -444,6 +483,7 @@ class B21_Task {
     reset() {
         let task = this;
         task.planner.map.removeLayer(task.map_elements);
+        task.planner.map.removeLayer(task.cloudLayer);
         task.planner.map.closePopup();
     }
 
