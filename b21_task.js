@@ -122,6 +122,7 @@ class B21_Task {
         task.update_waypoints();
         task.update_waypoint_icons();
         task.draw();
+        task.rescaleClouds();
     }
 
     // Parse soaring-encoded WP name, e.g.
@@ -429,27 +430,82 @@ class B21_Task {
         // Remove previous cloud if it exists
         this.cloudLayer.clearLayers();
 
-        let cloudLat = this.waypoints[0].position.lat + 0.11;
-        let cloudLng = this.waypoints[0].position.lng + 0.11;
-        const scale = this.planner.map.getZoom() / 10
+        if (!this.waypoints.length) return;
 
+        // Calculate center and radius
+        let sumLat = 0, sumLng = 0;
+        for (let wp of this.waypoints) {
+            sumLat += wp.position.lat;
+            sumLng += wp.position.lng;
+        }
+        let centerLat = sumLat / this.waypoints.length;
+        let centerLng = sumLng / this.waypoints.length;
+
+        // Calculate max distance from center to any waypoint (in meters)
+        let maxDistance = 0;
+        let center = L.latLng(centerLat, centerLng);
+        for (let wp of this.waypoints) {
+            let dist = center.distanceTo([wp.position.lat, wp.position.lng]);
+            if (dist > maxDistance) maxDistance = dist;
+        }
+
+        // --- Store and reuse cloud positions ---
+        if (!this.cloudPositions || this.cloudPositions.length !== 10) {
+            this.cloudPositions = [];
+            const cloudCircleRadius = maxDistance * 1.2; // Add some buffer to the radius
+            const minCloudDist = 500; // Minimum distance in meters between clouds (adjust as needed)
+            for (let i = 0; i < 10; i++) {
+                let tries = 0;
+                let found = false;
+                while (tries < 100 && !found) {
+                    let [lat, lng] = this.getRandomPointInCircle(centerLat, centerLng, cloudCircleRadius);
+                    let overlap = false;
+                    for (let [olat, olng] of this.cloudPositions) {
+                        if (this.cloudsOverlap(lat, lng, olat, olng, minCloudDist)) {
+                            overlap = true;
+                            break;
+                        }
+                    }
+                    if (!overlap) {
+                        this.cloudPositions.push([lat, lng]);
+                        found = true;
+                    }
+                    tries++;
+                }
+            }
+        }
+
+        // Draw clouds at stored positions
+        const scale = this.planner.map.getZoom() / 10;
         let cloudIcon = L.icon({
             iconUrl: 'images/cloud.png',
             iconSize: [48 * scale, 32 * scale],
             iconAnchor: [24 * scale, 16 * scale]
         });
 
-        let cloudMarker = L.marker([cloudLat, cloudLng], { icon: cloudIcon });
+        for (let [lat, lng] of this.cloudPositions) {
+            let cloudMarker = L.marker([lat, lng], { icon: cloudIcon });
+            this.cloudLayer.addLayer(cloudMarker);
+        }
 
-        // Add cloudlayer 
-        this.cloudLayer.addLayer(cloudMarker);
-        this.drawTaskCircle()
-
-        // Add the cloudLayer to the map
         this.cloudLayer.addTo(this.planner.map);
     }
 
+    cloudsOverlap(lat1, lng1, lat2, lng2, minDistanceMeters) {
+        const p1 = L.latLng(lat1, lng1);
+        const p2 = L.latLng(lat2, lng2);
+        return p1.distanceTo(p2) < minDistanceMeters;
+    }
 
+    getRandomPointInCircle(centerLat, centerLng, radiusMeters) {
+        // Returns [lat, lng] randomly within the given circle
+        const angle = Math.random() * 2 * Math.PI;
+        const r = radiusMeters * Math.sqrt(Math.random());
+        // Approximate meters per degree latitude/longitude
+        const dLat = (r * Math.cos(angle)) / 111320;
+        const dLng = (r * Math.sin(angle)) / (40075000 * Math.cos(centerLat * Math.PI / 180) / 360);
+        return [centerLat + dLat, centerLng + dLng];
+    }
 
     set_current_wp(index) {
         let task = this;
@@ -491,6 +547,7 @@ class B21_Task {
             task.planner.map.removeLayer(task.cloudLayer);
         }
         task.cloudLayer = L.layerGroup()
+        task.cloudPositions = [];
         task.planner.map.closePopup();
     }
 
