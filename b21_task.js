@@ -38,12 +38,14 @@ class B21_Task {
         task.max_lng = -180;
 
         // needed for scaling the clouds when zooming
-        if (!task.planner._cloudZoomHandlerAttached) {
-            task.planner.map.on('zoomend', () => {
-                task.drawClouds();
-            });
-            task.planner._cloudZoomHandlerAttached = true;
-
+        if (!task._cloudZoomHandler) {
+            task._cloudZoomHandler = () => {
+                // Only rescale if this is the active task
+                if (task.planner.b21_task === task) {
+                    task.drawClouds();
+                }
+            };
+            task.planner.map.on('zoomend', task._cloudZoomHandler);
         }
     }
 
@@ -484,6 +486,11 @@ class B21_Task {
         let task = this;
         task.planner.map.removeLayer(task.map_elements);
         task.planner.map.removeLayer(task.cloudLayer);
+
+        if (task.planner.map.hasLayer(task.cloudLayer)) {
+            task.planner.map.removeLayer(task.cloudLayer);
+        }
+        task.cloudLayer = L.layerGroup()
         task.planner.map.closePopup();
     }
 

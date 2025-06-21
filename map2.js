@@ -511,6 +511,7 @@ class TaskBrowserMap {
         tbm.b21_task.update_waypoint_icons();
 
         tbm.b21_task.draw();
+        tbm.b21_task.drawClouds();
     }
 
     parseWorldPosition(worldPosition) {
@@ -903,6 +904,13 @@ class TaskBrowserMap {
         taskControlPanel.style.display = 'none';
 
         tbm.showSelectedOnly();
+
+        // --- Ensure cloudLayer is removed if present ---
+        if (tbm.map && tbm.b21_task && tbm.b21_task.cloudLayer) {
+            if (tbm.map.hasLayer(tbm.b21_task.cloudLayer)) {
+                tbm.map.removeLayer(tbm.b21_task.cloudLayer);
+            }
+        }
     }
 
     showSelectedOnly() {
