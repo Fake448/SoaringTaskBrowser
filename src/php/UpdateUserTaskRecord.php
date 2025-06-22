@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/SessionRestore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
 header('Content-Type: application/json');
@@ -98,7 +98,7 @@ try {
                 $params[":$postKey"] = $postValue;
             }
         } else {
-            // For a new record, include all fields—using NULL when no value is provided.
+            // For a new record, include all fieldsï¿½using NULL when no value is provided.
             $insertColumns[] = $dbColumn;
             $insertPlaceholders[] = ":$postKey";
             $params[":$postKey"] = $postValue;

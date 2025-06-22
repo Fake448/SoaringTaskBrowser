@@ -1869,7 +1869,7 @@ class TaskBrowser {
         formData.append('igcKeys', selectedKeys.join(','));
 
         // Call the PHP script that processes IGC keys and returns the planner URL.
-        fetch('php/SendIGCToTaskPlanner.php', {
+        fetch('src/php/SendIGCToTaskPlanner.php', {
             method: 'POST',
             body: formData
         })
@@ -1899,7 +1899,7 @@ class TaskBrowser {
         let params = new URLSearchParams({ entrySeqID: task.EntrySeqID });
 
         try {
-            let response = await fetch("php/FetchUserStuffForTask.php?" + params.toString(), { credentials: "include" });
+            let response = await fetch("src/php/FetchUserStuffForTask.php?" + params.toString(), { credentials: "include" });
             if (!response.ok) {
                 throw new Error("Network response was not ok: " + response.statusText);
             }
@@ -2146,7 +2146,7 @@ class TaskBrowser {
         postData.append("Tags", tags);
 
         try {
-            let response = await fetch("php/UpdateUserTaskRecord.php", {
+            let response = await fetch("src/php/UpdateUserTaskRecord.php", {
                 method: "POST",
                 credentials: "include",
                 body: postData
@@ -2429,7 +2429,7 @@ class TaskBrowser {
 
     // Function to increment thread access count
     incrementThreadAccess(entrySeqID) {
-        fetch(`php/IncrementThreadAccessForTask.php?EntrySeqID=${entrySeqID}`)
+        fetch(`src/php/IncrementThreadAccessForTask.php?EntrySeqID=${entrySeqID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status !== 'success') {
@@ -2441,7 +2441,7 @@ class TaskBrowser {
 
     incrementDownloadCount(entrySeqID) {
         // Call the PHP script to increment the download count
-        fetch(`php/IncrementDownloadForTask.php?EntrySeqID=${entrySeqID}`)
+        fetch(`src/php/IncrementDownloadForTask.php?EntrySeqID=${entrySeqID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status !== 'success') {
@@ -2453,7 +2453,7 @@ class TaskBrowser {
 
     incrementDownloadCountUsingTaskID(taskID) {
         // Call the PHP script to increment the download count
-        fetch(`php/IncrementDownloadForTask.php?TaskID=${taskID}`)
+        fetch(`src/php/IncrementDownloadForTask.php?TaskID=${taskID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status !== 'success') {
@@ -2501,7 +2501,7 @@ class TaskBrowser {
     downloadExtraFile(filename, source = "map", task = null) {
         const taskToUse = task || this.currentTask;
         const taskID = taskToUse.TaskID;
-        const url = `php/DownloadExtraFile.php`;
+        const url = `src/php/DownloadExtraFile.php`;
 
         // List of image extensions
         const imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'];
@@ -2777,7 +2777,7 @@ class TaskBrowser {
             if (DEBUG_LOCAL) {
                 fetch_promise = test_fetch_task_details(entrySeqID);
             } else {
-                fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
+                fetch_promise = fetch(`src/php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
             }
 
             fetch_promise
@@ -2964,7 +2964,7 @@ class TaskBrowser {
         if (url.includes('discord.com') || url.includes('google.com')) {
             return Promise.resolve({});
         }
-        const apiUrl = `php/FetchMetadata.php?url=${encodeURIComponent(url)}`;
+        const apiUrl = `src/php/FetchMetadata.php?url=${encodeURIComponent(url)}`;
         return fetch(apiUrl)
             .then(response => response.json())
             .catch(error => {
@@ -3202,7 +3202,7 @@ class TaskBrowser {
     openTaskInPlanner() {
         const newWindow = window.open('', '_blank');  // Open immediately on user click
 
-        fetch(`php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${this.currentTask.TaskID}`)
+        fetch(`src/php/PrepareSendToB21OnlineTaskPlanner.php?taskID=${this.currentTask.TaskID}`)
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
@@ -3600,7 +3600,7 @@ class TaskBrowser {
     }
 
     getUserConnectionInfo() {
-        return fetch('php/session_status.php')
+        return fetch('src/php/SessionStatus.php')
             .then(response => {
                 if (!response.ok) {
                     throw new Error('Network response was not ok: ' + response.statusText);

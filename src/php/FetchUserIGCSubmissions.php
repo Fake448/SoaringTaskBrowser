@@ -1,6 +1,6 @@
 <?php
 // Use the dedicated session restoration file instead of calling session_start() directly.
-require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/SessionRestore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
 // Ensure the user is logged in; if not, return an error response.

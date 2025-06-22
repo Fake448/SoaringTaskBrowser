@@ -248,7 +248,7 @@ class TaskBrowserMap {
         this.clearPolylines();
 
         // Construct URL with query parameters
-        const url = new URL(DEBUG_LOCAL ? 'GetTasksForMap.php' : 'php/GetTasksForMap.php', window.location.href);
+        const url = new URL(DEBUG_LOCAL ? 'src/php/GetTasksForMap.php' : 'src/php/GetTasksForMap.php', window.location.href);
         url.searchParams.append('taskCount', this.taskCount);
         url.searchParams.append('startDate', this.startDate);
         url.searchParams.append('endDate', this.endDate);
@@ -958,7 +958,7 @@ class TaskBrowserMap {
                 if (igcText) {
                     processIGC(igcText);
                 } else {
-                    fetch(`php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
+                    fetch(`src/php/GetIGCFile.php?IGCKey=${encodeURIComponent(igcKey)}&EntrySeqID=${encodeURIComponent(entrySeqID)}`)
                         .then(r => r.ok ? r.text() : Promise.reject(r.status))
                         .then(processIGC)
                         .catch(err => console.error(`Error loading IGC ${igcKey}:`, err));

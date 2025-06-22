@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/CommonFunctions.php';
-require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/SessionRestore.php';
 
 // 2) Bring in $databasePath
 $config       = include __DIR__ . '/config.php';

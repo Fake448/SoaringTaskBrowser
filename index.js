@@ -664,7 +664,7 @@ function loadAccountInfo() {
         if (!info.loggedIn) {
             accountContent.innerHTML = `
         <p>You are not logged in.</p>
-        <button class="button-style" onclick="window.location.href='php/login.php'">
+        <button class="button-style" onclick="window.location.href='src/php/Login.php'">
           Login with Discord
         </button>
       `;
@@ -701,7 +701,7 @@ function loadAccountInfo() {
             const c = document.getElementById('compId').value.trim();
             if (!p || !c) return alert('Both fields are required.');
 
-            fetch('php/updateUserInfo.php', {
+            fetch('src/php/UpdateUserInfo.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ pilotName: p, compId: c })
@@ -732,7 +732,7 @@ function loadAccountInfo() {
         const logout = document.createElement('button');
         logout.className = 'button-style';
         logout.textContent = 'Logout';
-        logout.onclick = () => window.location.href = 'php/logout.php';
+        logout.onclick = () => window.location.href = 'src/php/Logout.php';
         accountContent.appendChild(logout);
     });
 }
@@ -812,7 +812,7 @@ function renderMatchTable(matches) {
                 if (!selected.length) {
                     return alert('No records selected.');
                 }
-                fetch('php/claimIgcRecords.php', {
+                fetch('src/php/ClaimIgcRecords.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ igcKeys: selected })
@@ -846,7 +846,7 @@ function refreshIGCSubmissionsContent() {
     const contentDiv = document.getElementById('igc-submissions-content');
     contentDiv.innerHTML = 'Loading...';
 
-    fetch('php/FetchUserIGCSubmissions.php')
+    fetch('src/php/FetchUserIGCSubmissions.php')
         .then(response => response.json())
         .then(data => {
             // Render only the <table> itself; DataTables handles the scrolling container.
@@ -1133,7 +1133,7 @@ function refreshIGCSubmissionsContent() {
                 const entry = $(this).data('entry'),
                     newCom = $(this).closest('tr').find('.comment-input').val(),
                     button = $(this);
-                fetch('php/UpdateIGCComment.php', {
+                fetch('src/php/UpdateIGCComment.php', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ IGCKey: entry, Comment: newCom })
@@ -1159,7 +1159,7 @@ function refreshIGCSubmissionsContent() {
                     row = $(this).closest('tr');
                 if (confirm("Delete this IGC submission? This cannot be undone.")) {
                     const params = new URLSearchParams({ IGCKey: entry });
-                    fetch('php/DeleteIGCRecord.php', {
+                    fetch('src/php/DeleteIGCRecord.php', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                         body: params.toString()
@@ -1208,7 +1208,7 @@ function addScrollEventListeners() {
 }
 
 function fetchAndDisplayEvents() {
-    fetch('php/RetrieveNewsWSG.php?newsType=1')
+    fetch('src/php/RetrieveNewsWSG.php?newsType=1')
         .then(response => response.json())
         .then(data => {
             if (data.status === 'success') {
@@ -1684,7 +1684,7 @@ function handleParams(params) {
 async function handleGetFileFromDiscord(fileType, entrySeqID) {
     try {
         // Fetch task details from the server
-        const response = await fetch(`php/GetTaskDetailsDiscord.php?entrySeqID=${entrySeqID}`);
+        const response = await fetch(`src/php/GetTaskDetailsDiscord.php?entrySeqID=${entrySeqID}`);
         const task = await response.json();
 
         if (task.error) {

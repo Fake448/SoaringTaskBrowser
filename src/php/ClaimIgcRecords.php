@@ -1,6 +1,6 @@
 <?php
-// php/claimIgcRecords.php
-require_once __DIR__ . '/session_restore.php';
+// src/php/ClaimIgcRecords.php
+require_once __DIR__ . '/SessionRestore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
 header('Content-Type: application/json');

@@ -521,7 +521,7 @@
         const tb = this.taskBrowser;
         tbm.showLoadingSpinner("Processing IGC file...");
 
-        fetch('php/SearchTaskByIGC.php', {
+        fetch('src/php/SearchTaskByIGC.php', {
             method: 'POST',
             credentials: 'include',
             body: formData
@@ -658,7 +658,7 @@
 
         // Call the PHP script that uses the tempIGCKey (or the IGC key list, in other mode)
         // to prepare the comp file and return the URL parts for the Online Planner.
-        fetch('php/SendIGCToTaskPlanner.php', {
+        fetch('src/php/SendIGCToTaskPlanner.php', {
             method: 'POST',
             body: formData
         })
@@ -724,7 +724,7 @@
         }
         formData.append('WSGUserID', finalUid);
 
-        fetch('php/SaveIGCRecord.php', {
+        fetch('src/php/SaveIGCRecord.php', {
             method: 'POST',
             body: formData
         })

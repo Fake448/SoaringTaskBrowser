@@ -1,6 +1,6 @@
 <?php
 require __DIR__ . '/CommonFunctions.php';
-require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/SessionRestore.php';
 
 header('Content-Type: application/json');
 

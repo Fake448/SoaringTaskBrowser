@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/session_restore.php';
+require_once __DIR__ . '/SessionRestore.php';
 require_once __DIR__ . '/CommonFunctions.php';
 
 try {
