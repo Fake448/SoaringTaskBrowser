@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soaring Tasks World Map - App</title>
-    <link rel="stylesheet" href="src/css/task_draw.css">
+    <link rel="stylesheet" href="../css/task_draw.css">
     <style>
         #map {
             height: 98vh; /* Adjust height to leave space for the button */
@@ -49,7 +49,7 @@
     <div id="map"></div>
     <div id="loadingSpinner" class="loading-spinner" style="display: none;">
         <div id="loadingMessage" class="loading-message"></div>
-        <img src="src/images/loading_circle.gif" alt="Loading...">
+        <img src="../images/loading_circle.gif" alt="Loading...">
     </div>
     <button id="zoomButton" class="map-button" onclick="ITB.tbm.zoomToTask()">Zoom to Task</button>
     <button id="fullWorldButton" class="map-button" onclick="ITB.tbm.resetToFullWorld()">Full World</button>
@@ -59,17 +59,17 @@
     <!-- Make sure you put this AFTER Leaflet's CSS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
     <!-- External JavaScript file -->
-    <script src="src/js/integrated.js"></script>
-    <script src="src/js/map2.js"></script>
-    <script src="src/js/semicircle.js"></script>
-    <script src="src/js/b21_leaflet-canvas-markers.js"></script> <!-- Leaflet extension -->
-    <script src="src/js/b21_utils_static.js"></script>
-    <script src="src/js/b21_geo_static.js"></script>
-    <script src="src/js/b21_wp.js"></script>
-    <script src="src/js/b21_task.js"></script>
-    <script src="src/js/b21_msfs_pln.js"></script>
-    <script src="src/js/b21_airports.js"></script>
-    <script src="src/js/b21_server_shim/test_api.js"></script>
+    <script src="../js/integrated.js"></script>
+    <script src="../js/map2.js"></script>
+    <script src="../js/semicircle.js"></script>
+    <script src="../js/b21_leaflet-canvas-markers.js"></script> <!-- Leaflet extension -->
+    <script src="../js/b21_utils_static.js"></script>
+    <script src="../js/b21_geo_static.js"></script>
+    <script src="../js/b21_wp.js"></script>
+    <script src="../js/b21_task.js"></script>
+    <script src="../js/b21_msfs_pln.js"></script>
+    <script src="../js/b21_airports.js"></script>
+    <script src="../js/b21_server_shim/test_api.js"></script>
     <script>
         var DEBUG_LOCAL = false;
         var VERSION = "0.0.4_MD";
