@@ -254,7 +254,6 @@ class B21_Airports {
 
     // User has typed in search box
     search(search_value) {
-        let parent = this;
         const RESULTS_MAX = 50;
         let results = [];
         for (let box_id in this.airports_data.box_coords) {
@@ -280,5 +279,4 @@ class B21_Airports {
 
         return results;
     }
-
-} // end class B21_Airports
+}

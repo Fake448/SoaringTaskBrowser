@@ -1,16 +1,14 @@
 "use strict"
 
 class IntegratedTB {
-
+    
     constructor() {
-        let tb = this;
-        tb.tbm = new TaskBrowserMap(tb);
+        this.tbm = new TaskBrowserMap(this);
     }
 
     init() {
-        let tb = this;
         console.log("Integrated.init()");
-        tb.loadMapUserSettings();
+        this.loadMapUserSettings();
     }
 
     //
@@ -19,21 +17,18 @@ class IntegratedTB {
 
     // Function to select a task on the map
     selectTaskFromApp(entrySeqID, forceZoomToTask = false) {
-        let tb = this;
-        tb.tbm.selectTaskFromDPHXApp(entrySeqID, forceZoomToTask);
+        this.tbm.selectTaskFromDPHXApp(entrySeqID, forceZoomToTask);
     };
 
     // Function to filter tasks based on a list of EntrySeqIDs
     filterTasksFromApp(entrySeqIDs) {
-        let tb = this;
         // Save the list of tasks
-        tb.tbm.filterTasksFromApp(entrySeqIDs);
+        this.tbm.filterTasksFromApp(entrySeqIDs);
     };
 
     // Function to clear all filters and show all tasks
     clearFilterFromApp() {
-        let tb = this;
-        tb.tbm.clearFilterFromApp();
+        this.tbm.clearFilterFromApp();
     };
 
     setJsonCookie(name, jsonObject, days) {
@@ -81,19 +76,17 @@ class IntegratedTB {
     }
 
     saveMapUserSettings() {
-        const tb = this;
         const settings = {
-            mapLayer: tb.tbm.getCurrentMapLayer(),
-            showAirports: tb.tbm.isLayerVisible('Airports'),
-            showRailways: tb.tbm.isLayerVisible('Railways'),
-            windCompass: tb.tbm.isLayerVisible('Wind Compass')
+            mapLayer: this.tbm.getCurrentMapLayer(),
+            showAirports: this.tbm.isLayerVisible('Airports'),
+            showRailways: this.tbm.isLayerVisible('Railways'),
+            windCompass: this.tbm.isLayerVisible('Wind Compass')
         };
-        tb.setJsonCookie('mapUserSettings', settings, 300);
+        this.setJsonCookie('mapUserSettings', settings, 300);
     }
 
     loadMapUserSettings() {
-        const tb = this;
-        const settings = tb.getJsonCookie('mapUserSettings', 300);
+        const settings = this.getJsonCookie('mapUserSettings', 300);
 
         // Set default settings if not found
         const defaultSettings = {

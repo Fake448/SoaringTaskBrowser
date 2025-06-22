@@ -1,6 +1,7 @@
 'use strict';
 
 class LeafletCanvasMarker {
+
     constructor() {
         L.Canvas.include({
             _updateImg(layer) {
@@ -65,4 +66,4 @@ class LeafletCanvasMarker {
             return new CanvasMarker(...opt);
         };
     }
-} // end class LeafletCanvasMarker
+}

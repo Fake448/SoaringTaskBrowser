@@ -5,6 +5,7 @@
 // ******************************************************************************
 
 class B21_Task {
+    
     constructor(planner) {
         let task = this;
         task.planner = planner; // Reference to parent app

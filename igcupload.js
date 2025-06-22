@@ -1,4 +1,5 @@
 ﻿class IGCUpload {
+    
     constructor(taskBrowser) {
         // Store the reference to the TaskBrowser instance.
         this.taskBrowser = taskBrowser;
@@ -746,5 +747,4 @@
                 alert("Error submitting IGC record.");
             });
     }
-
 }

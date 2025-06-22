@@ -153,5 +153,4 @@ class Geo {
     static miles(x) {
             return x * 0.000621371;
     }
-
 }

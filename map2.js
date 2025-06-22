@@ -1,63 +1,61 @@
 class TaskBrowserMap {
     constructor(tb) {
-        let tbm = this;
-        tbm.tb = tb;
+        this.tb = tb;
 
-        tbm.runningInApp = false;
+        this.runningInApp = false;
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('appContext')) {
-            tbm.runningInApp = true;
-            tbm.taskCount = 9999; // no limit when from the app
+            this.runningInApp = true;
+            this.taskCount = 9999; // no limit when from the app
         } else {
-            tbm.runningInApp = false;
-            tbm.taskCount = 300; // or any sensible default value for the number of tasks
+            this.runningInApp = false;
+            this.taskCount = 300; // or any sensible default value for the number of tasks
         }
 
         // Default values for taskCount, startDate, and endDate
-        tbm.startDate = '2000-01-01'; // example default minimum date
-        tbm.endDate = '2200-01-01'; // max date
+        this.startDate = '2000-01-01'; // example default minimum date
+        this.endDate = '2200-01-01'; // max date
         // Default values for soaring types (all selected)
-        tbm.soaringTypes = {
+        this.soaringTypes = {
             soaringRidge: true,
             soaringThermals: true,
             soaringWaves: true,
             soaringDynamic: true
         };
         // Default filter type for soaring types (e.g., "any" for OR filtering)
-        tbm.soaringTypeFilter = 'any';
+        this.soaringTypeFilter = 'any';
 
         // Default values for duration filters
-        tbm.durationMin = 0;               // Min duration in minutes
-        tbm.durationMax = 9999;            // Max duration in minutes
-        tbm.includeNoDuration = true;      // Include tasks with no duration specified
+        this.durationMin = 0;               // Min duration in minutes
+        this.durationMax = 9999;            // Max duration in minutes
+        this.includeNoDuration = true;      // Include tasks with no duration specified
 
         // B21 update, these are used by B21_Task / B21_WP
-        tbm.settings = {
+        this.settings = {
             altitude_units: "feet",
             wp_radius_units: "m",
             task_line_color_1: "blue",
             task_line_color_2: "none"
         }
 
-        tbm.M_TO_FEET = 3.28084;
-        tbm.defWeight = 6;
-        tbm.hoverWeight = 7;
-        tbm.selWeight = 0;
+        this.M_TO_FEET = 3.28084;
+        this.defWeight = 6;
+        this.hoverWeight = 7;
+        this.selWeight = 0;
 
         //B21 update
-        tbm.fetchBounds = null; // Keep track of the GetTasksForMap bounds
-        tbm.api_tasks = {};     // Will hold all tasks from GetTasksForMap.php
-        tbm.b21_task = null;    // Will hold parsed 'current' task
+        this.fetchBounds = null; // Keep track of the GetTasksForMap bounds
+        this.api_tasks = {};     // Will hold all tasks from GetTasksForMap.php
+        this.b21_task = null;    // Will hold parsed 'current' task
 
-        //tbm.map = L.map('map').setView([20, 0], 2);
-
+        //this.map = L.map('map').setView([20, 0], 2);
 
         // b21_airports requirements
-        tbm.canvas_renderer = L.canvas();
-        tbm.airport_markers = L.layerGroup(); //.addTo(planner.map);
+        this.canvas_renderer = L.canvas();
+        this.airport_markers = L.layerGroup(); //.addTo(planner.map);
 
         // Define different map layers
-        tbm.base_maps = {
+        this.base_maps = {
             "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
             }),
@@ -78,9 +76,9 @@ class TaskBrowserMap {
             })
         };
 
-        if (!tbm.runningInApp) {
-            tbm.map_layers = {
-                "Airports": tbm.airport_markers,
+        if (!this.runningInApp) {
+            this.map_layers = {
+                "Airports": this.airport_markers,
                 "Railways": L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
@@ -89,8 +87,8 @@ class TaskBrowserMap {
                 "Show selected only": L.layerGroup()
             };
         } else {
-            tbm.map_layers = {
-                "Airports": tbm.airport_markers,
+            this.map_layers = {
+                "Airports": this.airport_markers,
                 "Railways": L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
@@ -99,84 +97,84 @@ class TaskBrowserMap {
             };
         }
 
-        tbm.map = L.map('map', {
+        this.map = L.map('map', {
             minZoom: 2,
             maxZoom: 16,
             worldCopyJump: true,
-            layers: [tbm.base_maps["Google Terrain"], tbm.airport_markers]
+            layers: [this.base_maps["Google Terrain"], this.airport_markers]
         });
 
-        tbm.map.setView([20, 0], 2);;
+        this.map.setView([20, 0], 2);;
 
-        L.control.layers(tbm.base_maps, tbm.map_layers).addTo(tbm.map);
+        L.control.layers(this.base_maps, this.map_layers).addTo(this.map);
 
-        tbm.currentPolyline = null; // Track the currently selected polyline
-        tbm.currentEntrySeqID = null; // Track the EntrySeqID of the selected polyline
-        tbm.filteredEntrySeqIDs = null; // Track the filtered tasks
+        this.currentPolyline = null; // Track the currently selected polyline
+        this.currentEntrySeqID = null; // Track the EntrySeqID of the selected polyline
+        this.filteredEntrySeqIDs = null; // Track the filtered tasks
 
         // Initial task fetch
-        tbm.filtering = false;
-        tbm.fetchTasks();
+        this.filtering = false;
+        this.fetchTasks();
 
         this.addTaskCountControl();
 
         // Fetch tasks when the map view changes
-        tbm.map.on('moveend', function () {
-            tbm.airports.draw(tbm.map);
-            tbm.filterTasksByMapBounds(); // Filter tasks based on the updated map bounds
+        this.map.on('moveend', () => {
+            this.airports.draw(this.map);
+            this.filterTasksByMapBounds();
         });
 
-        tbm.airports = new B21_Airports(tbm, {
+        this.airports = new B21_Airports(this, {
             json_url: "https://xp-soaring.github.io/tasks/b21_task_planner/airports/airports.json",
             airport_img_url: "https://xp-soaring.github.io/tasks/b21_task_planner/images/airport_00.png"
         });
 
-        tbm.airports.init(tbm.map); // Here we ASYCHRONOUSLY load the airports JSON data (& will draw on map)
+        this.airports.init(this.map); // Here we ASYCHRONOUSLY load the airports JSON data (& will draw on map)
 
         let windCompassOptionChecked = false;
         let windCompassValidWindLayer = false;
         let showSelectedOnlyChecked = false;
-        tbm.addCompassRoseControl();
+        this.addCompassRoseControl();
 
         // Listen to layer control changes
-        tbm.map.on('overlayadd', function (eventLayer) {
+        this.map.on('overlayadd', (eventLayer) => {
             if (eventLayer.name === 'Wind Compass') {
-                tbm.windCompassOptionChecked = true;
-                tbm.setWindCompassVisibility();
+                this.windCompassOptionChecked = true;
+                this.setWindCompassVisibility();
             } else if (eventLayer.name === 'Show selected only') {
-                tbm.showSelectedOnlyChecked = true;
-                tbm.showSelectedOnly();
+                this.showSelectedOnlyChecked = true;
+                this.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.map.on('overlayremove', function (eventLayer) {
+        this.map.on('overlayremove', (eventLayer) => {
             if (eventLayer.name === 'Wind Compass') {
-                tbm.windCompassOptionChecked = false;
-                tbm.setWindCompassVisibility();
+                this.windCompassOptionChecked = false;
+                this.setWindCompassVisibility();
             } else if (eventLayer.name === 'Show selected only') {
-                tbm.showSelectedOnlyChecked = false;
-                tbm.showSelectedOnly();
+                this.showSelectedOnlyChecked = false;
+                this.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.map.on('baselayerchange', function (eventLayer) {
-            tbm.tb.saveMapUserSettings();
+        this.map.on('baselayerchange', (eventLayer) => {
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.setWindCompassVisibility();
+        this.setWindCompassVisibility();
 
         // Cache properties for IGC track logs
-        tbm.currentIGCCacheEntrySeqID = null;
-        tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
-        tbm.igcTrackNormalWeight = 2;
-        tbm.igcTrackNormalColor = 'black';
-        tbm.igcTrackHighlightedWeight = 4;
-        tbm.igcTrackHighlightedColor = '#9900cc';
-        tbm.igcTrackSelectedWeight = 4;
-        tbm.igcTrackSelectedColor = 'red';
-        tbm.igcParser = {
+        this.currentIGCCacheEntrySeqID = null;
+        this.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
+        this.igcTrackNormalWeight = 2;
+        this.igcTrackNormalColor = 'black';
+        this.igcTrackHighlightedWeight = 4;
+        this.igcTrackHighlightedColor = '#9900cc';
+        this.igcTrackSelectedWeight = 4;
+        this.igcTrackSelectedColor = 'red';
+        this.igcParser = {
             parse: function (igcText) {
                 const fixes = [];
                 const lines = igcText.split(/\r?\n/);
@@ -242,27 +240,25 @@ class TaskBrowserMap {
 
     // Fetch and filter tasks based on current filter settings
     fetchTasks() {
-        let tbm = this;
-
         // Show the loading spinner
-        tbm.showLoadingSpinner("Fetching tasks");
+        this.showLoadingSpinner("Fetching tasks");
 
-        console.log("fetchTasks() with filters:", tbm.taskCount, tbm.startDate, tbm.endDate, tbm.soaringTypes, tbm.soaringTypeFilter, tbm.durationMin, tbm.durationMax, tbm.includeNoDuration);
+        console.log("fetchTasks() with filters:", this.taskCount, this.startDate, this.endDate, this.soaringTypes, this.soaringTypeFilter, this.durationMin, this.durationMax, this.includeNoDuration);
 
-        tbm.clearPolylines();
+        this.clearPolylines();
 
         // Construct URL with query parameters
         const url = new URL(DEBUG_LOCAL ? 'GetTasksForMap.php' : 'php/GetTasksForMap.php', window.location.href);
-        url.searchParams.append('taskCount', tbm.taskCount);
-        url.searchParams.append('startDate', tbm.startDate);
-        url.searchParams.append('endDate', tbm.endDate);
+        url.searchParams.append('taskCount', this.taskCount);
+        url.searchParams.append('startDate', this.startDate);
+        url.searchParams.append('endDate', this.endDate);
         // Add duration parameters to the URL
-        url.searchParams.append('durationMin', tbm.durationMin);
-        url.searchParams.append('durationMax', tbm.durationMax);
-        url.searchParams.append('includeNoDuration', tbm.includeNoDuration ? '1' : '0');
+        url.searchParams.append('durationMin', this.durationMin);
+        url.searchParams.append('durationMax', this.durationMax);
+        url.searchParams.append('includeNoDuration', this.includeNoDuration ? '1' : '0');
 
         // Add soaring type filter type (any, all, only, exclude)
-        url.searchParams.append('soaringTypeFilter', tbm.soaringTypeFilter);
+        url.searchParams.append('soaringTypeFilter', this.soaringTypeFilter);
 
         // Map soaring type names to expected PHP parameter names
         const soaringTypeKeys = {
@@ -273,7 +269,7 @@ class TaskBrowserMap {
         };
 
         // Add each soaring type as a parameter based on user selection
-        Object.entries(tbm.soaringTypes).forEach(([type, isSelected]) => {
+        Object.entries(this.soaringTypes).forEach(([type, isSelected]) => {
             const key = soaringTypeKeys[type];
             if (key) {
                 url.searchParams.append(key, isSelected ? '1' : '0');
@@ -289,45 +285,43 @@ class TaskBrowserMap {
                 const { tasks, totalTasks, oldestDate, newestDate } = data;
 
                 // Store all fetched tasks locally
-                tbm.allTasks = tasks;
+                this.allTasks = tasks;
 
                 // Update dates and total tasks from the database
-                tbm.oldestDate = oldestDate.split(' ')[0];
-                tbm.newestDate = newestDate.split(' ')[0];
-                tbm.totalTasksInDB = totalTasks;
+                this.oldestDate = oldestDate.split(' ')[0];
+                this.newestDate = newestDate.split(' ')[0];
+                this.totalTasksInDB = totalTasks;
 
                 // Set filtering flag
-                tbm.filtering = (tbm.allTasks.length != tbm.totalTasksInDB);
-                tbm.updateTaskCountControl(tbm.allTasks.length);
+                this.filtering = (this.allTasks.length != this.totalTasksInDB);
+                this.updateTaskCountControl(this.allTasks.length);
 
                 // Clear and load tasks
-                tbm.api_tasks = {};
-                tasks.forEach(api_task => tbm.loadTask(api_task));
+                this.api_tasks = {};
+                tasks.forEach(api_task => this.loadTask(api_task));
 
-                tbm.tb.populateDataTable(tasks);
+                this.tb.populateDataTable(tasks);
 
                 // Apply map bounds filtering and update UI
-                tbm.filterTasksByMapBounds();
-                tbm.tb.setupSearchFiltersPanel();
-                tbm.tb.sortTasksGrid("Updated", "desc");
+                this.filterTasksByMapBounds();
+                this.tb.setupSearchFiltersPanel();
+                this.tb.sortTasksGrid("Updated", "desc");
             })
             .catch(error => {
                 console.error('Error fetching tasks:', error);
             })
             .finally(() => {
-                tbm.hideLoadingSpinner();
+                this.hideLoadingSpinner();
             });
     }
 
     filterTasksByMapBounds() {
-        let tbm = this;
-
-        if (!tbm.allTasks) return; // Ensure tasks are loaded first
+        if (!this.allTasks) return; // Ensure tasks are loaded first
 
         // Show the loading spinner
-        tbm.showLoadingSpinner("Fetching tasks...");
+        this.showLoadingSpinner("Fetching tasks...");
 
-        let bounds = tbm.map.getBounds();
+        let bounds = this.map.getBounds();
         const bufferKm = 0.5;
         const bufferLat = bufferKm / 110.574;
         const bufferLng = bufferKm / (111.320 * Math.cos(bounds.getCenter().lat * Math.PI / 180));
@@ -339,7 +333,7 @@ class TaskBrowserMap {
         const lngMax = bounds.getNorthEast().lng + bufferLng;
 
         // Filter tasks based on bounds
-        tbm.visibleTasks = tbm.allTasks.filter(task => (
+        this.visibleTasks = this.allTasks.filter(task => (
             task.LatMax >= latMin &&
             task.LatMin <= latMax &&
             task.LongMax >= lngMin &&
@@ -347,41 +341,39 @@ class TaskBrowserMap {
         ));
 
         // Check if showSelectedOnly is enabled and a task is selected
-        if (tbm.showSelectedOnlyChecked && tbm.currentEntrySeqID) {
+        if (this.showSelectedOnlyChecked && this.currentEntrySeqID) {
             // Only show the selected task if it's within the bounds
-            let selectedTask = tbm.api_tasks[tbm.currentEntrySeqID];
+            let selectedTask = this.api_tasks[this.currentEntrySeqID];
             if (selectedTask &&
                 selectedTask.LatMax >= latMin &&
                 selectedTask.LatMin <= latMax &&
                 selectedTask.LongMax >= lngMin &&
                 selectedTask.LongMin <= lngMax
             ) {
-                selectedTask.polyline.addTo(tbm.map);
+                selectedTask.polyline.addTo(this.map);
             }
         } else {
             // Otherwise, show all visible tasks within bounds
-            tbm.visibleTasks.forEach(task => {
-                tbm.api_tasks[task.EntrySeqID].polyline.addTo(tbm.map);
+            this.visibleTasks.forEach(task => {
+                this.api_tasks[task.EntrySeqID].polyline.addTo(this.map);
             });
         }
 
         // Restore the selected task style if a task is selected
-        if (tbm.currentEntrySeqID) {
-            tbm.selectTaskCommon(tbm.currentEntrySeqID, false, false);
+        if (this.currentEntrySeqID) {
+            this.selectTaskCommon(this.currentEntrySeqID, false, false);
         }
 
         // Hide the loading spinner
-        tbm.hideLoadingSpinner();
+        this.hideLoadingSpinner();
 
     }
 
     //B21_update
     loadTask(api_task) {
-        let tbm = this;
-
         // Check if the task is not in the cache
-        if (!tbm.api_tasks[api_task.EntrySeqID]) {
-            tbm.api_tasks[api_task.EntrySeqID] = api_task; // cache the download
+        if (!this.api_tasks[api_task.EntrySeqID]) {
+            this.api_tasks[api_task.EntrySeqID] = api_task; // cache the download
         }
 
         const parser = new DOMParser();
@@ -391,14 +383,14 @@ class TaskBrowserMap {
         const coordinates = [];
         for (let i = 0; i < waypoints.length; i++) {
             const worldPosition = waypoints[i].getElementsByTagName("WorldPosition")[0].textContent;
-            const [lat, lon] = tbm.parseWorldPosition(worldPosition);
+            const [lat, lon] = this.parseWorldPosition(worldPosition);
             coordinates.push([lat, lon]);
         }
 
         if (coordinates.length > 0) {
             const polyline = L.polyline(coordinates, {
                 color: "#ff7800",
-                weight: tbm.defWeight,
+                weight: this.defWeight,
                 opacity: 0.7,
                 className: 'task-polyline'
             });
@@ -406,74 +398,71 @@ class TaskBrowserMap {
             // Bind popup to the polyline
             polyline.bindPopup(`${api_task.Title}<br>ID: ${api_task.EntrySeqID}`);
 
-            polyline.addTo(tbm.map);
+            polyline.addTo(this.map);
 
-            tbm.api_tasks[api_task.EntrySeqID].bounds = polyline.getBounds(); // B21 update - add .bounds to each api_task
+            this.api_tasks[api_task.EntrySeqID].bounds = polyline.getBounds(); // B21 update - add .bounds to each api_task
 
-            tbm.api_tasks[api_task.EntrySeqID].polyline = polyline; // b21 update - add polyline to api_tasks entry
+            this.api_tasks[api_task.EntrySeqID].polyline = polyline; // b21 update - add polyline to api_tasks entry
 
-            polyline.on('mouseover', (e) => { tbm.highlightTask(tbm, api_task.EntrySeqID, e); });
+            polyline.on('mouseover', (e) => { this.highlightTask(tbm, api_task.EntrySeqID, e); });
 
-            polyline.on('mouseout', () => { tbm.unhighlightTask(tbm, api_task.EntrySeqID); });
+            polyline.on('mouseout', () => { this.unhighlightTask(tbm, api_task.EntrySeqID); });
 
             polyline.on('click', function () {
-                tbm.selectTaskFromClick(api_task.EntrySeqID);
+                this.selectTaskFromClick(api_task.EntrySeqID);
             });
         }
     }
 
     highlightTask(tbm, entrySeqID, event) {
         // Only highlight if it's not the currently selected task
-        if (tbm.currentEntrySeqID !== entrySeqID) {
-            const polyline = tbm.api_tasks[entrySeqID].polyline;
-            polyline.setStyle({ color: '#9900cc', weight: tbm.hoverWeight });
+        if (this.currentEntrySeqID !== entrySeqID) {
+            const polyline = this.api_tasks[entrySeqID].polyline;
+            polyline.setStyle({ color: '#9900cc', weight: this.hoverWeight });
             polyline.bringToFront(); // Ensure it's on top
 
             // Only show popup if event is provided (i.e., when hovering directly on the map)
             if (event) {
                 // Calculate the offset position for the popup
                 const offset = L.point(10, -10); // Adjust these values as needed
-                const popupPosition = tbm.map.layerPointToLatLng(tbm.map.latLngToLayerPoint(event.latlng).add(offset));
+                const popupPosition = this.map.layerPointToLatLng(this.map.latLngToLayerPoint(event.latlng).add(offset));
 
                 // Open the popup at the offset position
                 const popup = polyline.getPopup();
-                popup.setLatLng(popupPosition).openOn(tbm.map);
+                popup.setLatLng(popupPosition).openOn(this.map);
             }
         }
     }
 
     unhighlightTask(tbm, entrySeqID) {
         // Only unhighlight if it's not the currently selected task
-        if (tbm.currentEntrySeqID !== entrySeqID) {
-            tbm.api_tasks[entrySeqID].polyline.setStyle({ color: '#ff7800', weight: tbm.defWeight });
-            tbm.api_tasks[entrySeqID].polyline.closePopup(); // Close popup
+        if (this.currentEntrySeqID !== entrySeqID) {
+            this.api_tasks[entrySeqID].polyline.setStyle({ color: '#ff7800', weight: this.defWeight });
+            this.api_tasks[entrySeqID].polyline.closePopup(); // Close popup
         }
     }
 
     //B21 update
     mapExpanded(new_bounds) {
-        let tbm = this;
-        if (tbm.fetchBounds == null) {
+        if (this.fetchBounds == null) {
             return true;
         }
-        return !tbm.fetchBounds.contains(new_bounds);
+        return !this.fetchBounds.contains(new_bounds);
     }
 
     // B21 update - each polyline now stored in api_task object
     clearPolylines() {
-        let tbm = this;
-        for (const entrySeqID in tbm.api_tasks) {
-            tbm.map.removeLayer(tbm.api_tasks[entrySeqID].polyline);
+        for (const entrySeqID in this.api_tasks) {
+            this.map.removeLayer(this.api_tasks[entrySeqID].polyline);
         }
     }
 
-    // B21 update - tbm.api_tasks[entrySeqID].polyline
+    // B21 update - this.api_tasks[entrySeqID].polyline
     resetPolylines() {
-        let tbm = this;
-        for (const entrySeqID in tbm.api_tasks) {
-            let polyline = tbm.api_tasks[entrySeqID].polyline;
+        for (const entrySeqID in this.api_tasks) {
+            let polyline = this.api_tasks[entrySeqID].polyline;
             if (polyline.options.selected) {
-                polyline.setStyle({ color: '#ff7800', weight: tbm.defWeight });
+                polyline.setStyle({ color: '#ff7800', weight: this.defWeight });
                 polyline.options.selected = false;
             }
         }
@@ -481,61 +470,57 @@ class TaskBrowserMap {
 
     drawPolylines() {
         // Add all polylines to the map
-        for (const entrySeqID in tbm.api_tasks) {
-            let polyline = tbm.api_tasks[entrySeqID].polyline;
-            polyline.addTo(tbm.map);
+        for (const entrySeqID in this.api_tasks) {
+            let polyline = this.api_tasks[entrySeqID].polyline;
+            polyline.addTo(this.map);
         }
     }
 
     setB21Task(api_task) {
-        let tbm = this;
         // Remove the previous task map_elements
-        if (tbm.b21_task != null) {
-            if (tbm.b21_task.entrySeqID == api_task.EntrySeqID) {
+        if (this.b21_task != null) {
+            if (this.b21_task.entrySeqID == api_task.EntrySeqID) {
                 return;
             }
-            tbm.b21_task.reset();
+            this.b21_task.reset();
         }
 
-        tbm.b21_task = new B21_Task(tbm);   // B21 update here's where we parse the XML into a B21_Task
-        tbm.b21_task.load_pln_str(api_task.PLNXML, api_task.Title);
-        tbm.b21_task.update_waypoints();
-        tbm.b21_task.update_waypoint_icons();
+        this.b21_task = new B21_Task(tbm);   // B21 update here's where we parse the XML into a B21_Task
+        this.b21_task.load_pln_str(api_task.PLNXML, api_task.Title);
+        this.b21_task.update_waypoints();
+        this.b21_task.update_waypoint_icons();
 
-        tbm.b21_task.draw();
+        this.b21_task.draw();
     }
 
     parseWorldPosition(worldPosition) {
-        let tbm = this;
         const regex = /([NS])(\d+)° (\d+)' ([\d.]+)",([EW])(\d+)° (\d+)' ([\d.]+)"/;
         const match = regex.exec(worldPosition);
         if (!match) return [0, 0];
 
-        const lat = tbm.parseCoordinate(match[1], match[2], match[3], match[4]);
-        const lon = tbm.parseCoordinate(match[5], match[6], match[7], match[8]);
+        const lat = this.parseCoordinate(match[1], match[2], match[3], match[4]);
+        const lon = this.parseCoordinate(match[5], match[6], match[7], match[8]);
         return [lat, lon];
     }
 
     parseCoordinate(direction, degrees, minutes, seconds) {
-        let tbm = this;
         let decimal = parseFloat(degrees) + parseFloat(minutes) / 60 + parseFloat(seconds) / 3600;
         if (direction === 'S' || direction === 'W') decimal = -decimal;
         return decimal;
     }
 
     manageFilteredTasks() {
-        let tbm = this;
         // Check if filtered tasks are active or not (filteredEntrySeqIDs is null or not)
-        if (tbm.filteredEntrySeqIDs === null) {
+        if (this.filteredEntrySeqIDs === null) {
             return;
         }
         // Hide all polylines first
-        tbm.clearPolylines();
+        this.clearPolylines();
 
         // Show only the polylines whose EntrySeqID is in the filteredEntrySeqIDs list
-        tbm.filteredEntrySeqIDs.forEach(entrySeqID => {
-            if (tbm.api_tasks[entrySeqID]) {
-                tbm.api_tasks[entrySeqID].polyline.addTo(tbm.map);
+        this.filteredEntrySeqIDs.forEach(entrySeqID => {
+            if (this.api_tasks[entrySeqID]) {
+                this.api_tasks[entrySeqID].polyline.addTo(this.map);
             }
         });
     }
@@ -546,29 +531,27 @@ class TaskBrowserMap {
 
     // Selecting a task from the "task" parameter in the URL string
     selectTaskFromURL(entrySeqID, doNotExpand = false, sectionsToExpand = []) {
-        let tbm = this;
-
         if (doNotExpand) {
-            tbm.tb.fromURL = false;
-            tbm.tb.sectionsToExpandFromURL = null;
+            this.tb.fromURL = false;
+            this.tb.sectionsToExpandFromURL = null;
         } else {
-            tbm.tb.fromURL = true;
-            tbm.tb.sectionsToExpandFromURL = Array.isArray(sectionsToExpand) ? sectionsToExpand : [];
+            this.tb.fromURL = true;
+            this.tb.sectionsToExpandFromURL = Array.isArray(sectionsToExpand) ? sectionsToExpand : [];
         }
 
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromURL()", entrySeqIDNbr);
-        tbm.clearIGCTracklogs();
+        this.clearIGCTracklogs();
 
         // 1. Remove the task parameter from the URL
-        tbm.tb.clearUrlParameter('task');
-        tbm.tb.clearUrlParameter('results');
+        this.tb.clearUrlParameter('task');
+        this.tb.clearUrlParameter('results');
 
         // 2. Fetch task details and proceed only if the task is available
-        tbm.tb.getTaskDetails(entrySeqIDNbr, true).then(isAvailable => {
+        this.tb.getTaskDetails(entrySeqIDNbr, true).then(isAvailable => {
             if (isAvailable) {
                 // 3. Call the selectTaskCommon to perform the common actions
-                tbm.selectTaskCommon(entrySeqIDNbr, true);
+                this.selectTaskCommon(entrySeqIDNbr, true);
             } else {
                 console.log(`Task ${entrySeqIDNbr} is unavailable or could not be retrieved.`);
             }
@@ -579,37 +562,32 @@ class TaskBrowserMap {
 
     // Selecting a task from a true user click on the map
     selectTaskFromClick(entrySeqID, forceZoomToTask = false) {
-
-        let tbm = this;
-
         // Check if the igcOverlay is visible. If so, exit immediately.
         const igcOverlay = document.getElementById('igcOverlay');
         if (igcOverlay && igcOverlay.style.display === 'block') {
             return;
         }
 
-        tbm.tb.fromURL = false;
+        this.tb.fromURL = false;
         console.log("selectTaskFromClick()", entrySeqID);
-        tbm.clearIGCTracklogs();
+        this.clearIGCTracklogs();
 
         // 1. Call the selectTaskCommon to perform the common actions
-        tbm.selectTaskCommon(entrySeqID, forceZoomToTask);
+        this.selectTaskCommon(entrySeqID, forceZoomToTask);
 
         // 2a. If we're not running in the context of the DPHX app, get the task details to show on the right panel.
         // 2b. If we're running in the context of DPHX app, call the postSelectedTask function.
-        if (tbm.runningInApp) {
-            tbm.postSelectedTask(entrySeqID); // Notify the app
+        if (this.runningInApp) {
+            this.postSelectedTask(entrySeqID); // Notify the app
         } else {
-            tbm.tb.selectGridTask(entrySeqID);
-            tbm.tb.getTaskDetails(entrySeqID, false); // Display task details on the right panel
+            this.tb.selectGridTask(entrySeqID);
+            this.tb.getTaskDetails(entrySeqID, false); // Display task details on the right panel
         }
     }
 
     // Selecting a task based on an interaction from the external DPHX app
     selectTaskFromDPHXApp(entrySeqID, forceZoomToTask = false) {
-
-        let tbm = this;
-        tbm.tb.fromURL = false;
+        this.tb.fromURL = false;
         const entrySeqIDNbr = Number(entrySeqID);
         console.log("selectTaskFromDPHXApp()", entrySeqIDNbr);
 
@@ -620,46 +598,43 @@ class TaskBrowserMap {
         // Right now, not necessary as all tasks are being loaded right from the start
 
         // 3. Call the selectTaskCommon to perform the common actions
-        tbm.selectTaskCommon(entrySeqIDNbr, forceZoomToTask);
+        this.selectTaskCommon(entrySeqIDNbr, forceZoomToTask);
 
     }
 
     // Common actions that need to be performed by all task selection use cases
     selectTaskCommon(entrySeqID, forceZoomToTask = false, realSelection = true) {
-
-        let tbm = this;
-
-        if (!tbm.runningInApp && realSelection) {
-            tbm.tb.TaskDetailsPanelVisible = true;
-            tbm.tb.showTaskDetailsPanel();
+        if (!this.runningInApp && realSelection) {
+            this.tb.TaskDetailsPanelVisible = true;
+            this.tb.showTaskDetailsPanel();
         }
 
         // 1. The previous (if any) selected task's normal unselected polyline should be drawn (and the detailed task rendering removed)
-        tbm.resetPolylines();
+        this.resetPolylines();
 
         // 2. Render the detailed task and remove the regular polyline
-        tbm.currentEntrySeqID = entrySeqID; // Track the EntrySeqID
-        if (tbm.api_tasks[entrySeqID] == undefined) {
+        this.currentEntrySeqID = entrySeqID; // Track the EntrySeqID
+        if (this.api_tasks[entrySeqID] == undefined) {
             return;
         }
-        let api_task = tbm.api_tasks[entrySeqID]; // Retrieve api_task from the cache
-        tbm.currentPolyline = api_task.polyline; // Set the current polyline
-        tbm.currentPolyline.setStyle({ color: '#0000ff', weight: tbm.selWeight }); // Set selWeight (0 actually)
-        tbm.currentPolyline.options.selected = true; // Se the selection flag on the polyline
-        tbm.setB21Task(api_task); // Render the B21Task
+        let api_task = this.api_tasks[entrySeqID]; // Retrieve api_task from the cache
+        this.currentPolyline = api_task.polyline; // Set the current polyline
+        this.currentPolyline.setStyle({ color: '#0000ff', weight: this.selWeight }); // Set selWeight (0 actually)
+        this.currentPolyline.options.selected = true; // Se the selection flag on the polyline
+        this.setB21Task(api_task); // Render the B21Task
 
         if (realSelection) {
             // 3. Zoom in on the task if specified or if task bounds outside current map bounds
-            let taskBounds = tbm.b21_task.get_bounds();
-            let mapBounds = tbm.map.getBounds();
+            let taskBounds = this.b21_task.get_bounds();
+            let mapBounds = this.map.getBounds();
             let containsBounds = mapBounds.contains(taskBounds);
 
             if (forceZoomToTask || !containsBounds) {
                 console.log('zooming to task', forceZoomToTask, containsBounds);
-                tbm.zoomToTask();
+                this.zoomToTask();
             }
         }
-        tbm.showSelectedOnly();
+        this.showSelectedOnly();
     }
 
     //
@@ -668,15 +643,13 @@ class TaskBrowserMap {
 
     // Full world button function
     resetToFullWorld() {
-        let tbm = this;
-        tbm.map.setView([20, 0], 2); // Set the default view with the entire world
+        this.map.setView([20, 0], 2); // Set the default view with the entire world
     }
 
     // Function to zoom to the selected task
     zoomToTask() {
-        let tbm = this;
-        if (tbm.b21_task) {
-            tbm.map.fitBounds(tbm.b21_task.get_bounds());
+        if (this.b21_task) {
+            this.map.fitBounds(this.b21_task.get_bounds());
         } else {
             alert("No task selected");
         }
@@ -699,13 +672,12 @@ class TaskBrowserMap {
 
     // Function to filter tasks based on a list of EntrySeqIDs
     filterTasksFromApp(entrySeqIDs) {
-        let tbm = this;
         console.log('filterTasksFromApp');
 
         // Save the list of tasks
-        tbm.filteredEntrySeqIDs = entrySeqIDs;
+        this.filteredEntrySeqIDs = entrySeqIDs;
 
-        tbm.manageFilteredTasks();
+        this.manageFilteredTasks();
 
         // Todo: Reselect active task??
 
@@ -713,22 +685,20 @@ class TaskBrowserMap {
 
     // Function to clear all filters and show all tasks
     clearFilterFromApp() {
-        let tbm = this;
         console.log('clearFilterFromApp');
 
         // Clear the list of filtered tasks
-        tbm.filteredEntrySeqIDs = null;
+        this.filteredEntrySeqIDs = null;
 
-        tbm.drawPolylines();
+        this.drawPolylines();
 
         // Todo: Reselect active task??
 
     }
 
     getCurrentMapLayer() {
-        let tbm = this;
-        for (let key in tbm.base_maps) {
-            if (tbm.map.hasLayer(tbm.base_maps[key])) {
+        for (let key in this.base_maps) {
+            if (this.map.hasLayer(this.base_maps[key])) {
                 return key;
             }
         }
@@ -736,35 +706,33 @@ class TaskBrowserMap {
     }
 
     setMapLayer(layerName) {
-        let tbm = this;
-        if (tbm.base_maps[layerName]) {
-            tbm.map.eachLayer(function (layer) {
-                tbm.map.removeLayer(layer);
+        if (this.base_maps[layerName]) {
+            this.map.eachLayer((layer) => {
+                this.map.removeLayer(layer);
             });
-            tbm.map.addLayer(tbm.base_maps[layerName]);
+            this.map.addLayer(this.base_maps[layerName]);
         }
     }
 
     isLayerVisible(layerName) {
-        let tbm = this;
-        return tbm.map.hasLayer(tbm.map_layers[layerName]);
+        return this.map.hasLayer(this.map_layers[layerName]);
     }
 
     setLayerVisibility(layerName, isVisible) {
-        let tbm = this;
         if (isVisible) {
-            if (!tbm.map.hasLayer(tbm.map_layers[layerName])) {
-                tbm.map.addLayer(tbm.map_layers[layerName]);
+            if (!this.map.hasLayer(this.map_layers[layerName])) {
+                this.map.addLayer(this.map_layers[layerName]);
             }
         } else {
-            if (tbm.map.hasLayer(tbm.map_layers[layerName])) {
-                tbm.map.removeLayer(tbm.map_layers[layerName]);
+            if (this.map.hasLayer(this.map_layers[layerName])) {
+                this.map.removeLayer(this.map_layers[layerName]);
             }
         }
     }
 
     addCompassRoseControl() {
-        let tbm = this;
+        // Capture reference to TaskBrowserMap instance
+        const tbm = this;
 
         // Custom control for the compass rose
         L.Control.CompassRose = L.Control.extend({
@@ -781,18 +749,17 @@ class TaskBrowserMap {
         });
 
         // Add the control to the map
-        tbm.compassControl = new L.Control.CompassRose({ position: 'topleft' });
-        tbm.map.addControl(tbm.compassControl);
+        this.compassControl = new L.Control.CompassRose({ position: 'topleft' });
+        this.map.addControl(this.compassControl);
 
         // Event listener for changing wind direction
-        tbm.setWindDirection(-1);  // Initialize with 0° wind direction
+        this.setWindDirection(-1);  // Initialize with 0° wind direction
     }
 
     setWindCompassVisibility() {
-        let tbm = this;
         let compassContainer = document.querySelector('.compass-container');
         if (compassContainer) {
-            if (tbm.windCompassValidWindLayer && tbm.windCompassOptionChecked) {
+            if (this.windCompassValidWindLayer && this.windCompassOptionChecked) {
                 compassContainer.style.display = 'block';
             } else {
                 compassContainer.style.display = 'none';
@@ -801,15 +768,14 @@ class TaskBrowserMap {
     }
 
     setWindDirection(degree, speed, altitude) {
-        let tbm = this;
         if (degree < 0) {
-            tbm.windCompassValidWindLayer = false;
-            tbm.setWindCompassVisibility();
+            this.windCompassValidWindLayer = false;
+            this.setWindCompassVisibility();
             return;
         }
         else {
-            tbm.windCompassValidWindLayer = true;
-            tbm.setWindCompassVisibility();
+            this.windCompassValidWindLayer = true;
+            this.setWindCompassVisibility();
         }
         let windDirectionElem = document.getElementById('windDirection');
         let windArrowElem = document.getElementById('windArrow');
@@ -856,70 +822,64 @@ class TaskBrowserMap {
     }
 
     clearIGCTracklogs() {
-        let tbm = this;
         // Clear any tracklogs from the map and the cache.
-        Object.keys(tbm.igcTrackCache).forEach(key => {
-            const polyline = tbm.igcTrackCache[key];
-            if (tbm.map.hasLayer(polyline)) {
-                tbm.map.removeLayer(polyline);
+        Object.keys(this.igcTrackCache).forEach(key => {
+            const polyline = this.igcTrackCache[key];
+            if (this.map.hasLayer(polyline)) {
+                this.map.removeLayer(polyline);
             }
         });
-        tbm.igcTrackCache = {};
-        tbm.currentIGCCacheEntrySeqID = null;
+        this.igcTrackCache = {};
+        this.currentIGCCacheEntrySeqID = null;
     }
 
     deselectTask() {
-        let tbm = this;
-
-        tbm.clearIGCTracklogs();
+        this.clearIGCTracklogs();
 
         // Reset the style of the current selected polyline.
-        if (tbm.currentPolyline) {
-            tbm.currentPolyline.setStyle({ color: '#ff7800', weight: tbm.defWeight });
-            tbm.currentPolyline.options.selected = false;
+        if (this.currentPolyline) {
+            this.currentPolyline.setStyle({ color: '#ff7800', weight: this.defWeight });
+            this.currentPolyline.options.selected = false;
         }
-        tbm.currentEntrySeqID = null;
-        tbm.currentPolyline = null;
+        this.currentEntrySeqID = null;
+        this.currentPolyline = null;
 
         // Hide the detailed task rendering if needed.
-        if (tbm.b21_task != null) {
-            tbm.b21_task.reset();
-            tbm.b21_task = null;
+        if (this.b21_task != null) {
+            this.b21_task.reset();
+            this.b21_task = null;
         }
 
-        tbm.tb.clearTaskDetails();
-        tbm.tb.deselectGridTask();
+        this.tb.clearTaskDetails();
+        this.tb.deselectGridTask();
 
         // Hide the task control panel.
         const taskControlPanel = document.getElementById('taskControlPanel');
         taskControlPanel.style.display = 'none';
 
-        tbm.showSelectedOnly();
+        this.showSelectedOnly();
     }
 
     showSelectedOnly() {
-        let tbm = this;
-        if (tbm.showSelectedOnlyChecked && tbm.currentEntrySeqID) {
-            for (const entrySeqID in tbm.api_tasks) {
-                let polyline = tbm.api_tasks[entrySeqID].polyline;
-                if (tbm.currentEntrySeqID !== parseInt(entrySeqID)) {
-                    tbm.map.removeLayer(polyline);
+        if (this.showSelectedOnlyChecked && this.currentEntrySeqID) {
+            for (const entrySeqID in this.api_tasks) {
+                let polyline = this.api_tasks[entrySeqID].polyline;
+                if (this.currentEntrySeqID !== parseInt(entrySeqID)) {
+                    this.map.removeLayer(polyline);
                 }
             }
         } else {
-            for (const entrySeqID in tbm.api_tasks) {
-                let polyline = tbm.api_tasks[entrySeqID].polyline;
-                tbm.map.addLayer(polyline);
+            for (const entrySeqID in this.api_tasks) {
+                let polyline = this.api_tasks[entrySeqID].polyline;
+                this.map.addLayer(polyline);
             }
         }
     }
     addTaskCountControl() {
-        let tbm = this;
-
         // Define the control
-        tbm.taskCountControl = L.control({ position: 'bottomleft' });
+        this.taskCountControl = L.control({ position: 'bottomleft' });
 
-        tbm.taskCountControl.onAdd = function (map) {
+        this.taskCountControl.onAdd = function (map) {
             // Create a div element to hold the count
             let countDiv = L.DomUtil.create('div', 'task-count-control');
             countDiv.style.padding = '5px';
@@ -930,33 +890,30 @@ class TaskBrowserMap {
 
             // Set initial text
             countDiv.innerHTML = "Tasks fetched: 0";
-            tbm.taskCountDiv = countDiv; // Store reference to update it later
+            this.taskCountDiv = countDiv; // Store reference to update it later
 
             return countDiv;
         };
 
-        tbm.taskCountControl.addTo(tbm.map);
+        this.taskCountControl.addTo(this.map);
     }
 
     updateTaskCountControl(count) {
-        let tbm = this;
-        if (tbm.taskCountControl) {
-            // Display count with optional "(filters applied)" based on tbm.filtering
-            const filterText = tbm.filtering ? ' (filters applied)' : '';
-            tbm.taskCountControl._container.innerHTML = `Tasks fetched: ${count}${filterText}`;
+        if (this.taskCountControl) {
+            // Display count with optional "(filters applied)" based on this.filtering
+            const filterText = this.filtering ? ' (filters applied)' : '';
+            this.taskCountControl._container.innerHTML = `Tasks fetched: ${count}${filterText}`;
         }
     }
 
     processIGCRecordDisplay(entrySeqID, igcKey, isChecked, igcText) {
-        const tbm = this;
-
         // 1) If we’ve switched tasks, clear out old layers & cache
-        if (tbm.currentIGCCacheEntrySeqID !== entrySeqID) {
-            Object.values(tbm.igcTrackCache).forEach(poly => {
-                if (tbm.map.hasLayer(poly)) tbm.map.removeLayer(poly);
+        if (this.currentIGCCacheEntrySeqID !== entrySeqID) {
+            Object.values(this.igcTrackCache).forEach(poly => {
+                if (this.map.hasLayer(poly)) this.map.removeLayer(poly);
             });
-            tbm.igcTrackCache = {};
-            tbm.currentIGCCacheEntrySeqID = entrySeqID;
+            this.igcTrackCache = {};
+            this.currentIGCCacheEntrySeqID = entrySeqID;
         }
 
         // helper to restyle a polyline based on row.selected
@@ -966,22 +923,22 @@ class TaskBrowserMap {
             ).closest('tr');
             const selected = $row.hasClass('selected');
             poly.setStyle({
-                color: selected ? tbm.igcTrackSelectedColor : tbm.igcTrackNormalColor,
-                weight: selected ? tbm.igcTrackSelectedWeight : tbm.igcTrackNormalWeight
+                color: selected ? this.igcTrackSelectedColor : this.igcTrackNormalColor,
+                weight: selected ? this.igcTrackSelectedWeight : this.igcTrackNormalWeight
             });
         }
 
         if (isChecked) {
             // 2a) Already cached? just add + style
-            if (tbm.igcTrackCache[igcKey]) {
-                const poly = tbm.igcTrackCache[igcKey];
-                if (!tbm.map.hasLayer(poly)) tbm.map.addLayer(poly);
+            if (this.igcTrackCache[igcKey]) {
+                const poly = this.igcTrackCache[igcKey];
+                if (!this.map.hasLayer(poly)) this.map.addLayer(poly);
                 stylePolyline(poly);
 
             } else {
                 // 2b) Not cached → load & cache
                 const processIGC = (igcContent) => {
-                    const igcData = tbm.igcParser.parse(igcContent);
+                    const igcData = this.igcParser.parse(igcContent);
                     if (!igcData.fixes.length) {
                         console.warn(`No fixes for IGCKey ${igcKey}`);
                         return;
@@ -989,12 +946,12 @@ class TaskBrowserMap {
                     const poly = L.polyline(
                         igcData.fixes.map(fix => [fix.lat, fix.lon]),
                         {
-                            color: tbm.igcTrackNormalColor,
-                            weight: tbm.igcTrackNormalWeight
+                            color: this.igcTrackNormalColor,
+                            weight: this.igcTrackNormalWeight
                         }
                     );
-                    tbm.igcTrackCache[igcKey] = poly;
-                    poly.addTo(tbm.map);
+                    this.igcTrackCache[igcKey] = poly;
+                    poly.addTo(this.map);
                     stylePolyline(poly);
                 };
 
@@ -1010,11 +967,10 @@ class TaskBrowserMap {
 
         } else {
             // 3) Unchecked → remove layer
-            const poly = tbm.igcTrackCache[igcKey];
-            if (poly && tbm.map.hasLayer(poly)) {
-                tbm.map.removeLayer(poly);
+            const poly = this.igcTrackCache[igcKey];
+            if (poly && this.map.hasLayer(poly)) {
+                this.map.removeLayer(poly);
             }
         }
     }
-
 }

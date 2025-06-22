@@ -7,7 +7,6 @@
 class B21_MSFS_PLN {
 
     constructor(task) {
-
         this.task = task;
         this.departure = null;
         this.departure_updated = false; // will set to true if/when the departure runway has been set in the first waypoint
@@ -210,5 +209,4 @@ class B21_MSFS_PLN {
 
         return this.get_title();
     }
-
-} // end B21_MSFS_CLASS class
+}
