@@ -1318,3 +1318,11 @@ table.dataTable thead .sorting {
         .hero-discord-cta a:hover {
             background-color: #4752c4;
         }
+
+.leaflet-marker-icon[src$="cloud.png"] {
+    /* Increase contrast and brightness */
+    filter: brightness(1.2) contrast(2) drop-shadow(0 0 4px #222);
+
+    /* Optional: add a white outline for visibility on dark backgrounds */
+    /* filter: drop-shadow(0 0 2px #fff) drop-shadow(0 0 4px #222); */
+}

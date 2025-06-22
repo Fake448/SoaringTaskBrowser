@@ -9,6 +9,7 @@ class B21_Task {
         let task = this;
         task.planner = planner; // Reference to parent app
         task.init();
+        task.maxClouds = 30;
     }
 
     init() {
@@ -45,7 +46,10 @@ class B21_Task {
                     task.drawClouds();
                 }
             };
-            task.planner.map.on('zoomend', task._cloudZoomHandler);
+            task.planner.map.on('zoomend', () => {
+                task.stopCloudAnimation();
+                task.drawClouds(); // This will restart the animation with the correct icon size
+            });
         }
     }
 
@@ -488,8 +492,138 @@ class B21_Task {
             this.cloudLayer.addLayer(cloudMarker);
         }
 
+        // --- GET WIND INFO HERE ---
+        let windDegree = 0, windSpeed = 10; // defaults
+        if (
+            this.planner &&
+            this.planner.tb &&
+            this.planner.tb.wsg_weather &&
+            this.planner.tb.wsg_weather.windLayers &&
+            this.planner.tb.wsg_weather.windLayers.length > 0
+        ) {
+            windDegree = parseFloat(this.planner.tb.wsg_weather.windLayers[0].angle);
+            windSpeed = parseFloat(this.planner.tb.wsg_weather.windLayers[0].speed);
+        }
+        this._windDegree = windDegree;
+        this._windSpeed = windSpeed;
+
+        console.log("Cloud positions:", this.cloudPositions);
+
         this.cloudLayer.addTo(this.planner.map);
+        // Start animation if not already running
+        if (!this._cloudAnimationRunning) {
+            console.log("Starting cloud animation with wind degree:", this._windDegree, "and speed:", this._windSpeed);
+            this.startCloudAnimation(this._windDegree || 0, this._windSpeed || 10);
+        }
     }
+
+    startCloudAnimation(windDegree, windSpeed) {
+        // windDegree: degrees from north, windSpeed: meters/second
+        if (this._cloudAnimationRunning) return;
+        this._cloudAnimationRunning = true;
+
+        // Calculate center and radius
+        let sumLat = 0, sumLng = 0;
+        for (let wp of this.waypoints) {
+            sumLat += wp.position.lat;
+            sumLng += wp.position.lng;
+        }
+        let centerLat = sumLat / this.waypoints.length;
+        let centerLng = sumLng / this.waypoints.length;
+        let center = L.latLng(centerLat, centerLng);
+
+        // Calculate max distance from center to any waypoint (in meters)
+        let maxDistance = 0;
+        for (let wp of this.waypoints) {
+            let dist = center.distanceTo([wp.position.lat, wp.position.lng]);
+            if (dist > maxDistance) maxDistance = dist;
+        }
+        const cloudCircleRadius = maxDistance * 1.2;
+
+        // Animation loop
+        const moveClouds = () => {
+            if (!this._cloudAnimationRunning) return;
+
+            // Move each cloud
+            const dt = 1 / 60; // seconds per frame
+            const speedMultiplier = 100
+            const speed = (windSpeed || 10) * speedMultiplier; // m/s
+
+
+            const windTo = (windDegree + 180) % 360; // Convert "from" to "to" direction if needed
+            const angleRad = (windTo - 90) * Math.PI / 180; // Convert compass to radians (0°=East, 90°=South, etc.)
+            const dx = Math.cos(angleRad) * speed * dt;
+            const dy = Math.sin(angleRad) * speed * dt;
+
+            for (let i = 0; i < this.cloudPositions.length; i++) {
+                let [lat, lng] = this.cloudPositions[i];
+                if (isNaN(lat) || isNaN(lng)) {
+                    console.error("Cloud position NaN!", { lat, lng, i });
+                    this.cloudPositions[i] = [lat, lng];
+                }
+
+                // Move cloud
+                // Approximate meters per degree
+                lat += (dy / 111320);
+                lng += (dx / (40075000 * Math.cos(lat * Math.PI / 180) / 360));
+
+                // Check if outside circle
+                let dist = center.distanceTo([lat, lng]);
+                if (dist > cloudCircleRadius) {
+                    // Compute angle from center to current cloud (correct order: y, x)
+                    const fromCenter = Math.atan2(lat - centerLat, lng - centerLng);
+                    const oppAngle = fromCenter + Math.PI;
+
+                    // Place new cloud at the same radius, opposite side
+                    const dLat = (cloudCircleRadius * Math.sin(oppAngle)) / 111320;
+                    const dLng = (cloudCircleRadius * Math.cos(oppAngle)) / (40075000 * Math.cos(centerLat * Math.PI / 180) / 360);
+                    lat = centerLat + dLat;
+                    lat = Math.max(-89, Math.min(89, lat))
+                    lng = centerLng + dLng;
+                    lng = Math.max(-89, Math.min(89, lng))
+
+                    console.log("Opera debug:", { lat, lng, dx, dy, i });
+                    if (!isFinite(lat) || !isFinite(lng)) {
+                        console.error("Non-finite cloud position!", { lat, lng, i });
+                    }
+
+                }
+
+                this.cloudPositions[i] = [lat, lng];
+            }
+
+            // Redraw clouds
+            this.cloudLayer.clearLayers();
+            // Always get the current zoom for each redraw
+            const scale = this.planner.map.getZoom() / 10;
+            let cloudIcon = L.icon({
+                iconUrl: 'images/cloud.png',
+                iconSize: [48 * scale, 32 * scale],
+                iconAnchor: [24 * scale, 16 * scale]
+            });
+            for (let [lat, lng] of this.cloudPositions) {
+                let cloudMarker = L.marker([lat, lng], { icon: cloudIcon });
+                this.cloudLayer.addLayer(cloudMarker);
+            }
+            if (!this.planner.map.hasLayer(this.cloudLayer)) {
+                this.cloudLayer.addTo(this.planner.map);
+            }
+
+            this._cloudAnimationFrame = requestAnimationFrame(moveClouds);
+        };
+
+        moveClouds();
+    }
+
+
+    stopCloudAnimation() {
+        this._cloudAnimationRunning = false;
+        if (this._cloudAnimationFrame) {
+            cancelAnimationFrame(this._cloudAnimationFrame);
+            this._cloudAnimationFrame = null;
+        }
+    }
+
 
     cloudsOverlap(lat1, lng1, lat2, lng2, minDistanceMeters) {
         const p1 = L.latLng(lat1, lng1);
@@ -540,13 +674,14 @@ class B21_Task {
 
     reset() {
         let task = this;
+        task.stopCloudAnimation();
         task.planner.map.removeLayer(task.map_elements);
         task.planner.map.removeLayer(task.cloudLayer);
 
         if (task.planner.map.hasLayer(task.cloudLayer)) {
             task.planner.map.removeLayer(task.cloudLayer);
         }
-        task.cloudLayer = L.layerGroup()
+        task.cloudLayer.clearLayers();
         task.cloudPositions = [];
         task.planner.map.closePopup();
     }

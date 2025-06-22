@@ -5,6 +5,7 @@ var TB = new TaskBrowser();
 var igcUpload = new IGCUpload(TB);
 
 TB.init(igcUpload);
+window.TB = TB;
 if (!TB.isDownloadPage) {
     igcUpload.init();
 }

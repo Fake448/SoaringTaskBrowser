@@ -3320,6 +3320,9 @@ export default class TaskBrowser {
 
         this.setWeatherInfo(task_details.WPRXML);
 
+        if (this.tbm.b21_task && typeof this.tbm.b21_task.drawClouds === "function") {
+            this.tbm.b21_task.drawClouds();
+        }
         // Zoom in on the task if specified or if task bounds outside current map bounds
         let taskBounds = this.tbm.b21_task.get_bounds();
         let mapBounds = this.tbm.map.getBounds();
