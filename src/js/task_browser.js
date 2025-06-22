@@ -1761,7 +1761,7 @@ class TaskBrowser {
                     const SearchIGCDiv = $(api.table().container()).find('div.dataTables_filter');
 
                     // load the legend HTML from your otherdata folder
-                    $('#igcLegend').load('otherdata/lblegend.html');
+                    $('#igcLegend').load('../html/lblegend.html');
 
                     //  • Legend toggle button
                     const legendBtn = $('<button>')
