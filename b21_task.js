@@ -454,10 +454,10 @@ class B21_Task {
         }
         this.stopCloudAnimation();
         // --- Store and reuse cloud positions ---
-        if (!this.cloudPositions || this.cloudPositions.length !== 10) {
+        if (!this.cloudPositions || this.cloudPositions.length !== this.maxClouds) {
             this.cloudPositions = [];
             const cloudCircleRadius = maxDistance * 1.2; // Add some buffer to the radius
-            const minCloudDist = 500; // Minimum distance in meters between clouds (adjust as needed)
+            const minCloudDist = 1000; // Minimum distance in meters between clouds (adjust as needed)
             for (let i = 0; i < this.maxClouds; i++) {
                 let tries = 0;
                 let found = false;
@@ -482,7 +482,7 @@ class B21_Task {
         // Draw clouds at stored positions
         const scale = this.planner.map.getZoom() / 10;
         let cloudIcon = L.icon({
-            iconUrl: 'images/cloud.png',
+            iconUrl: 'images/Cloud2.png',
             iconSize: [48 * scale, 32 * scale],
             iconAnchor: [24 * scale, 16 * scale]
         });
@@ -614,7 +614,7 @@ class B21_Task {
             // Always get the current zoom for each redraw
             const scale = this.planner.map.getZoom() / 10;
             let cloudIcon = L.icon({
-                iconUrl: 'images/cloud.png',
+                iconUrl: 'images/cloud2.png',
                 iconSize: [48 * scale, 32 * scale],
                 iconAnchor: [24 * scale, 16 * scale]
             });
