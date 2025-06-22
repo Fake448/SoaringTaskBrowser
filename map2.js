@@ -739,8 +739,8 @@ class TaskBrowserMap {
             onAdd: function (map) {
                 let compassContainer = L.DomUtil.create('div', 'compass-container');
                 compassContainer.innerHTML = `
-                    <img id="compassRose" class="compass-rose" src="images/compass_rose.png" alt="Compass Rose">
-                    <img id="windArrow" class="wind-arrow" src="images/wind_arrow2.png" alt="Wind Arrow">
+                    <img id="compassRose" class="compass-rose" src="src/images/compass_rose.png" alt="Compass Rose">
+                    <img id="windArrow" class="wind-arrow" src="src/images/windArrow2.png" alt="Wind Arrow">
                     <div id="windDirection" class="wind-direction">0°</div>
                 `;
                 tbm.makeDraggable(compassContainer, compassContainer.querySelector('#windDirection'));

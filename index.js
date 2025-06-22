@@ -137,7 +137,7 @@ function loadTabContent(tabId) {
             content = `
                 <div class="hero-container">
                     <div class="hero-left">
-                        <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="hero-logo-img-large">
+                        <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="hero-logo-img-large">
                         <div class="hero-branding">
                             <h1>WeSimGlide.org</h1>
                             <p class="hero-subtagline">Your Virtual MSFS Soaring Home</p>
@@ -252,35 +252,35 @@ function loadTabContent(tabId) {
                         <div class="community-logos">
                             <div class="community-item">
                                 <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">
-                                    <img src="images/SoaringDiamondsClub.jpg" alt="Soaring Diamonds Club" class="community-logo">
+                                    <img src="src/images/soaringDiamondsClub.jpg" alt="Soaring Diamonds Club" class="community-logo">
                                 </a>
                                 <p class="community-name"><strong>Soaring Diamonds Club</strong></p>
                                 <p class="community-clubs">Hosted on<br>GotGravel's Discord</p>
                             </div>
                             <div class="community-item">
                                 <a href="discord://discord.gg/got-gravel-793376245915189268" target="_blank">
-                                    <img src="images/GotGravel.jpg" alt="GotGravel" class="community-logo">
+                                    <img src="src/images/gotGravel.jpg" alt="GotGravel" class="community-logo">
                                 </a>
                                 <p class="community-name"><strong>Friday Soaring Club</strong></p>
                                 <p class="community-clubs">Hosted on<br>GotGravel's Discord</p>
                             </div>
                             <div class="community-item">
                                 <a href="discord://discord.gg/h9H2MZyrg2" target="_blank">
-                                    <img src="images/SSCLogo.jpg" alt="Sim Soaring Club" class="community-logo">
+                                    <img src="src/images/SSCLogo.jpg" alt="Sim Soaring Club" class="community-logo">
                                 </a>
                                 <p class="community-name"><strong>Sim Soaring Club</strong></p>
                                 <p class="community-clubs">Also home of<br>AusGlide Club</p>
                             </div>
                             <div class="community-item">
                                 <a href="discord://discord.gg/9PtUtaH9tz" target="_blank">
-                                    <img src="images/UKVGALogo.jpg" alt="UKVGA" class="community-logo">
+                                    <img src="src/images/UKVGALogo.jpg" alt="UKVGA" class="community-logo">
                                 </a>
                                 <p class="community-name"><strong>UK Virtual Gliding Association</strong></p>
                                 <p class="community-clubs"></p>
                             </div>
                             <div class="community-item">
                                 <a href="discord://discord.gg/h2GuWXJaGK" target="_blank">
-                                    <img src="images/FranceMSFS.png" alt="UKVGA" class="community-logo">
+                                    <img src="src/images/franceMSFS.png" alt="UKVGA" class="community-logo">
                                 </a>
                                 <p class="community-name"><strong>MSFS ✈️20✈️24 FR</strong></p>
                                 <p class="community-clubs">Home of<br>Planeur France</p>
@@ -296,7 +296,7 @@ function loadTabContent(tabId) {
         case 'eventsTab':
             content = `
                 <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Group Soaring Events</h2>
                 </div>
                 <div id="eventsGeneralInfoSection"></div>
@@ -307,7 +307,7 @@ function loadTabContent(tabId) {
         case 'toolsTab':
             content = `
                 <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Most useful soaring tools and other references!</h2>
                 </div>
                 `;
@@ -336,7 +336,7 @@ function loadTabContent(tabId) {
         case 'accountTab':
             content = `
                 <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Your User Account</h2>
                 </div>
                 <div id="account-content">
@@ -347,7 +347,7 @@ function loadTabContent(tabId) {
         case 'aboutTab':
             content = `
                 <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>About WeSimGlide</h2>
                 </div>
                 <p>Welcome to WeSimGlide.org, your go-to destination for virtual soaring in Flight Simulator. Inspired by the official WeGlide.org site for real-life soaring, WeSimGlide is dedicated to bringing the same level of community to the virtual skies.</p>
@@ -968,10 +968,10 @@ function refreshIGCSubmissionsContent() {
                   '${row.IGCKey}.igc'
                 );return false;"
                 title="Download this IGC file">
-                <img src="images/IGCDownload.svg" alt="Download" style="height:20px;vertical-align:middle;">
+                <img src="src/images/IGCDownload.svg" alt="Download" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style save-comment" data-entry="${row.IGCKey}" disabled title="Save comment">
-                <img src="images/ApplyChanges.svg" alt="Save" style="height:20px;vertical-align:middle;">
+                <img src="src/images/applyChanges.svg" alt="Save" style="height:20px;vertical-align:middle;">
               </button>
               <button class="igc-button-style delete-igc" data-entry="${row.IGCKey}" title="Delete this IGC record">🗑️</button>
             `
@@ -1291,13 +1291,13 @@ function displayEvents(events) {
 
     // Mapping of club IDs to their respective logos
     const clubLogos = {
-        'DIAMTU': 'images/SoaringDiamondsClub.jpg',
-        'FSCFR': 'images/GotGravel.jpg',
-        'SSCSA': 'images/SSCLogo.jpg',
-        'SSCWE': 'images/SSCLogo.jpg',
-        'AUSTU': 'images/SSCLogo.jpg',
-        'UKVGATU': 'images/UKVGALogo.jpg',
-        'UKVGATH': 'images/UKVGALogo.jpg'
+        'DIAMTU': 'src/images/soaringDiamondsClub.jpg',
+        'FSCFR': 'src/images/gotGravel.jpg',
+        'SSCSA': 'src/images/SSCLogo.jpg',
+        'SSCWE': 'src/images/SSCLogo.jpg',
+        'AUSTU': 'src/images/SSCLogo.jpg',
+        'UKVGATU': 'src/images/UKVGALogo.jpg',
+        'UKVGATH': 'src/images/UKVGALogo.jpg'
     };
 
     events.forEach(event => {
@@ -1434,7 +1434,7 @@ function displayEvents(events) {
         }
 
         if (event.Credits) {
-            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "images/tracker_green.svg"));
+            rows.push(createEventRow(null, `<strong>Tracker Group:</strong> ${event.Credits}<p>`, "src/images/tracker_green.svg"));
         }
 
         if (event.EligibleAward && event.EligibleAward != 'None') {
@@ -1465,21 +1465,21 @@ function displayEvents(events) {
         reviewTaskDetails = "";
         if (taskPublished && taskAvailable) {
             taskButton = `<button class="button-style" onclick="switchToMapAndSelectTask(${event.EntrySeqID})" title="View task on map">
-                <img src="images/World.svg" alt="View task on map" style="height: 20px; vertical-align: middle;">
+                <img src="src/images/world.svg" alt="View task on map" style="height: 20px; vertical-align: middle;">
             </button>`;
 
             dphxButton = `<button class="button-style" onclick="TB.downloadDPHXFile('${event.TaskID}', ${event.EntrySeqID}, '${event.TaskTitle}','event')" title="Download DPHX file">
-                <img src="images/DPHXFile.png" alt="DPHX File" style="height: 20px; vertical-align: middle;">
+                <img src="src/images/DPHXFile.png" alt="DPHX File" style="height: 20px; vertical-align: middle;">
             </button>`;
             reviewTaskDetails = 'Review task details and map before briefing!';
         }
 
         shareButton = `<button class="button-style" onclick="TB.copyTextToClipboard('${window.location.origin}/index.html?event=${event.Key}')" title="Share event (copy link to clipboard)">
-                <img src="images/ShareLink.png" alt="Share event (copy link to clipboard)" style="height: 20px; vertical-align: middle;">
+                <img src="src/images/shareLink.png" alt="Share event (copy link to clipboard)" style="height: 20px; vertical-align: middle;">
         </button>`;
 
         trackerButton = `<button class="button-style" onclick="TB.setSSCTracker('${event.TrackerGroup}',${event.EntrySeqID},'${event.URLToGo}')" title="Set SSC-Tracker app">
-            <img src="images/tracker.png" alt="Select this event and task on the tracker app" style="height: 20px; vertical-align: middle;">
+            <img src="src/images/tracker.png" alt="Select this event and task on the tracker app" style="height: 20px; vertical-align: middle;">
         </button>`;
 
         // Determine highlight class

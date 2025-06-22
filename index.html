@@ -8,7 +8,7 @@
     <meta property="og:title" content="WeSimGlide.org">
     <meta property="og:description" content="Your go-to destination for virtual soaring in Flight Simulator.">
     <meta property="og:url" content="https://wesimglide.org">
-    <meta property="og:image" content="https://wesimglide.org/images/WeSimGlide.png">
+    <meta property="og:image" content="https://wesimglide.org/src/images/WeSimGlide.png">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="WeSimGlide.org">
 
@@ -35,7 +35,7 @@
             <button class="tabButton" onclick="TB.switchTab('toolsTab')" title="Useful tools and other references" data-tab="toolsTab">🛠️</button>
             <button class="tabButton" onclick="TB.switchTab('settingsTab')" title="Your settings" data-tab="settingsTab">⚙️</button>
             <button class="tabButton" onclick="TB.switchTab('accountTab')" title="User Account" data-tab="accountTab">
-                <img id="userAccountImage" src="images/user_account_disconnected.svg" alt="User Account" style="width: 23px; height: 23px;">
+                <img id="userAccountImage" src="src/images/userAccountDisconnected.svg" alt="User Account" style="width: 23px; height: 23px;">
             </button>
             <button class="tabButton" onclick="TB.switchTab('aboutTab')" title="About WeSimGlide.org" data-tab="aboutTab">ℹ️</button>
         </div>
@@ -49,20 +49,20 @@
                         <div id="igcOverlay" style="display:none;"></div>
                         <div id="loadingSpinner" class="loading-spinner" style="display: none;">
                             <div id="loadingMessage" class="loading-message"></div>
-                            <img src="images/loading_circle.gif" alt="Loading...">
+                            <img src="src/images/loading_circle.gif" alt="Loading...">
                         </div>
                         <button id="fullWorldButton" onclick="TB.tbm.resetToFullWorld()" title="View full world">
-                            <img src="images/FullWorld.svg" alt="View full world" style="width: 25px; height: 25px;">
+                            <img src="src/images/fullWorld.svg" alt="View full world" style="width: 25px; height: 25px;">
                         </button>
                         <button id="searchFiltersButton" onclick="TB.toggleSearchAndFiltersPanel()" title="Search/Filters">
-                            <img src="images/SearchFilters.png" alt="Search/Filters" style="width: 25px; height: 25px;">
+                            <img src="src/images/SearchFilters.png" alt="Search/Filters" style="width: 25px; height: 25px;">
                         </button>
                         <button id="tableToggleButton" onclick="TB.toggleTableVisibility()" title="Toggle Table Visibility">
-                            <img src="images/Grid.png" alt="Toggle Table Visibility" style="width: 25px; height: 25px;">
+                            <img src="src/images/grid.png" alt="Toggle Table Visibility" style="width: 25px; height: 25px;">
                         </button>
                         <div class="upload-container" id="dropZone">
                             <button id="selectFileButton" title="Select IGC File to upload">
-                                <img src="images/IGCUpload.png" alt="View full world" style="width: 25px; height: 25px;">
+                                <img src="src/images/IGCUpload.png" alt="View full world" style="width: 25px; height: 25px;">
                             </button>
                             <span>
                                 IGC File Drop Zone
@@ -71,25 +71,25 @@
                         </div>
                         <div id="taskControlPanel">
                             <button id="zoomButton" onclick="TB.tbm.zoomToTask()" title="Zoom to task">
-                                <img src="images/ZoomToTask.png" alt="Zoom to task">
+                                <img src="src/images/zoomToTask.png" alt="Zoom to task">
                             </button>
                             <button id="directDPHXDownload" title="Download DPHX file">
-                                <img src="images/DPHXFile.png" alt="Download DPHX file">
+                                <img src="src/images/DPHXFile.png" alt="Download DPHX file">
                             </button>
                             <button id="sendTaskToTracker" title="Send task to Tracker">
-                                <img src="images/tracker.png" alt="Send task to Tracker">
+                                <img src="src/images/tracker.png" alt="Send task to Tracker">
                             </button>
                             <button id="copyTaskLinkToClipboard" title="Copy link to task">
-                                <img src="images/ShareLink.png" alt="Copy link to task">
+                                <img src="src/images/shareLink.png" alt="Copy link to task">
                             </button>
                             <button id="gotoDiscordThread" title="Go to task's thread on Discord">
-                                <img src="images/DiscordThread.png" alt="Go to task's thread on Discord">
+                                <img src="src/images/discordThread.png" alt="Go to task's thread on Discord">
                             </button>
                             <button id="toggleTaskDetailsPanel" title="Toggle visibility of task details">
-                                <img src="images/ViewDetailsToggle.png" alt="Toggle visibility of task details">
+                                <img src="src/images/ViewDetailsToggle.png" alt="Toggle visibility of task details">
                             </button>
                             <button id="deselectTaskButton" title="Deselect current task">
-                                <img src="images/XClose.svg" alt="Deselect current task">
+                                <img src="src/images/xClose.svg" alt="Deselect current task">
                             </button>
                         </div>
                         <div id="taskGridOverlay" style="position: absolute; top: 75px; right: 0; width: 100%; max-height: 40%; background-color: rgba(100, 100, 100, 0.9); display: none; z-index: 9000; padding: 10px; box-sizing: border-box;">
@@ -127,7 +127,7 @@
             <div id="toolsTab" class="tabContent"></div>
             <div id="settingsTab" class="tabContent">
                 <div class="header-container">
-                    <img src="images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
+                    <img src="src/images/WeSimGlide.png" alt="WeSimGlideLogo" class="header-image">
                     <h2>Customize Your Settings</h2>
                 </div>
                 <form id="settingsForm">

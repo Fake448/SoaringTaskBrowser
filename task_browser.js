@@ -917,20 +917,20 @@ class TaskBrowser {
             <p><strong>Option 1:</strong> Download the single package DPHX file for use with the <a href="https://flightsim.to/file/62573/msfs-soaring-task-tools-dphx-unpack-load" target="_blank">DPHX Unpack & Load tool</a></p>
             <p>
                 <a href="#" onclick="TB.downloadDPHXFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
-                    <img src="images/DPHXFile.png" alt="DPHX File" class="file-icon" style="width: 40px; height: 40px;">
+                    <img src="src/images/DPHXFile.png" alt="DPHX File" class="file-icon" style="width: 40px; height: 40px;">
                     ${task.Title}.dphx
                 </a>
             </p>
             <p><strong>Option 2:</strong> Download individual files and install them yourself</p>
             <p>
                 <a href="#" onclick="TB.downloadPLNFile()">
-                    <img src="images/PLNFile.png" alt="PLN File" class="file-icon">
+                    <img src="src/images/PLNFile.png" alt="PLN File" class="file-icon">
                     Flight plan file (PLN): ${this.getFileNameFromPath(this.currentTask.PLNFilename)}
                 </a>
             </p>
             <p>
                 <a href="#" onclick="TB.downloadWPRFile()">
-                    <img src="images/WPRFile.png" alt="WPR File" class="file-icon">
+                    <img src="src/images/WPRFile.png" alt="WPR File" class="file-icon">
                     Weather file (WPR): ${this.getFileNameFromPath(this.currentTask.WPRFilename)}
                 </a>
             </p>
@@ -942,7 +942,7 @@ class TaskBrowser {
             <p><strong>Option 3:</strong> Download all files (including extras) as ZIP file</strong></p>
             <p>
                 <a href="#" onclick="TB.downloadZIPFile('${task.TaskID}', ${task.EntrySeqID}, '${task.Title}')">
-                    <img src="images/ZIPFile.png" alt="ZIP File" class="file-icon">
+                    <img src="src/images/zipFile.png" alt="ZIP File" class="file-icon">
                     ${task.Title}.zip
                 </a>
             </p>
@@ -1989,7 +1989,7 @@ class TaskBrowser {
                 null, // resetCallback
                 null, // countdownSection
                 null, // backgroundImageUrl
-                "images/user_account_connected.svg" // iconImageUrl
+                "src/images/userAccountConnected.svg" // iconImageUrl
             );
         } catch (error) {
             console.error("Error fetching user stuff:", error);
@@ -2002,7 +2002,7 @@ class TaskBrowser {
                 null,
                 null,
                 null,
-                "images/user_account_connected.svg"
+                "src/images/userAccountConnected.svg"
             );
         }
     }
@@ -3626,11 +3626,11 @@ class TaskBrowser {
         const userImg = document.getElementById('userAccountImage');
         if (userImg) {
             if (this.isUserConnected) {
-                userImg.src = "images/user_account_connected.svg";
+                userImg.src = "src/images/userAccountConnected.svg";
                 userImg.title = "You are currently logged in as " + this.user.displayName;
             }
             else {
-                userImg.src = "images/user_account_disconnected.svg";
+                userImg.src = "src/images/userAccountDisconnected.svg";
                 userImg.title = "You are NOT currently logged in.";
             }
         }
