@@ -9,7 +9,7 @@ class B21_Task {
         let task = this;
         task.planner = planner; // Reference to parent app
         task.init();
-        task.maxClouds = 30;
+        task.maxClouds = 50;
     }
 
     init() {
@@ -452,13 +452,13 @@ class B21_Task {
             let dist = center.distanceTo([wp.position.lat, wp.position.lng]);
             if (dist > maxDistance) maxDistance = dist;
         }
-
+        this.stopCloudAnimation();
         // --- Store and reuse cloud positions ---
         if (!this.cloudPositions || this.cloudPositions.length !== 10) {
             this.cloudPositions = [];
             const cloudCircleRadius = maxDistance * 1.2; // Add some buffer to the radius
             const minCloudDist = 500; // Minimum distance in meters between clouds (adjust as needed)
-            for (let i = 0; i < 10; i++) {
+            for (let i = 0; i < this.maxClouds; i++) {
                 let tries = 0;
                 let found = false;
                 while (tries < 100 && !found) {
@@ -572,21 +572,38 @@ class B21_Task {
                 if (dist > cloudCircleRadius) {
                     // Compute angle from center to current cloud (correct order: y, x)
                     const fromCenter = Math.atan2(lat - centerLat, lng - centerLng);
-                    const oppAngle = fromCenter + Math.PI;
+                    let oppAngle = fromCenter + Math.PI;
+                    let tries = 0;
+                    const minCloudDist = 500; // or use your configured value
 
-                    // Place new cloud at the same radius, opposite side
-                    const dLat = (cloudCircleRadius * Math.sin(oppAngle)) / 111320;
-                    const dLng = (cloudCircleRadius * Math.cos(oppAngle)) / (40075000 * Math.cos(centerLat * Math.PI / 180) / 360);
-                    lat = centerLat + dLat;
-                    lat = Math.max(-89, Math.min(89, lat))
-                    lng = centerLng + dLng;
-                    lng = Math.max(-89, Math.min(89, lng))
+                    let found = false;
+                    while (tries < 20 && !found) {
+                        // Place new cloud at the same radius, opposite side, with a small random jitter
+                        const jitter = (Math.random() - 0.5) * (Math.PI / 12); // up to ±15°
+                        const testAngle = oppAngle + jitter;
+                        const dLat = (cloudCircleRadius * Math.sin(testAngle)) / 111320;
+                        const dLng = (cloudCircleRadius * Math.cos(testAngle)) / (40075000 * Math.cos(centerLat * Math.PI / 180) / 360);
+                        let testLat = centerLat + dLat;
+                        let testLng = centerLng + dLng;
 
-                    console.log("Opera debug:", { lat, lng, dx, dy, i });
-                    if (!isFinite(lat) || !isFinite(lng)) {
-                        console.error("Non-finite cloud position!", { lat, lng, i });
+                        // Check for overlap with other clouds
+                        let overlap = false;
+                        for (let j = 0; j < this.cloudPositions.length; j++) {
+                            if (j === i) continue; // skip self
+                            const [olat, olng] = this.cloudPositions[j];
+                            if (this.cloudsOverlap(testLat, testLng, olat, olng, minCloudDist)) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+                        if (!overlap) {
+                            lat = testLat;
+                            lng = testLng;
+                            found = true;
+                        }
+                        tries++;
                     }
-
+                    // If no non-overlapping spot found, just use the last tried position
                 }
 
                 this.cloudPositions[i] = [lat, lng];
