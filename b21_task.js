@@ -258,11 +258,7 @@ class B21_Task {
     }
 
     update_waypoint_icons() {
-        let task = this;
-        for (let i = 0; i < task.waypoints.length; i++) {
-            let wp = task.waypoints[i];
-            wp.update_icon(wp);
-        }
+        this.waypoints.forEach(wp => wp.update_icon());
     }
 
     update_elevations() {

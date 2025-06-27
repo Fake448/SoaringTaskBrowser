@@ -1332,7 +1332,7 @@ class TaskBrowser {
                 const index = this.getAttribute('data-index');
                 const waypoint = tb.tbm.b21_task.waypoints[index];
                 if (waypoint && waypoint.position) {
-                    waypoint.wp_click(waypoint);
+                    waypoint.wp_click();
                 } else {
                     console.warn(`Waypoint ${index} does not have a valid position.`);
                 }
