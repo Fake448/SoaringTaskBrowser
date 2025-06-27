@@ -1,63 +1,62 @@
 class TaskBrowserMap {
     constructor(tb) {
-        let tbm = this;
-        tbm.tb = tb;
+        this.tb = tb;
 
-        tbm.runningInApp = false;
+        this.runningInApp = false;
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.has('appContext')) {
-            tbm.runningInApp = true;
-            tbm.taskCount = 9999; // no limit when from the app
+            this.runningInApp = true;
+            this.taskCount = 9999; // no limit when from the app
         } else {
-            tbm.runningInApp = false;
-            tbm.taskCount = 300; // or any sensible default value for the number of tasks
+            this.runningInApp = false;
+            this.taskCount = 300; // or any sensible default value for the number of tasks
         }
 
         // Default values for taskCount, startDate, and endDate
-        tbm.startDate = '2000-01-01'; // example default minimum date
-        tbm.endDate = '2200-01-01'; // max date
+        this.startDate = '2000-01-01'; // example default minimum date
+        this.endDate = '2200-01-01'; // max date
         // Default values for soaring types (all selected)
-        tbm.soaringTypes = {
+        this.soaringTypes = {
             soaringRidge: true,
             soaringThermals: true,
             soaringWaves: true,
             soaringDynamic: true
         };
         // Default filter type for soaring types (e.g., "any" for OR filtering)
-        tbm.soaringTypeFilter = 'any';
+        this.soaringTypeFilter = 'any';
 
         // Default values for duration filters
-        tbm.durationMin = 0;               // Min duration in minutes
-        tbm.durationMax = 9999;            // Max duration in minutes
-        tbm.includeNoDuration = true;      // Include tasks with no duration specified
+        this.durationMin = 0;               // Min duration in minutes
+        this.durationMax = 9999;            // Max duration in minutes
+        this.includeNoDuration = true;      // Include tasks with no duration specified
 
         // B21 update, these are used by B21_Task / B21_WP
-        tbm.settings = {
+        this.settings = {
             altitude_units: "feet",
             wp_radius_units: "m",
             task_line_color_1: "blue",
             task_line_color_2: "none"
         }
 
-        tbm.M_TO_FEET = 3.28084;
-        tbm.defWeight = 6;
-        tbm.hoverWeight = 7;
-        tbm.selWeight = 0;
+        this.M_TO_FEET = 3.28084;
+        this.defWeight = 6;
+        this.hoverWeight = 7;
+        this.selWeight = 0;
 
         //B21 update
-        tbm.fetchBounds = null; // Keep track of the GetTasksForMap bounds
-        tbm.api_tasks = {};     // Will hold all tasks from GetTasksForMap.php
-        tbm.b21_task = null;    // Will hold parsed 'current' task
+        this.fetchBounds = null; // Keep track of the GetTasksForMap bounds
+        this.api_tasks = {};     // Will hold all tasks from GetTasksForMap.php
+        this.b21_task = null;    // Will hold parsed 'current' task
 
-        //tbm.map = L.map('map').setView([20, 0], 2);
+        //this.map = L.map('map').setView([20, 0], 2);
 
 
         // b21_airports requirements
-        tbm.canvas_renderer = L.canvas();
-        tbm.airport_markers = L.layerGroup(); //.addTo(planner.map);
+        this.canvas_renderer = L.canvas();
+        this.airport_markers = L.layerGroup(); //.addTo(planner.map);
 
         // Define different map layers
-        tbm.base_maps = {
+        this.base_maps = {
             "OpenStreetMap": L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 attribution: 'Map data © <a href="https://openstreetmap.org">OpenStreetMap</a> contributors'
             }),
@@ -78,9 +77,9 @@ class TaskBrowserMap {
             })
         };
 
-        if (!tbm.runningInApp) {
-            tbm.map_layers = {
-                "Airports": tbm.airport_markers,
+        if (!this.runningInApp) {
+            this.map_layers = {
+                "Airports": this.airport_markers,
                 "Railways": L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
@@ -89,8 +88,8 @@ class TaskBrowserMap {
                 "Show selected only": L.layerGroup()
             };
         } else {
-            tbm.map_layers = {
-                "Airports": tbm.airport_markers,
+            this.map_layers = {
+                "Airports": this.airport_markers,
                 "Railways": L.tileLayer('https://{s}.tiles.openrailwaymap.org/standard/{z}/{x}/{y}.png', {
                     maxZoom: 19,
                     attribution: 'Map data: &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors | Map style: &copy; <a href="https://www.OpenRailwayMap.org">OpenRailwayMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/">CC-BY-SA</a>)'
@@ -99,84 +98,84 @@ class TaskBrowserMap {
             };
         }
 
-        tbm.map = L.map('map', {
+        this.map = L.map('map', {
             minZoom: 2,
             maxZoom: 16,
             worldCopyJump: true,
-            layers: [tbm.base_maps["Google Terrain"], tbm.airport_markers]
+            layers: [this.base_maps["Google Terrain"], this.airport_markers]
         });
 
-        tbm.map.setView([20, 0], 2);;
+        this.map.setView([20, 0], 2);;
 
-        L.control.layers(tbm.base_maps, tbm.map_layers).addTo(tbm.map);
+        L.control.layers(this.base_maps, this.map_layers).addTo(this.map);
 
-        tbm.currentPolyline = null; // Track the currently selected polyline
-        tbm.currentEntrySeqID = null; // Track the EntrySeqID of the selected polyline
-        tbm.filteredEntrySeqIDs = null; // Track the filtered tasks
+        this.currentPolyline = null; // Track the currently selected polyline
+        this.currentEntrySeqID = null; // Track the EntrySeqID of the selected polyline
+        this.filteredEntrySeqIDs = null; // Track the filtered tasks
 
         // Initial task fetch
-        tbm.filtering = false;
-        tbm.fetchTasks();
+        this.filtering = false;
+        this.fetchTasks();
 
         this.addTaskCountControl();
 
         // Fetch tasks when the map view changes
-        tbm.map.on('moveend', function () {
-            tbm.airports.draw(tbm.map);
-            tbm.filterTasksByMapBounds(); // Filter tasks based on the updated map bounds
+        this.map.on('moveend', () => {
+            this.airports.draw(this.map);
+            this.filterTasksByMapBounds(); // Filter tasks based on the updated map bounds
         });
 
-        tbm.airports = new B21_Airports(tbm, {
+        this.airports = new B21_Airports(this, {
             json_url: "https://xp-soaring.github.io/tasks/b21_task_planner/airports/airports.json",
             airport_img_url: "https://xp-soaring.github.io/tasks/b21_task_planner/images/airport_00.png"
         });
 
-        tbm.airports.init(tbm.map); // Here we ASYCHRONOUSLY load the airports JSON data (& will draw on map)
+        this.airports.init(this.map); // Here we ASYCHRONOUSLY load the airports JSON data (& will draw on map)
 
         let windCompassOptionChecked = false;
         let windCompassValidWindLayer = false;
         let showSelectedOnlyChecked = false;
-        tbm.addCompassRoseControl();
+        this.addCompassRoseControl();
 
         // Listen to layer control changes
-        tbm.map.on('overlayadd', function (eventLayer) {
+        this.map.on('overlayadd', (eventLayer) => {
             if (eventLayer.name === 'Wind Compass') {
-                tbm.windCompassOptionChecked = true;
-                tbm.setWindCompassVisibility();
+                this.windCompassOptionChecked = true;
+                this.setWindCompassVisibility();
             } else if (eventLayer.name === 'Show selected only') {
-                tbm.showSelectedOnlyChecked = true;
-                tbm.showSelectedOnly();
+                this.showSelectedOnlyChecked = true;
+                this.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.map.on('overlayremove', function (eventLayer) {
+        this.map.on('overlayremove', (eventLayer) => {
             if (eventLayer.name === 'Wind Compass') {
-                tbm.windCompassOptionChecked = false;
-                tbm.setWindCompassVisibility();
+                this.windCompassOptionChecked = false;
+                this.setWindCompassVisibility();
             } else if (eventLayer.name === 'Show selected only') {
-                tbm.showSelectedOnlyChecked = false;
-                tbm.showSelectedOnly();
+                this.showSelectedOnlyChecked = false;
+                this.showSelectedOnly();
             }
-            tbm.tb.saveMapUserSettings();
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.map.on('baselayerchange', function (eventLayer) {
-            tbm.tb.saveMapUserSettings();
+        this.map.on('baselayerchange', (eventLayer) => {
+            this.tb.saveMapUserSettings();
         });
 
-        tbm.setWindCompassVisibility();
+        this.setWindCompassVisibility();
 
         // Cache properties for IGC track logs
-        tbm.currentIGCCacheEntrySeqID = null;
-        tbm.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
-        tbm.igcTrackNormalWeight = 2;
-        tbm.igcTrackNormalColor = 'black';
-        tbm.igcTrackHighlightedWeight = 4;
-        tbm.igcTrackHighlightedColor = '#9900cc';
-        tbm.igcTrackSelectedWeight = 4;
-        tbm.igcTrackSelectedColor = 'red';
-        tbm.igcParser = {
+        this.currentIGCCacheEntrySeqID = null;
+        this.igcTrackCache = {};  // { igcKey: L.Polyline, ... }
+        this.igcTrackNormalWeight = 2;
+        this.igcTrackNormalColor = 'black';
+        this.igcTrackHighlightedWeight = 4;
+        this.igcTrackHighlightedColor = '#9900cc';
+        this.igcTrackSelectedWeight = 4;
+        this.igcTrackSelectedColor = 'red';
+        this.igcParser = {
             parse: function (igcText) {
                 const fixes = [];
                 const lines = igcText.split(/\r?\n/);
