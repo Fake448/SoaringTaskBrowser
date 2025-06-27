@@ -2837,24 +2837,44 @@ class TaskBrowser {
         }
     }
 
+    test_fetch_task_details(entrySeqID) {
+        return fetch('otherdata/test_tasks.json')
+            .then(res => res.json())
+            .then(data => {
+                const task = data.tasks.find(t => t.EntrySeqID == entrySeqID);
+                if (!task) {
+                    return { status: "not_found" };
+                }
+                return task;
+            });
+    }
+
+
     getTaskDetails(entrySeqID, forceZoomToTask = false) {
         let tb = this;
 
         return new Promise((resolve, reject) => {
             let fetch_promise;
             if (DEBUG_LOCAL) {
-                fetch_promise = test_fetch_task_details(entrySeqID);
+                fetch_promise = tb.test_fetch_task_details(entrySeqID);
             } else {
                 fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
             }
 
             fetch_promise
                 .then(response => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to fetch task details: ${response.statusText}`);
+                    if (DEBUG_LOCAL) {
+                        // response is already the task object
+                        return response;
+                    } else {
+                        if (!response.ok) {
+                            const statusText = response.statusText || `HTTP ${response.status}`;
+                            throw new Error(`Failed to fetch task details: ${statusText}`);
+                        }
+                        return response.json();
                     }
-                    return response.json();
                 })
+
                 .then(task_details => {
                     // Check for errors
                     if (task_details.error) {
