@@ -2856,7 +2856,7 @@ class TaskBrowser {
         return new Promise((resolve, reject) => {
             let fetch_promise;
             if (DEBUG_LOCAL) {
-                fetch_promise = this.test_fetch_task_details(entrySeqID);
+                fetch_promise = tb.test_fetch_task_details(entrySeqID);
             } else {
                 fetch_promise = fetch(`php/GetTaskDetails.php?entrySeqID=${entrySeqID}`);
             }
