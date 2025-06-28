@@ -5,6 +5,8 @@ import Banner from './banner.js';
 const TB = new TaskBrowser();
 const igcUpload = new IGCUpload(TB);
 
+window.TB = TB;
+
 TB.init(igcUpload);
 if (!TB.isDownloadPage) {
     igcUpload.init();
