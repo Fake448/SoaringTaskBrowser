@@ -1,11 +1,20 @@
 ﻿// js/index.new.js
+import Banner from './banner.js';
+import Splitter from './splitter.js';
+import TabManager from './tabs/manager.js';
 
-// 🚧 NEW index.js stub
-// Copy bits from index.old.js here and
-// refactor step by step—nothing runs until you enable it.
+// Core singletons
+const TB = new TaskBrowser();
+const igcUpload = new IGCUpload(TB);
 
-console.log("🚧 running NEW index.js");
-// e.g.
-// window.addEventListener('DOMContentLoaded', () => {
-//   // your new startup logic
-// });
+document.addEventListener('DOMContentLoaded', () => {
+    // 1) Initialize your little cross-cutting bits
+    Banner.init();                 // pull in your banner.json marquee
+    Splitter.init({ TB });         // wire up the resizer drag logic
+
+    // 2) Bootstrap the tab-based UI
+    TabManager.init({ TB, igcUpload });
+
+    // 3) Map needs an initial resize
+    if (typeof TB.resizeMap === 'function') TB.resizeMap();
+});
